@@ -29,7 +29,6 @@
         }
         .logo { display: flex; align-items: center; gap: 15px; }
         .logo-img { height: 50px; width: auto; }
-        .logo-icon { font-size: 2.5em; }
         .logo h1 { color: #1a472a; font-size: 1.5em; }
         .logo p { color: #666; font-size: 0.9em; }
         .badge-organizer {
@@ -49,14 +48,14 @@
         .login-card {
             background: white;
             border-radius: 20px;
-            padding: 50px;
+            padding: 40px 50px;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            max-width: 480px;
+            max-width: 550px;
             width: 100%;
             border-top: 5px solid #27ae60;
         }
-        .login-card h2 { color: #1a472a; margin-bottom: 10px; }
+        .login-card h2 { color: #1a472a; margin-bottom: 10px; font-size: 1.6em; }
         .login-card > p { color: #666; margin-bottom: 25px; }
         .login-form { display: flex; flex-direction: column; gap: 15px; }
         .login-form input {
@@ -87,18 +86,70 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
         }
-        .login-note { margin-top: 20px; font-size: 0.85em; color: #999; }
         .error-message { color: #e74c3c; font-size: 0.9em; min-height: 20px; margin-top: 10px; }
-        .access-denied {
-            background: #fff5f5;
-            border: 2px solid #e74c3c;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
+        
+        /* First Login Info Box */
+        .first-login-info {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 2px solid #27ae60;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 25px;
             text-align: left;
         }
-        .access-denied h4 { color: #c0392b; margin-bottom: 10px; }
-        .access-denied p { color: #666; font-size: 0.9em; margin-bottom: 5px; }
+        .first-login-info h4 {
+            color: #1a472a;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .first-login-info h4 .icon { font-size: 1.5em; }
+        .info-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+        .step-number {
+            background: #27ae60;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        .step-text {
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .step-text strong { color: #1a472a; }
+        .contact-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #e67e22;
+        }
+        .contact-box p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .contact-box a {
+            color: #e67e22;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .contact-box a:hover { text-decoration: underline; }
+        
         .organizer-bar {
             background: white;
             border-radius: 12px;
@@ -179,152 +230,135 @@
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px 15px;
-            font-size: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
-            outline: none;
-            transition: all 0.3s;
+            font-size: 15px;
             font-family: inherit;
+            transition: all 0.3s;
         }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: #27ae60;
-            box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
         }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .level-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
-        .level-option { cursor: pointer; }
-        .level-option input { display: none; }
-        .level-card {
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        .level-option input:checked + .level-card { background: #e8f5e9; border-color: #27ae60; }
-        .level-number { display: block; font-size: 2em; font-weight: 700; color: #27ae60; }
-        .level-title { display: block; font-weight: 600; color: #333; margin: 5px 0; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
         .skills-selector { background: #f0fff4; border-radius: 12px; padding: 20px; }
         .selected-skills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .no-skills { color: #999; font-style: italic; }
         .skill-tag {
-            background: white;
-            border: 1px solid #27ae60;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 8px 12px;
             border-radius: 20px;
-            padding: 8px 15px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-size: 0.9em;
         }
         .skill-level-badge {
-            background: #27ae60;
-            color: white;
+            background: rgba(255,255,255,0.3);
             padding: 2px 8px;
             border-radius: 10px;
-            font-size: 0.8em;
-            font-weight: 600;
+            font-weight: 700;
         }
-        .remove-skill { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 1.1em; padding: 0 5px; }
-        .btn-add-skill {
-            background: #27ae60;
+        .remove-skill {
+            background: none;
+            border: none;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
+            padding: 0 5px;
+            font-size: 1.1em;
         }
-        .btn-add-skill:hover { background: #219a52; }
-        .form-actions { display: flex; gap: 15px; margin-top: 30px; justify-content: flex-end; flex-wrap: wrap; }
-        .btn-submit, .btn-secondary {
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
+        .btn-add-skill {
+            background: white;
+            border: 2px dashed #27ae60;
+            color: #27ae60;
+            padding: 12px 24px;
             border-radius: 10px;
             cursor: pointer;
+            font-weight: 600;
             transition: all 0.3s;
         }
+        .btn-add-skill:hover { background: #e8f5e9; }
+        .student-ids-input {
+            font-family: monospace;
+            min-height: 120px;
+            resize: vertical;
+        }
+        .btn-submit-group { display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+        .btn-save, .btn-submit {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-save { background: #f8f9fa; border: 2px solid #27ae60; color: #27ae60; }
+        .btn-save:hover { background: #e8f5e9; }
         .btn-submit { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4); }
-        .btn-secondary { background: #f8f9fa; color: #333; border: 2px solid #ddd; }
-        .btn-secondary:hover { background: #e9ecef; }
-        .activity-card {
-            background: #f0fff4;
+        .activity-item {
+            background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
             border-left: 4px solid #27ae60;
         }
-        .activity-card.status-approved { border-left-color: #27ae60; }
-        .activity-card.status-pending { border-left-color: #f39c12; }
-        .activity-card.status-rejected { border-left-color: #e74c3c; }
-        .activity-card.status-draft { border-left-color: #95a5a6; }
-        .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .activity-header h3 { color: #1a472a; font-size: 1.1em; }
-        .activity-meta { display: flex; gap: 20px; color: #666; font-size: 0.9em; margin-bottom: 10px; flex-wrap: wrap; }
+        .activity-item.pending { border-left-color: #f39c12; }
+        .activity-item.approved { border-left-color: #27ae60; }
+        .activity-item.rejected { border-left-color: #e74c3c; }
+        .activity-item.draft { border-left-color: #95a5a6; }
+        .activity-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .activity-title { font-weight: 600; color: #1a472a; font-size: 1.1em; }
+        .activity-status { padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+        .activity-status.draft { background: #ecf0f1; color: #7f8c8d; }
+        .activity-status.pending { background: #fff3e0; color: #e67e22; }
+        .activity-status.approved { background: #e8f5e9; color: #27ae60; }
+        .activity-status.rejected { background: #ffebee; color: #e74c3c; }
+        .activity-meta { color: #666; font-size: 0.9em; margin-bottom: 10px; }
         .activity-skills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-        .skill-mini { background: #e8f5e9; color: #27ae60; padding: 4px 10px; border-radius: 15px; font-size: 0.8em; font-weight: 500; }
-        .activity-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-small { padding: 8px 16px; font-size: 0.9em; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
-        .btn-edit { background: #e8f5e9; color: #27ae60; }
-        .btn-submit-approval { background: #27ae60; color: white; }
-        .btn-students { background: #e3f2fd; color: #1976d2; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
-        .status-badge.approved { background: #d4edda; color: #155724; }
-        .status-badge.pending { background: #fff3cd; color: #856404; }
-        .status-badge.rejected { background: #f8d7da; color: #721c24; }
-        .status-badge.draft { background: #e2e3e5; color: #383d41; }
-        .reject-reason { background: #fff0f0; color: #c0392b; padding: 10px 15px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal-overlay.show { display: flex; }
-        .modal { background: white; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #e0e0e0; }
+        .skill-mini { background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 15px; font-size: 0.8em; }
+        .activity-actions { display: flex; gap: 10px; }
+        .btn-action { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9em; transition: all 0.2s; }
+        .btn-edit { background: #e3f2fd; color: #1976d2; }
+        .btn-delete { background: #ffebee; color: #e74c3c; }
+        .btn-action:hover { transform: translateY(-1px); }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .icon { font-size: 4em; margin-bottom: 15px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 20px; max-width: 800px; width: 100%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { padding: 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h3 { color: #1a472a; }
         .modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: #999; }
         .modal-body { padding: 25px; }
-        .modal-footer { padding: 20px 25px; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end; gap: 10px; }
-        .btn-primary { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .skill-modal { max-width: 700px; }
-        .skill-categories { max-height: 400px; overflow-y: auto; }
         .skill-domain { margin-bottom: 20px; }
-        .skill-domain h4 { color: #27ae60; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0; }
-        .skill-items { display: flex; flex-direction: column; gap: 8px; }
-        .skill-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #f8f9fa; border-radius: 8px; transition: all 0.3s; }
-        .skill-item.selected { background: #e8f5e9; }
-        .skill-info { display: flex; align-items: center; gap: 10px; }
+        .skill-domain h4 { color: #27ae60; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #e8f5e9; }
+        .skill-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+        .skill-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; transition: all 0.2s; }
+        .skill-item:hover { background: #e8f5e9; }
+        .skill-item.selected { background: #e8f5e9; border: 2px solid #27ae60; }
+        .skill-info { flex: 1; display: flex; align-items: center; gap: 8px; }
         .skill-info label { cursor: pointer; }
-        .skill-level { padding: 5px 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .students-modal { max-width: 500px; }
-        .students-modal textarea { width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-family: monospace; resize: vertical; }
-        .student-count { margin-top: 10px; color: #666; font-size: 0.9em; }
-        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .skill-level { padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .modal-footer { padding: 20px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-modal { padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-cancel { background: #f8f9fa; border: 1px solid #ddd; }
+        .btn-confirm { background: #27ae60; color: white; border: none; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; gap: 20px; }
         .loading-overlay.show { display: flex; }
-        .loading-box { background: white; padding: 40px 60px; border-radius: 16px; text-align: center; }
-        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #27ae60; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-        .empty-state .icon { font-size: 4em; margin-bottom: 15px; }
-        .activities-list { max-height: 600px; overflow-y: auto; }
-        @media (max-width: 768px) {
-            .container { padding: 15px; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #e0e0e0; border-top-color: #27ae60; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 600px) {
+            .login-card { padding: 30px 20px; }
             .header { flex-direction: column; text-align: center; }
-            .form-row { grid-template-columns: 1fr; }
-            .level-options { grid-template-columns: repeat(2, 1fr); }
-            .form-actions { flex-direction: column; }
-            .form-actions button { width: 100%; }
+            .btn-submit-group { flex-direction: column; }
+            .organizer-bar { flex-direction: column; gap: 15px; text-align: center; }
+            .first-login-info { padding: 20px 15px; }
         }
     </style>
 </head>
@@ -332,31 +366,64 @@
     <div class="container">
         <header class="header">
             <div class="logo">
-                <img src="images/MainLogo.png" alt="Student Talent Development" class="logo-img">
+                <img src="images/MainLogo.png" alt="Logo" class="logo-img">
                 <div>
-                    <h1>Organizer Portal | ผู้จัดกิจกรรม</h1>
-                    <p>Activity Registration System | ระบบลงทะเบียนกิจกรรม</p>
+                    <h1>ระบบแจ้งกิจกรรม | Activity Registration</h1>
+                    <p>สำหรับผู้จัดกิจกรรม | For Activity Organizers</p>
                 </div>
             </div>
-            <span class="badge-organizer">🔐 ORGANIZER ACCESS</span>
+            <span class="badge-organizer">👨‍💼 ORGANIZER PORTAL</span>
         </header>
 
         <section id="login-section" class="login-section">
             <div class="login-card">
-                <h2>🔐 เข้าสู่ระบบผู้จัด | Organizer Login</h2>
-                <p>กรุณากรอก Email ที่ได้รับสิทธิ์ | Enter authorized Email</p>
+                <h2>👨‍💼 ระบบผู้จัดกิจกรรม | Organizer Portal</h2>
+                <p>แจ้งกิจกรรมและเพิ่มรายชื่อนักศึกษาที่เข้าร่วม<br>Register activities and add participating students</p>
+                
                 <div class="login-form">
-                    <input type="email" id="organizer-email" placeholder="Email (organizer@cmu.ac.th)">
+                    <input type="email" id="organizer-email" placeholder="Email (your-email@cmu.ac.th)">
                     <input type="password" id="organizer-password" placeholder="รหัสผ่าน | Password (min 4 chars)" minlength="4">
-                    <button onclick="loginOrganizer()">เข้าสู่ระบบ | Login</button>
+                    <button onclick="loginOrganizer()">🚀 เข้าสู่ระบบ | Login</button>
                 </div>
                 <p id="login-error" class="error-message"></p>
-                <div id="access-denied-box" class="access-denied" style="display: none;">
-                    <h4>⛔ ไม่มีสิทธิ์เข้าใช้งาน | Access Denied</h4>
-                    <p>Email นี้ไม่ได้รับสิทธิ์ | This email is not authorized</p>
-                    <p>กรุณาติดต่อ Admin | Please contact Admin for access</p>
+                
+                <!-- First Login Info Box -->
+                <div class="first-login-info">
+                    <h4><span class="icon">✨</span> คำแนะนำการใช้งาน | How to Use</h4>
+                    
+                    <div class="info-step">
+                        <span class="step-number">1</span>
+                        <div class="step-text">
+                            <strong>ครั้งแรก (First Login):</strong><br>
+                            กรอก Email และ <strong>กำหนดรหัสผ่านที่ต้องการใช้</strong> (อย่างน้อย 4 ตัวอักษร)<br>
+                            Enter your Email and <strong>create your password</strong> (min 4 characters)
+                        </div>
+                    </div>
+                    
+                    <div class="info-step">
+                        <span class="step-number">2</span>
+                        <div class="step-text">
+                            <strong>ครั้งต่อไป (Next Login):</strong><br>
+                            ใช้ Email และรหัสผ่านเดิมที่ตั้งไว้ครั้งแรก<br>
+                            Use the same Email and password you set initially
+                        </div>
+                    </div>
+                    
+                    <div class="info-step">
+                        <span class="step-number">3</span>
+                        <div class="step-text">
+                            <strong>รหัสผ่านใช้ได้ตลอด (Password is Permanent):</strong><br>
+                            รหัสผ่านที่กำหนดจะใช้งานได้ตลอดไป ไม่หมดอายุ<br>
+                            Your password will work forever, no expiration
+                        </div>
+                    </div>
+                    
+                    <div class="contact-box">
+                        <p>🔐 <strong>ลืมรหัสผ่าน? | Forgot Password?</strong></p>
+                        <p>กรุณาติดต่อเพื่อขอรีเซ็ตรหัสผ่าน | Contact us to reset password:</p>
+                        <a href="mailto:talentdev@eng.cmu.ac.th">📧 talentdev@eng.cmu.ac.th</a>
+                    </div>
                 </div>
-                <p class="login-note">💡 เฉพาะผู้ที่ได้รับสิทธิ์ | Only authorized organizers<br>First login? Enter desired password</p>
             </div>
         </section>
 
@@ -365,92 +432,102 @@
                 <div class="organizer-info">
                     <span class="avatar" id="organizer-avatar">O</span>
                     <div>
-                        <strong id="display-name">ผู้จัดกิจกรรม</strong>
+                        <strong id="display-name">ผู้จัดกิจกรรม | Organizer</strong>
                         <span id="display-email">organizer@cmu.ac.th</span>
                     </div>
                 </div>
-                <button class="btn-logout" onclick="logoutOrganizer()">ออกจากระบบ</button>
+                <button class="btn-logout" onclick="logoutOrganizer()">🚪 ออกจากระบบ | Logout</button>
             </div>
 
             <div class="tabs">
-                <button class="tab active" data-tab="new-activity">➕ สร้างกิจกรรมใหม่</button>
-                <button class="tab" data-tab="my-activities">📋 กิจกรรมของฉัน</button>
+                <button class="tab active" data-tab="new-activity">➕ สร้างกิจกรรมใหม่ | New Activity</button>
+                <button class="tab" data-tab="my-activities">📋 กิจกรรมของฉัน | My Activities</button>
             </div>
 
             <div id="tab-new-activity" class="tab-content active">
                 <div class="form-card">
-                    <h2>📋 ลงทะเบียนกิจกรรมใหม่</h2>
+                    <h2>📋 ลงทะเบียนกิจกรรมใหม่ | Register New Activity</h2>
                     <form id="activity-form" onsubmit="saveActivity(event)">
                         <input type="hidden" id="edit-activity-id">
-                        <div class="section-title">👤 ข้อมูลผู้จัด</div>
+                        
+                        <div class="section-title">👤 ข้อมูลผู้จัด | Organizer Info</div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>ชื่อผู้จัด/หน่วยงาน <span class="required">*</span></label>
-                                <input type="text" id="organizer-name" required placeholder="เช่น ชมรม AI">
+                                <label>ชื่อผู้จัด/หน่วยงาน | Organizer Name <span class="required">*</span></label>
+                                <input type="text" id="organizer-name" required placeholder="เช่น ชมรม AI | e.g. AI Club">
                             </div>
                             <div class="form-group">
-                                <label>สังกัด <span class="required">*</span></label>
-                                <input type="text" id="department" required placeholder="เช่น คณะวิศวกรรมศาสตร์">
+                                <label>สังกัด | Department <span class="required">*</span></label>
+                                <input type="text" id="department" required placeholder="เช่น คณะวิศวกรรมศาสตร์ | e.g. Faculty of Engineering">
                             </div>
                         </div>
-                        <div class="section-title">📝 ข้อมูลกิจกรรม</div>
+                        
+                        <div class="section-title">📝 ข้อมูลกิจกรรม | Activity Info</div>
                         <div class="form-group">
-                            <label>ชื่อกิจกรรม <span class="required">*</span></label>
+                            <label>ชื่อกิจกรรม | Activity Name <span class="required">*</span></label>
                             <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>วันที่เริ่ม <span class="required">*</span></label>
+                                <label>วันที่เริ่ม | Start Date <span class="required">*</span></label>
                                 <input type="date" id="start-date" required>
                             </div>
                             <div class="form-group">
-                                <label>วันที่สิ้นสุด <span class="required">*</span></label>
+                                <label>วันที่สิ้นสุด | End Date <span class="required">*</span></label>
                                 <input type="date" id="end-date" required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>ระยะเวลา <span class="required">*</span></label>
-                                <input type="number" id="duration" required min="1" placeholder="จำนวน">
+                                <label>ระยะเวลา | Duration <span class="required">*</span></label>
+                                <input type="number" id="duration" required min="1" placeholder="จำนวน | Amount">
                             </div>
                             <div class="form-group">
-                                <label>หน่วย</label>
+                                <label>หน่วย | Unit</label>
                                 <select id="duration-unit">
-                                    <option value="ชั่วโมง">ชั่วโมง</option>
-                                    <option value="วัน">วัน</option>
-                                    <option value="สัปดาห์">สัปดาห์</option>
+                                    <option value="ชั่วโมง | Hours">ชั่วโมง | Hours</option>
+                                    <option value="วัน | Days">วัน | Days</option>
+                                    <option value="สัปดาห์ | Weeks">สัปดาห์ | Weeks</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>ระดับกิจกรรม <span class="required">*</span></label>
-                            <div class="level-options">
-                                <label class="level-option"><input type="radio" name="activity-level" value="1" required><div class="level-card"><span class="level-number">1</span><span class="level-title">ฟังบรรยาย</span></div></label>
-                                <label class="level-option"><input type="radio" name="activity-level" value="2"><div class="level-card"><span class="level-number">2</span><span class="level-title">Workshop</span></div></label>
-                                <label class="level-option"><input type="radio" name="activity-level" value="3"><div class="level-card"><span class="level-number">3</span><span class="level-title">โครงงานจริง</span></div></label>
-                                <label class="level-option"><input type="radio" name="activity-level" value="4"><div class="level-card"><span class="level-number">4</span><span class="level-title">ผู้นำ/ผู้จัด</span></div></label>
-                            </div>
+                            <label>ระดับกิจกรรม | Activity Level <span class="required">*</span></label>
+                            <select id="activity-level" required>
+                                <option value="1">ระดับ 1 | Level 1 - เข้าร่วม/รับฟัง | Participation</option>
+                                <option value="2" selected>ระดับ 2 | Level 2 - ปฏิบัติ/ฝึกหัด | Practice</option>
+                                <option value="3">ระดับ 3 | Level 3 - ประยุกต์/ดำเนินการ | Application</option>
+                                <option value="4">ระดับ 4 | Level 4 - สร้างสรรค์/เป็นผู้นำ | Leadership</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>รายละเอียดกิจกรรม <span class="required">*</span></label>
-                            <textarea id="description" required rows="3" placeholder="อธิบายรายละเอียดกิจกรรม..."></textarea>
+                            <label>รายละเอียดกิจกรรม | Description</label>
+                            <textarea id="description" rows="4" placeholder="อธิบายกิจกรรมโดยย่อ... | Brief activity description..."></textarea>
                         </div>
-                        <div class="form-group">
-                            <label>สิ่งที่ผู้เข้าร่วมได้เรียนรู้ <span class="required">*</span></label>
-                            <textarea id="learning-outcomes" required rows="3" placeholder="ผู้เข้าร่วมจะได้เรียนรู้อะไรบ้าง..."></textarea>
-                        </div>
-                        <div class="section-title">🎯 ทักษะที่ได้รับ</div>
+
+                        <div class="section-title">🎯 ทักษะที่ได้รับ | Skills Gained <span class="required">*</span></div>
                         <div class="skills-selector">
-                            <div id="selected-skills" class="selected-skills"></div>
-                            <button type="button" class="btn-add-skill" onclick="openSkillModal()">➕ เพิ่มทักษะ</button>
+                            <div id="selected-skills" class="selected-skills">
+                                <p class="no-skills">ยังไม่ได้เลือกทักษะ | No skills selected</p>
+                            </div>
+                            <button type="button" class="btn-add-skill" onclick="openSkillModal()">
+                                ➕ เลือกทักษะ | Select Skills
+                            </button>
                         </div>
-                        <div class="form-group" style="margin-top: 20px;">
-                            <label>Link ประชาสัมพันธ์ (ถ้ามี)</label>
-                            <input type="url" id="promotional-link" placeholder="https://...">
+
+                        <div class="section-title">👥 รายชื่อนักศึกษา | Student List <span class="required">*</span></div>
+                        <div class="form-group">
+                            <label>รหัสนักศึกษา | Student IDs (หนึ่งรหัสต่อบรรทัด | one per line)</label>
+                            <textarea id="student-ids" class="student-ids-input" rows="6" 
+                                placeholder="640610001
+640610002
+640610003"></textarea>
+                            <small style="color: #666;">ใส่รหัสนักศึกษา (9 หลัก) ที่เข้าร่วมกิจกรรม | Enter student IDs (9 digits) who participated</small>
                         </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-secondary">💾 บันทึกแบบร่าง</button>
-                            <button type="button" class="btn-submit" onclick="saveAndSubmit()">🚀 ส่งขออนุมัติ</button>
+
+                        <div class="btn-submit-group">
+                            <button type="submit" class="btn-save">💾 บันทึกร่าง | Save Draft</button>
+                            <button type="button" class="btn-submit" onclick="saveAndSubmit()">📤 ส่งขออนุมัติ | Submit for Approval</button>
                         </div>
                     </form>
                 </div>
@@ -458,36 +535,35 @@
 
             <div id="tab-my-activities" class="tab-content">
                 <div class="activities-panel">
-                    <h2>📋 กิจกรรมของฉัน</h2>
-                    <div id="my-activities-list" class="activities-list">
-                        <div class="empty-state"><span class="icon">📭</span><p>ยังไม่มีกิจกรรม</p></div>
+                    <h2>📋 กิจกรรมของฉัน | My Activities</h2>
+                    <div id="activities-list">
+                        <div class="loading-inline">กำลังโหลด... | Loading...</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <div id="skill-modal" class="modal-overlay">
-            <div class="modal skill-modal">
-                <div class="modal-header"><h3>🎯 เลือกทักษะ</h3><button class="modal-close" onclick="closeSkillModal()">✕</button></div>
-                <div class="modal-body"><div id="skill-categories" class="skill-categories"></div></div>
-                <div class="modal-footer"><button class="btn-secondary" onclick="closeSkillModal()">ยกเลิก</button><button class="btn-primary" onclick="confirmSkills()">ยืนยัน</button></div>
-            </div>
-        </div>
-
-        <div id="students-modal" class="modal-overlay">
-            <div class="modal students-modal">
-                <div class="modal-header"><h3>👥 เพิ่มรายชื่อนักศึกษา</h3><button class="modal-close" onclick="closeStudentsModal()">✕</button></div>
-                <div class="modal-body">
-                    <p>กรอกรหัสนักศึกษา (แยกด้วย Enter หรือ , )</p>
-                    <textarea id="student-ids-input" rows="6" placeholder="640610001&#10;640610002"></textarea>
-                    <div id="student-count" class="student-count"></div>
+        <!-- Skill Selection Modal -->
+        <div id="skill-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🎯 เลือกทักษะและระดับ | Select Skills & Levels</h3>
+                    <button class="modal-close" onclick="closeSkillModal()">&times;</button>
                 </div>
-                <div class="modal-footer"><button class="btn-secondary" onclick="closeStudentsModal()">ยกเลิก</button><button class="btn-primary" onclick="addStudentsToActivity()">เพิ่มนักศึกษา</button></div>
+                <div class="modal-body">
+                    <div id="skill-categories"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal btn-cancel" onclick="closeSkillModal()">ยกเลิก | Cancel</button>
+                    <button class="btn-modal btn-confirm" onclick="confirmSkills()">✅ ยืนยัน | Confirm</button>
+                </div>
             </div>
         </div>
 
+        <!-- Loading -->
         <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-box"><div class="spinner"></div><p id="loading-text">กำลังโหลด...</p></div>
+            <div class="spinner"></div>
+            <p id="loading-text">กำลังโหลด... | Loading...</p>
         </div>
     </div>
 
@@ -497,64 +573,105 @@
     
     <script>
         const CRITERIA_LIST = [
-            { code: "1.1", nameTh: "การใช้เหตุผลเชิงวิเคราะห์", domain: "Critical Thinking" },
-            { code: "1.2", nameTh: "การแก้ปัญหาอย่างเป็นระบบ", domain: "Critical Thinking" },
-            { code: "1.3", nameTh: "การคิดเชิงระบบ", domain: "Critical Thinking" },
-            { code: "2.1", nameTh: "ทักษะการนำเสนอ", domain: "Communication" },
-            { code: "2.2", nameTh: "การฟังและความเข้าใจ", domain: "Communication" },
-            { code: "2.3", nameTh: "การสื่อสารภาษาอังกฤษ", domain: "Communication" },
-            { code: "3.1", nameTh: "ความเข้าใจในบทบาท", domain: "Teamwork" },
-            { code: "3.2", nameTh: "การจัดการงาน", domain: "Teamwork" },
-            { code: "3.3", nameTh: "การทำงานร่วมกัน", domain: "Teamwork" },
-            { code: "4.1", nameTh: "ความคล่องตัวในการเรียนรู้", domain: "Digital & Learning" },
-            { code: "4.2", nameTh: "ความรู้ด้านดิจิทัล", domain: "Digital & Learning" },
-            { code: "4.3", nameTh: "ความเชี่ยวชาญเครื่องมือ", domain: "Digital & Learning" },
-            { code: "5.1", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง", domain: "Innovation" },
-            { code: "5.2", nameTh: "การบริหารโครงการ", domain: "Innovation" },
-            { code: "5.3", nameTh: "ความตระหนักทางธุรกิจ", domain: "Innovation" },
-            { code: "6.1", nameTh: "การเติบโตส่วนบุคคล", domain: "Self Development" },
-            { code: "6.2", nameTh: "ความยืดหยุ่นและการปรับตัว", domain: "Self Development" },
-            { code: "6.3", nameTh: "ความเห็นอกเห็นใจ", domain: "Self Development" }
+            { code: "1.1", nameTh: "การใช้เหตุผลเชิงวิเคราะห์", nameEn: "Analytical Reasoning", domain: "Critical Thinking" },
+            { code: "1.2", nameTh: "การแก้ปัญหาอย่างเป็นระบบ", nameEn: "Problem Solving", domain: "Critical Thinking" },
+            { code: "1.3", nameTh: "การคิดเชิงระบบ", nameEn: "Systems Thinking", domain: "Critical Thinking" },
+            { code: "2.1", nameTh: "ทักษะการนำเสนอ", nameEn: "Presentation", domain: "Communication" },
+            { code: "2.2", nameTh: "การฟังและความเข้าใจ", nameEn: "Listening", domain: "Communication" },
+            { code: "2.3", nameTh: "การสื่อสารภาษาอังกฤษ", nameEn: "English", domain: "Communication" },
+            { code: "3.1", nameTh: "ความเข้าใจในบทบาท", nameEn: "Role Understanding", domain: "Teamwork" },
+            { code: "3.2", nameTh: "การจัดการงาน", nameEn: "Task Management", domain: "Teamwork" },
+            { code: "3.3", nameTh: "การทำงานร่วมกัน", nameEn: "Collaboration", domain: "Teamwork" },
+            { code: "4.1", nameTh: "ความคล่องตัวในการเรียนรู้", nameEn: "Learning Agility", domain: "Digital & Learning" },
+            { code: "4.2", nameTh: "ความรู้ด้านดิจิทัล", nameEn: "Digital Literacy", domain: "Digital & Learning" },
+            { code: "4.3", nameTh: "ความเชี่ยวชาญเครื่องมือ", nameEn: "Tool Proficiency", domain: "Digital & Learning" },
+            { code: "5.1", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง", nameEn: "Human-Centered Design", domain: "Innovation" },
+            { code: "5.2", nameTh: "การบริหารโครงการ", nameEn: "Project Management", domain: "Innovation" },
+            { code: "5.3", nameTh: "ความตระหนักทางธุรกิจ", nameEn: "Business Awareness", domain: "Innovation" },
+            { code: "6.1", nameTh: "การเติบโตส่วนบุคคล", nameEn: "Personal Growth", domain: "Self Development" },
+            { code: "6.2", nameTh: "ความยืดหยุ่นและการปรับตัว", nameEn: "Resilience", domain: "Self Development" },
+            { code: "6.3", nameTh: "ความเห็นอกเห็นใจ", nameEn: "Empathy", domain: "Self Development" }
         ];
         const DOMAINS = ["Critical Thinking", "Communication", "Teamwork", "Digital & Learning", "Innovation", "Self Development"];
         let currentOrganizer = null, selectedSkills = [], currentActivityId = null;
 
+        // LOGIN - Anyone can register (no permission check)
         async function loginOrganizer() {
             const email = document.getElementById('organizer-email').value.trim().toLowerCase();
             const password = document.getElementById('organizer-password').value.trim();
             const errorEl = document.getElementById('login-error');
-            const accessDeniedBox = document.getElementById('access-denied-box');
-            errorEl.textContent = ''; accessDeniedBox.style.display = 'none';
-            if (!email || !email.includes('@')) { errorEl.textContent = '⚠️ กรุณากรอก Email ที่ถูกต้อง'; return; }
-            if (!password || password.length < 4) { errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)'; return; }
-            showLoading(true, 'กำลังตรวจสอบสิทธิ์...');
+            errorEl.textContent = '';
+            
+            if (!email || !email.includes('@')) { 
+                errorEl.textContent = '⚠️ กรุณากรอก Email ที่ถูกต้อง | Please enter valid Email'; 
+                return; 
+            }
+            if (!password || password.length < 4) { 
+                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร) | Password must be at least 4 characters'; 
+                return; 
+            }
+            
+            showLoading(true, 'กำลังเข้าสู่ระบบ... | Logging in...');
+            
             try {
+                // Check if organizer exists
                 const q = await db.collection('organizers').where('email', '==', email).limit(1).get();
-                if (q.empty) { accessDeniedBox.style.display = 'block'; showLoading(false); return; }
-                const doc = q.docs[0], data = doc.data();
-                if (!data.password) { await db.collection('organizers').doc(doc.id).update({ password }); data.password = password; }
-                else if (password !== data.password) { errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง'; showLoading(false); return; }
-                currentOrganizer = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
+                
+                if (q.empty) {
+                    // First time login - create new organizer record
+                    const newOrganizer = {
+                        email: email,
+                        name: email.split('@')[0],
+                        password: password,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    const docRef = await db.collection('organizers').add(newOrganizer);
+                    currentOrganizer = { id: docRef.id, ...newOrganizer };
+                } else {
+                    // Existing organizer - verify password
+                    const doc = q.docs[0];
+                    const data = doc.data();
+                    
+                    if (!data.password) {
+                        // Password not set yet - set it now
+                        await db.collection('organizers').doc(doc.id).update({ password });
+                        data.password = password;
+                    } else if (password !== data.password) {
+                        errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง | Incorrect password';
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    currentOrganizer = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
+                }
+                
+                // Show main section
                 document.getElementById('organizer-avatar').textContent = currentOrganizer.name.charAt(0).toUpperCase();
                 document.getElementById('display-name').textContent = currentOrganizer.name;
                 document.getElementById('display-email').textContent = email;
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('main-section').style.display = 'block';
-                await loadMyActivities(); initSkillModal();
-            } catch (e) { errorEl.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message; }
+                
+                await loadMyActivities();
+                initSkillModal();
+                
+            } catch (e) { 
+                errorEl.textContent = '❌ เกิดข้อผิดพลาด | Error: ' + e.message; 
+            }
             showLoading(false);
         }
 
         function logoutOrganizer() {
-            currentOrganizer = null; selectedSkills = [];
+            currentOrganizer = null; 
+            selectedSkills = [];
             document.getElementById('activity-form').reset();
             document.getElementById('main-section').style.display = 'none';
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('organizer-email').value = '';
             document.getElementById('organizer-password').value = '';
-            document.getElementById('access-denied-box').style.display = 'none';
         }
 
+        // Tab navigation
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -565,19 +682,30 @@
             });
         });
 
+        // Skill modal
         function initSkillModal() {
             const container = document.getElementById('skill-categories');
             container.innerHTML = DOMAINS.map(domain => {
                 const skills = CRITERIA_LIST.filter(c => c.domain === domain);
                 return `<div class="skill-domain"><h4>${domain}</h4><div class="skill-items">${skills.map(s => `
                     <div class="skill-item" data-code="${s.code}">
-                        <div class="skill-info"><input type="checkbox" id="skill-${s.code}"><label for="skill-${s.code}"><strong>${s.code}</strong> ${s.nameTh}</label></div>
-                        <select class="skill-level" disabled><option value="1">Lv.1</option><option value="2">Lv.2</option><option value="3">Lv.3</option><option value="4">Lv.4</option></select>
+                        <div class="skill-info">
+                            <input type="checkbox" id="skill-${s.code}">
+                            <label for="skill-${s.code}"><strong>${s.code}</strong> ${s.nameTh}<br><small>${s.nameEn}</small></label>
+                        </div>
+                        <select class="skill-level" disabled>
+                            <option value="1">Lv.1</option>
+                            <option value="2" selected>Lv.2</option>
+                            <option value="3">Lv.3</option>
+                            <option value="4">Lv.4</option>
+                        </select>
                     </div>`).join('')}</div></div>`;
             }).join('');
+            
             container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 cb.addEventListener('change', e => {
-                    const item = e.target.closest('.skill-item'), sel = item.querySelector('.skill-level');
+                    const item = e.target.closest('.skill-item');
+                    const sel = item.querySelector('.skill-level');
                     sel.disabled = !e.target.checked;
                     item.classList.toggle('selected', e.target.checked);
                 });
@@ -586,153 +714,249 @@
 
         function openSkillModal() {
             document.querySelectorAll('.skill-item').forEach(item => {
-                const code = item.dataset.code, cb = item.querySelector('input[type="checkbox"]'), sel = item.querySelector('.skill-level');
+                const code = item.dataset.code;
+                const cb = item.querySelector('input[type="checkbox"]');
+                const sel = item.querySelector('.skill-level');
                 const ex = selectedSkills.find(s => s.code === code);
-                if (ex) { cb.checked = true; sel.disabled = false; sel.value = ex.level; item.classList.add('selected'); }
-                else { cb.checked = false; sel.disabled = true; sel.value = '1'; item.classList.remove('selected'); }
+                if (ex) { 
+                    cb.checked = true; 
+                    sel.disabled = false; 
+                    sel.value = ex.level; 
+                    item.classList.add('selected'); 
+                } else { 
+                    cb.checked = false; 
+                    sel.disabled = true; 
+                    sel.value = '2'; 
+                    item.classList.remove('selected'); 
+                }
             });
             document.getElementById('skill-modal').classList.add('show');
         }
-        function closeSkillModal() { document.getElementById('skill-modal').classList.remove('show'); }
+
+        function closeSkillModal() { 
+            document.getElementById('skill-modal').classList.remove('show'); 
+        }
+
         function confirmSkills() {
             selectedSkills = [];
             document.querySelectorAll('.skill-item').forEach(item => {
                 if (item.querySelector('input[type="checkbox"]').checked) {
-                    const code = item.dataset.code, level = parseInt(item.querySelector('.skill-level').value);
+                    const code = item.dataset.code;
+                    const level = parseInt(item.querySelector('.skill-level').value);
                     const c = CRITERIA_LIST.find(x => x.code === code);
-                    selectedSkills.push({ code, level, nameTh: c.nameTh });
+                    selectedSkills.push({ code, level, nameTh: c.nameTh, nameEn: c.nameEn });
                 }
             });
-            renderSelectedSkills(); closeSkillModal();
+            renderSelectedSkills(); 
+            closeSkillModal();
         }
+
         function renderSelectedSkills() {
             const c = document.getElementById('selected-skills');
-            c.innerHTML = selectedSkills.length === 0 ? '<p class="no-skills">ยังไม่ได้เลือกทักษะ</p>' :
-                selectedSkills.map(s => `<div class="skill-tag"><span>${s.code} ${s.nameTh}</span><span class="skill-level-badge">Lv.${s.level}</span><button type="button" onclick="removeSkill('${s.code}')" class="remove-skill">✕</button></div>`).join('');
+            c.innerHTML = selectedSkills.length === 0 
+                ? '<p class="no-skills">ยังไม่ได้เลือกทักษะ | No skills selected</p>' 
+                : selectedSkills.map(s => `
+                    <div class="skill-tag">
+                        <span>${s.code} ${s.nameTh}</span>
+                        <span class="skill-level-badge">Lv.${s.level}</span>
+                        <button type="button" onclick="removeSkill('${s.code}')" class="remove-skill">✕</button>
+                    </div>
+                `).join('');
         }
-        function removeSkill(code) { selectedSkills = selectedSkills.filter(s => s.code !== code); renderSelectedSkills(); }
 
-        async function saveActivity(e) { e.preventDefault(); await saveActivityData('Draft'); }
-        async function saveAndSubmit() { await saveActivityData('Pending'); }
+        function removeSkill(code) { 
+            selectedSkills = selectedSkills.filter(s => s.code !== code); 
+            renderSelectedSkills(); 
+        }
+
+        // Save activity
+        async function saveActivity(e) { 
+            e.preventDefault(); 
+            await saveActivityData('Draft'); 
+        }
+
+        async function saveAndSubmit() { 
+            await saveActivityData('Pending'); 
+        }
+
         async function saveActivityData(status) {
-            if (!currentOrganizer) { alert('กรุณาเข้าสู่ระบบก่อน'); return; }
-            if (selectedSkills.length === 0) { alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ'); return; }
-            showLoading(true, status === 'Draft' ? 'กำลังบันทึก...' : 'กำลังส่งขออนุมัติ...');
+            if (!currentOrganizer) { 
+                alert('⚠️ กรุณาเข้าสู่ระบบก่อน | Please login first'); 
+                return; 
+            }
+            if (selectedSkills.length === 0) { 
+                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ | Please select at least 1 skill'); 
+                return; 
+            }
+            
+            const studentIdsRaw = document.getElementById('student-ids').value.trim();
+            const studentIds = studentIdsRaw.split('\n')
+                .map(id => id.trim())
+                .filter(id => id.length > 0);
+            
+            if (studentIds.length === 0) {
+                alert('⚠️ กรุณาใส่รหัสนักศึกษาอย่างน้อย 1 คน | Please enter at least 1 student ID');
+                return;
+            }
+            
+            showLoading(true, status === 'Draft' ? 'กำลังบันทึก... | Saving...' : 'กำลังส่งขออนุมัติ... | Submitting...');
+            
             try {
-                const data = {
+                const activityData = {
                     organizerEmail: currentOrganizer.email,
                     organizerName: document.getElementById('organizer-name').value.trim(),
                     department: document.getElementById('department').value.trim(),
                     activityName: document.getElementById('activity-name').value.trim(),
                     startDate: document.getElementById('start-date').value,
                     endDate: document.getElementById('end-date').value,
-                    duration: parseInt(document.getElementById('duration').value),
+                    duration: document.getElementById('duration').value,
                     durationUnit: document.getElementById('duration-unit').value,
-                    activityLevel: parseInt(document.querySelector('input[name="activity-level"]:checked').value),
+                    activityLevel: parseInt(document.getElementById('activity-level').value),
                     description: document.getElementById('description').value.trim(),
-                    learningOutcomes: document.getElementById('learning-outcomes').value.trim(),
                     skills: selectedSkills,
-                    promotionalLink: document.getElementById('promotional-link').value.trim(),
-                    status, studentIds: [], studentCount: 0,
+                    studentIds: studentIds,
+                    status: status,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
+
                 const editId = document.getElementById('edit-activity-id').value;
-                if (editId) await db.collection('organizerActivities').doc(editId).update(data);
-                else { data.createdAt = firebase.firestore.FieldValue.serverTimestamp(); await db.collection('organizerActivities').add(data); }
-                document.getElementById('activity-form').reset(); document.getElementById('edit-activity-id').value = '';
-                selectedSkills = []; renderSelectedSkills();
-                alert(status === 'Pending' ? '✅ ส่งกิจกรรมเพื่อขออนุมัติเรียบร้อยแล้ว' : '✅ บันทึกแบบร่างเรียบร้อยแล้ว');
-                document.querySelector('[data-tab="my-activities"]').click();
-            } catch (e) { alert('❌ เกิดข้อผิดพลาด: ' + e.message); }
+                if (editId) {
+                    await db.collection('organizerActivities').doc(editId).update(activityData);
+                } else {
+                    activityData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('organizerActivities').add(activityData);
+                }
+
+                const msg = status === 'Draft' 
+                    ? '✅ บันทึกร่างเรียบร้อย! | Draft saved!' 
+                    : '✅ ส่งขออนุมัติเรียบร้อย! | Submitted for approval!';
+                alert(msg);
+                
+                document.getElementById('activity-form').reset();
+                document.getElementById('edit-activity-id').value = '';
+                selectedSkills = [];
+                renderSelectedSkills();
+                
+            } catch (e) {
+                alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message);
+            }
             showLoading(false);
         }
 
+        // Load my activities
         async function loadMyActivities() {
-            const c = document.getElementById('my-activities-list');
-            if (!currentOrganizer) return;
+            const list = document.getElementById('activities-list');
+            list.innerHTML = '<div class="loading-inline">กำลังโหลด... | Loading...</div>';
+            
             try {
-                const q = await db.collection('organizerActivities').where('organizerEmail', '==', currentOrganizer.email).orderBy('updatedAt', 'desc').get();
-                if (q.empty) { c.innerHTML = '<div class="empty-state"><span class="icon">📭</span><p>ยังไม่มีกิจกรรม</p></div>'; return; }
-                c.innerHTML = q.docs.map(doc => {
-                    const d = doc.data(), sc = getStatusClass(d.status), st = getStatusText(d.status);
-                    return `<div class="activity-card status-${sc}">
-                        <div class="activity-header"><h3>${d.activityName}</h3><span class="status-badge ${sc}">${st}</span></div>
-                        <div class="activity-meta"><span>📅 ${d.startDate} - ${d.endDate}</span><span>⏱️ ${d.duration} ${d.durationUnit}</span><span>📊 Level ${d.activityLevel}</span><span>👥 ${d.studentCount||0} คน</span></div>
-                        <div class="activity-skills">${(d.skills||[]).map(s=>`<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join('')}</div>
-                        <div class="activity-actions">
-                            ${d.status==='Draft'?`<button onclick="editActivity('${doc.id}')" class="btn-small btn-edit">✏️ แก้ไข</button><button onclick="submitForApproval('${doc.id}')" class="btn-small btn-submit-approval">🚀 ส่งขออนุมัติ</button>`:''}
-                            ${['Approved','Draft','Pending'].includes(d.status)?`<button onclick="openStudentsModal('${doc.id}')" class="btn-small btn-students">👥 เพิ่มนักศึกษา</button>`:''}
-                            ${d.status==='Rejected'?`<button onclick="editActivity('${doc.id}')" class="btn-small btn-edit">✏️ แก้ไขและส่งใหม่</button><div class="reject-reason">❌ ${d.rejectReason||'-'}</div>`:''}
-                        </div></div>`;
+                const q = await db.collection('organizerActivities')
+                    .where('organizerEmail', '==', currentOrganizer.email)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                if (q.empty) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>ยังไม่มีกิจกรรม | No activities yet</p>
+                        </div>`;
+                    return;
+                }
+                
+                list.innerHTML = q.docs.map(doc => {
+                    const d = doc.data();
+                    const statusClass = (d.status || 'draft').toLowerCase();
+                    const statusText = {
+                        'draft': '📝 ร่าง | Draft',
+                        'pending': '⏳ รอตรวจสอบ | Pending',
+                        'approved': '✅ อนุมัติ | Approved',
+                        'rejected': '❌ ไม่อนุมัติ | Rejected'
+                    }[statusClass] || d.status;
+                    
+                    return `
+                        <div class="activity-item ${statusClass}">
+                            <div class="activity-header">
+                                <span class="activity-title">${d.activityName}</span>
+                                <span class="activity-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="activity-meta">
+                                📅 ${d.startDate || '-'} | 👥 ${(d.studentIds || []).length} คน | students | 📊 Lv.${d.activityLevel || 2}
+                            </div>
+                            <div class="activity-skills">
+                                ${(d.skills || []).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join('')}
+                            </div>
+                            ${d.status === 'Rejected' && d.rejectReason ? `<div style="color:#e74c3c;font-size:0.9em;margin-bottom:10px;">❌ เหตุผล | Reason: ${d.rejectReason}</div>` : ''}
+                            <div class="activity-actions">
+                                ${d.status === 'Draft' || d.status === 'Rejected' ? `
+                                    <button class="btn-action btn-edit" onclick="editActivity('${doc.id}')">✏️ แก้ไข | Edit</button>
+                                    <button class="btn-action btn-delete" onclick="deleteActivity('${doc.id}')">🗑️ ลบ | Delete</button>
+                                ` : ''}
+                            </div>
+                        </div>`;
                 }).join('');
-            } catch (e) { console.error(e); }
+                
+            } catch (e) {
+                list.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด | Error: ${e.message}</p></div>`;
+            }
         }
 
         async function editActivity(id) {
-            showLoading(true, 'กำลังโหลดข้อมูล...');
+            showLoading(true, 'กำลังโหลด... | Loading...');
             try {
                 const doc = await db.collection('organizerActivities').doc(id).get();
-                if (!doc.exists) { alert('ไม่พบกิจกรรม'); showLoading(false); return; }
+                if (!doc.exists) { alert('ไม่พบกิจกรรม | Activity not found'); return; }
                 const d = doc.data();
+                
                 document.getElementById('edit-activity-id').value = id;
-                document.getElementById('organizer-name').value = d.organizerName||'';
-                document.getElementById('department').value = d.department||'';
-                document.getElementById('activity-name').value = d.activityName||'';
-                document.getElementById('start-date').value = d.startDate||'';
-                document.getElementById('end-date').value = d.endDate||'';
-                document.getElementById('duration').value = d.duration||'';
-                document.getElementById('duration-unit').value = d.durationUnit||'ชั่วโมง';
-                document.querySelector(`input[name="activity-level"][value="${d.activityLevel}"]`).checked = true;
-                document.getElementById('description').value = d.description||'';
-                document.getElementById('learning-outcomes').value = d.learningOutcomes||'';
-                document.getElementById('promotional-link').value = d.promotionalLink||'';
-                selectedSkills = d.skills||[]; renderSelectedSkills();
-                document.querySelector('[data-tab="new-activity"]').click();
-            } catch (e) { alert('เกิดข้อผิดพลาด'); }
+                document.getElementById('organizer-name').value = d.organizerName || '';
+                document.getElementById('department').value = d.department || '';
+                document.getElementById('activity-name').value = d.activityName || '';
+                document.getElementById('start-date').value = d.startDate || '';
+                document.getElementById('end-date').value = d.endDate || '';
+                document.getElementById('duration').value = d.duration || '';
+                document.getElementById('duration-unit').value = d.durationUnit || 'ชั่วโมง | Hours';
+                document.getElementById('activity-level').value = d.activityLevel || 2;
+                document.getElementById('description').value = d.description || '';
+                document.getElementById('student-ids').value = (d.studentIds || []).join('\n');
+                
+                selectedSkills = d.skills || [];
+                renderSelectedSkills();
+                
+                // Switch to new activity tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('[data-tab="new-activity"]').classList.add('active');
+                document.getElementById('tab-new-activity').classList.add('active');
+                
+            } catch (e) { alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message); }
             showLoading(false);
         }
 
-        async function submitForApproval(id) {
-            if (!confirm('ยืนยันส่งกิจกรรมเพื่อขออนุมัติ?')) return;
-            showLoading(true, 'กำลังส่งขออนุมัติ...');
+        async function deleteActivity(id) {
+            if (!confirm('⚠️ ยืนยันการลบกิจกรรมนี้?\nConfirm delete this activity?')) return;
+            showLoading(true, 'กำลังลบ... | Deleting...');
             try {
-                await db.collection('organizerActivities').doc(id).update({ status: 'Pending', submittedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                alert('✅ ส่งกิจกรรมเพื่อขออนุมัติเรียบร้อยแล้ว');
+                await db.collection('organizerActivities').doc(id).delete();
+                alert('✅ ลบเรียบร้อย | Deleted successfully');
                 await loadMyActivities();
-            } catch (e) { alert('เกิดข้อผิดพลาด'); }
+            } catch (e) { alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message); }
             showLoading(false);
         }
 
-        function openStudentsModal(id) { currentActivityId = id; document.getElementById('student-ids-input').value = ''; document.getElementById('students-modal').classList.add('show'); }
-        function closeStudentsModal() { document.getElementById('students-modal').classList.remove('show'); currentActivityId = null; }
-
-        async function addStudentsToActivity() {
-            if (!currentActivityId) return;
-            const ids = document.getElementById('student-ids-input').value.split(/[\n,]/).map(x=>x.trim()).filter(x=>x);
-            if (!ids.length) { alert('⚠️ กรุณากรอกรหัสนักศึกษา'); return; }
-            showLoading(true, 'กำลังเพิ่มนักศึกษา...');
-            try {
-                const doc = await db.collection('organizerActivities').doc(currentActivityId).get(), d = doc.data();
-                const all = [...new Set([...(d.studentIds||[]), ...ids])];
-                await db.collection('organizerActivities').doc(currentActivityId).update({ studentIds: all, studentCount: all.length, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                if (d.status === 'Approved') {
-                    for (const sid of ids) {
-                        const ex = await db.collection('participation').where('studentId','==',sid).where('activityName','==',d.activityName).get();
-                        if (ex.empty) await db.collection('participation').add({ studentId: sid, activityName: d.activityName, status: 'Approved', date: d.startDate, addedBy: 'organizer', addedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    }
-                }
-                alert(`✅ เพิ่มนักศึกษา ${ids.length} คน เรียบร้อยแล้ว`);
-                closeStudentsModal(); await loadMyActivities();
-            } catch (e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
-            showLoading(false);
+        function showLoading(show, text = 'กำลังโหลด... | Loading...') {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').textContent = text;
+            if (show) overlay.classList.add('show');
+            else overlay.classList.remove('show');
         }
 
-        function getStatusClass(s) { if (!s) return 'draft'; s=s.toLowerCase(); if (s==='approved') return 'approved'; if (s==='rejected') return 'rejected'; if (s==='pending') return 'pending'; return 'draft'; }
-        function getStatusText(s) { if (!s) return '📝 แบบร่าง'; s=s.toLowerCase(); if (s==='approved') return '✅ อนุมัติแล้ว'; if (s==='rejected') return '❌ ไม่อนุมัติ'; if (s==='pending') return '⏳ รออนุมัติ'; return '📝 แบบร่าง'; }
-        function showLoading(show, text='กำลังโหลด...') { const o = document.getElementById('loading-overlay'); document.getElementById('loading-text').textContent = text; show ? o.classList.add('show') : o.classList.remove('show'); }
-
-        document.getElementById('organizer-email').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('organizer-password').focus(); });
-        document.getElementById('organizer-password').addEventListener('keypress', e => { if (e.key === 'Enter') loginOrganizer(); });
+        // Enter key handlers
+        document.getElementById('organizer-email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('organizer-password').focus();
+        });
+        document.getElementById('organizer-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginOrganizer();
+        });
     </script>
 </body>
 </html>

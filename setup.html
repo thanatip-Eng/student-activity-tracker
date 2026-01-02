@@ -99,26 +99,27 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1>🔧 Import Sample Data to Firebase</h1>
-            <p>เครื่องมือช่วยนำเข้าข้อมูลตัวอย่างไปยัง Firestore Database</p>
+            <h1>🔧 Setup & Sample Data | ตั้งค่าและข้อมูลตัวอย่าง</h1>
+            <p>เครื่องมือช่วยนำเข้าข้อมูลตัวอย่างไปยัง Firestore Database | Tool to import sample data to Firestore</p>
             
             <div class="warning">
-                <strong>⚠️ คำเตือน:</strong> กรุณาตรวจสอบว่าคุณได้แก้ไข Firebase Config ในไฟล์ <code>js/firebase-config.js</code> เรียบร้อยแล้ว ก่อนใช้เครื่องมือนี้
+                <strong>⚠️ คำเตือน | Warning:</strong> กรุณาตรวจสอบว่าคุณได้แก้ไข Firebase Config ในไฟล์ <code>js/firebase-config.js</code> เรียบร้อยแล้ว<br>
+                Please make sure you have configured <code>js/firebase-config.js</code> before using this tool.
             </div>
         </div>
 
         <div class="card">
-            <h2>📊 ข้อมูลตัวอย่างที่จะนำเข้า</h2>
-            <p><strong>นักศึกษา:</strong> 3 คน</p>
-            <p><strong>กิจกรรม:</strong> 5 กิจกรรม</p>
-            <p><strong>การเข้าร่วม:</strong> 8 รายการ</p>
+            <h2>📊 ข้อมูลตัวอย่าง | Sample Data</h2>
+            <p><strong>นักศึกษา | Students:</strong> 3 คน</p>
+            <p><strong>กิจกรรม | Activities:</strong> 5 กิจกรรม</p>
+            <p><strong>การเข้าร่วม | Participation:</strong> 8 รายการ</p>
             
             <button class="btn btn-primary" onclick="importAllData()">
-                🚀 นำเข้าข้อมูลทั้งหมด
+                🚀 นำเข้าข้อมูลทั้งหมด | Import All Data
             </button>
             
             <button class="btn btn-danger" onclick="clearAllData()">
-                🗑️ ลบข้อมูลทั้งหมด
+                🗑️ ลบข้อมูลทั้งหมด | Delete All Data
             </button>
             
             <div id="status" class="status"></div>
@@ -126,15 +127,15 @@
         </div>
 
         <div class="card">
-            <h2>📋 รายละเอียดข้อมูลตัวอย่าง</h2>
+            <h2>📋 รายละเอียดข้อมูล | Data Details</h2>
             
-            <h3 style="margin-top: 20px; color: #333;">นักศึกษา (Students)</h3>
+            <h3 style="margin-top: 20px; color: #333;">นักศึกษา | Students</h3>
             <pre id="students-preview"></pre>
             
-            <h3 style="margin-top: 20px; color: #333;">กิจกรรม (Activities)</h3>
+            <h3 style="margin-top: 20px; color: #333;">กิจกรรม | Activities</h3>
             <pre id="activities-preview"></pre>
             
-            <h3 style="margin-top: 20px; color: #333;">การเข้าร่วม (Participation)</h3>
+            <h3 style="margin-top: 20px; color: #333;">การเข้าร่วม | Participation</h3>
             <pre id="participation-preview"></pre>
         </div>
     </div>

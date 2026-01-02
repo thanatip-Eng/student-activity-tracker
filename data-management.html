@@ -353,27 +353,27 @@
 
             <!-- Format Guide -->
             <div class="format-guide">
-                <h5>📝 รูปแบบไฟล์ CSV</h5>
-                <p>คอลัมน์ที่ต้องมี: <code>studentId</code>, <code>name</code>, <code>email</code></p>
-                <p>คอลัมน์เพิ่มเติม (optional): <code>department</code>, <code>faculty</code>, <code>year</code></p>
+                <h5>📝 รูปแบบไฟล์ CSV | CSV Format</h5>
+                <p>คอลัมน์ที่ต้องมี | Required: <code>studentId</code>, <code>name</code>, <code>email</code></p>
+                <p>คอลัมน์เพิ่มเติม | Optional: <code>department</code>, <code>faculty</code>, <code>year</code></p>
                 <ul>
-                    <li>บรรทัดแรกต้องเป็น header</li>
-                    <li>ใช้ comma (,) คั่นระหว่างคอลัมน์</li>
-                    <li>รองรับ UTF-8 encoding (ภาษาไทย)</li>
+                    <li>บรรทัดแรกต้องเป็น header | First row must be header</li>
+                    <li>ใช้ comma (,) คั่นระหว่างคอลัมน์ | Use comma separator</li>
+                    <li>รองรับ UTF-8 encoding (ภาษาไทย) | UTF-8 encoding supported</li>
                 </ul>
             </div>
 
             <!-- Upload Area -->
             <div class="upload-area" id="student-upload-area" onclick="document.getElementById('student-file-input').click()">
                 <div class="icon">📁</div>
-                <p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากไฟล์มาวางที่นี่</p>
-                <p class="hint">รองรับไฟล์ .csv เท่านั้น</p>
+                <p><strong>คลิกเพื่อเลือกไฟล์ | Click to select file</strong></p>
+                <p class="hint">รองรับไฟล์ .csv เท่านั้น | .csv files only</p>
                 <input type="file" id="student-file-input" accept=".csv" onchange="handleStudentFile(this.files[0])">
             </div>
 
             <!-- Preview -->
             <div id="student-preview" class="preview-section" style="display: none;">
-                <h4>👁️ ตัวอย่างข้อมูล</h4>
+                <h4>👁️ ตัวอย่างข้อมูล | Preview</h4>
                 <div class="preview-stats" id="student-preview-stats"></div>
                 <div class="preview-table-wrapper">
                     <table class="preview-table" id="student-preview-table">
@@ -384,10 +384,10 @@
                 <div id="student-errors" class="error-list" style="display: none;"></div>
                 <div class="import-actions">
                     <button class="btn-import" id="btn-import-students" onclick="importStudents()">
-                        ✅ นำเข้าข้อมูล
+                        ✅ นำเข้าข้อมูล | Import
                     </button>
                     <button class="btn-clear" onclick="clearStudentPreview()">
-                        🗑️ ล้าง
+                        🗑️ ล้าง | Clear
                     </button>
                 </div>
                 <div class="import-log" id="student-import-log"></div>
@@ -465,40 +465,40 @@
 
             <!-- Template Download -->
             <div class="template-section">
-                <h4>📥 ดาวน์โหลด Template</h4>
+                <h4>📥 ดาวน์โหลด Template | Download Template</h4>
                 <div class="template-buttons">
                     <a href="#" class="btn-template" onclick="downloadParticipationTemplate(); return false;">
                         📄 participation_template.csv
                     </a>
                     <a href="#" class="btn-template" onclick="downloadParticipationSample(); return false;">
-                        📋 participation_sample.csv (ตัวอย่าง)
+                        📋 participation_sample.csv (ตัวอย่าง | Sample)
                     </a>
                 </div>
             </div>
 
             <!-- Format Guide -->
             <div class="format-guide">
-                <h5>📝 รูปแบบไฟล์ CSV</h5>
-                <p>คอลัมน์ที่ต้องมี: <code>studentId</code>, <code>activityName</code></p>
-                <p>คอลัมน์เพิ่มเติม (optional): <code>date</code>, <code>status</code></p>
+                <h5>📝 รูปแบบไฟล์ CSV | CSV Format</h5>
+                <p>คอลัมน์ที่ต้องมี | Required: <code>studentId</code>, <code>activityName</code></p>
+                <p>คอลัมน์เพิ่มเติม | Optional: <code>date</code>, <code>status</code></p>
                 <ul>
-                    <li>studentId = รหัสนักศึกษา (ต้องมีในระบบแล้ว)</li>
-                    <li>activityName = ชื่อกิจกรรม (ต้องตรงกับที่มีในระบบ)</li>
-                    <li>status = Approved (ค่าเริ่มต้น) หรือ Pending</li>
+                    <li>studentId = รหัสนักศึกษา | Student ID (must exist in system)</li>
+                    <li>activityName = ชื่อกิจกรรม | Activity name (must match)</li>
+                    <li>status = Approved (default) หรือ | or Pending</li>
                 </ul>
             </div>
 
             <!-- Upload Area -->
             <div class="upload-area" id="participation-upload-area" onclick="document.getElementById('participation-file-input').click()">
                 <div class="icon">📁</div>
-                <p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากไฟล์มาวางที่นี่</p>
-                <p class="hint">รองรับไฟล์ .csv เท่านั้น</p>
+                <p><strong>คลิกเพื่อเลือกไฟล์ | Click to select file</strong></p>
+                <p class="hint">รองรับไฟล์ .csv เท่านั้น | .csv files only</p>
                 <input type="file" id="participation-file-input" accept=".csv" onchange="handleParticipationFile(this.files[0])">
             </div>
 
             <!-- Preview -->
             <div id="participation-preview" class="preview-section" style="display: none;">
-                <h4>👁️ ตัวอย่างข้อมูล</h4>
+                <h4>👁️ ตัวอย่างข้อมูล | Preview</h4>
                 <div class="preview-stats" id="participation-preview-stats"></div>
                 <div class="preview-table-wrapper">
                     <table class="preview-table" id="participation-preview-table">
@@ -509,10 +509,10 @@
                 <div id="participation-errors" class="error-list" style="display: none;"></div>
                 <div class="import-actions">
                     <button class="btn-import" id="btn-import-participation" onclick="importParticipation()">
-                        ✅ นำเข้าข้อมูล
+                        ✅ นำเข้าข้อมูล | Import
                     </button>
                     <button class="btn-clear" onclick="clearParticipationPreview()">
-                        🗑️ ล้าง
+                        🗑️ ล้าง | Clear
                     </button>
                 </div>
                 <div class="import-log" id="participation-import-log"></div>
@@ -521,23 +521,23 @@
 
         <!-- Current Data Summary -->
         <section class="upload-section">
-            <h2>📈 สรุปข้อมูลในระบบ</h2>
+            <h2>📈 สรุปข้อมูลในระบบ | System Data Summary</h2>
             <div class="data-summary" id="data-summary">
                 <div class="summary-card">
                     <span class="count" id="total-students">-</span>
-                    <span class="label">นักศึกษา</span>
+                    <span class="label">นักศึกษา | Students</span>
                 </div>
                 <div class="summary-card">
                     <span class="count" id="total-activities">-</span>
-                    <span class="label">กิจกรรม</span>
+                    <span class="label">กิจกรรม | Activities</span>
                 </div>
                 <div class="summary-card">
                     <span class="count" id="total-participation">-</span>
-                    <span class="label">การเข้าร่วม</span>
+                    <span class="label">การเข้าร่วม | Participation</span>
                 </div>
             </div>
             <button class="btn-template" style="margin-top: 20px;" onclick="loadDataSummary()">
-                🔄 รีเฟรชข้อมูล
+                🔄 รีเฟรชข้อมูล | Refresh
             </button>
         </section>
 

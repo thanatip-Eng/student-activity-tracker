@@ -64,7 +64,7 @@
             <button class="tab" data-tab="student-submissions">📝 นศ.แจ้ง | Student</button>
             <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
             <button class="tab" data-tab="transfer">📤 โอนข้อมูล | Transfer</button>
-            <button class="tab" data-tab="organizers">🔐 สิทธิ์ | Permissions</button>
+            <button class="tab" data-tab="organizers">👥 ผู้จัดทะเบียน | Organizers</button>
             <button class="tab" data-tab="export">📥 Export CSV</button>
         </div>
 
@@ -202,20 +202,21 @@
         <div id="tab-organizers" class="tab-content">
             <div class="panel">
                 <div class="panel-header">
-                    <h2>🔐 จัดการสิทธิ์ผู้จัดกิจกรรม</h2>
+                    <h2>👥 รายชื่อผู้จัดกิจกรรม | Registered Organizers</h2>
                     <button class="btn-add-organizer" onclick="openAddOrganizerModal()">
-                        ➕ เพิ่มผู้จัดใหม่
+                        ➕ เพิ่มผู้จัดใหม่ | Add New
                     </button>
                 </div>
+                <p class="panel-desc">ผู้จัดสามารถลงทะเบียนได้เองผ่านหน้า Organizer Portal | Anyone can register via Organizer Portal</p>
                 
                 <div class="organizers-stats">
                     <div class="org-stat">
                         <span class="org-stat-number" id="total-organizers">0</span>
-                        <span class="org-stat-label">ผู้จัดทั้งหมด</span>
+                        <span class="org-stat-label">ผู้จัดทั้งหมด | Total</span>
                     </div>
                     <div class="org-stat">
                         <span class="org-stat-number" id="active-organizers">0</span>
-                        <span class="org-stat-label">ใช้งานแล้ว</span>
+                        <span class="org-stat-label">ใช้งานแล้ว | Active</span>
                     </div>
                 </div>
 
@@ -289,8 +290,25 @@
                 
                 <div class="export-all">
                     <button class="btn-export-all" onclick="exportAllCSV()">
-                        📦 Export ทั้งหมด | Export All Data (ZIP)
+                        📦 Export ทั้งหมด | Export All Data
                     </button>
+                </div>
+                
+                <!-- Data Repair Section -->
+                <div class="repair-section">
+                    <h3>🔧 ซ่อมแซมข้อมูล | Data Repair</h3>
+                    <p class="panel-desc">แก้ไขกิจกรรมที่ไม่มี skills | Fix activities without skills</p>
+                    
+                    <div class="repair-actions">
+                        <button class="btn-repair" onclick="scanActivitiesWithoutSkills()">
+                            🔍 ตรวจสอบกิจกรรม | Scan Activities
+                        </button>
+                        <button class="btn-repair warning" onclick="showAddSkillsToActivity()">
+                            ➕ เพิ่ม Skills ให้กิจกรรม | Add Skills to Activity
+                        </button>
+                    </div>
+                    
+                    <div id="repair-result" class="repair-result" style="display: none;"></div>
                 </div>
             </div>
         </div>
@@ -1154,17 +1172,27 @@
                     .get();
                 
                 if (existingActivity.empty) {
-                    const activityData = {
+                    // Save with skills array for consistency
+                    await db.collection('activities').add({
                         name: currentItem.activityName,
-                        level: currentItem.activityLevel
-                    };
-                    skills.forEach(s => {
-                        activityData[s.code] = s.level;
+                        level: currentItem.activityLevel,
+                        organizer: currentItem.activityOrganizer || '',
+                        date: currentItem.startDate || '',
+                        description: currentItem.description || '',
+                        skills: skills,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    await db.collection('activities').add(activityData);
+                } else {
+                    // Update existing activity skills if empty
+                    const existingData = existingActivity.docs[0].data();
+                    if (!existingData.skills || existingData.skills.length === 0) {
+                        await db.collection('activities').doc(existingActivity.docs[0].id).update({
+                            skills: skills
+                        });
+                    }
                 }
                 
-                alert('✅ อนุมัติเรียบร้อยแล้ว');
+                alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
                 closeDetailModal();
                 await loadAllData();
                 
@@ -1194,15 +1222,24 @@
                     .get();
                 
                 if (existingActivity.empty) {
-                    const activityData = {
+                    // Save with skills array for consistency
+                    await db.collection('activities').add({
                         name: currentItem.activityName,
-                        level: currentItem.activityLevel,
-                        description: currentItem.description
-                    };
-                    (currentItem.skills || []).forEach(s => {
-                        activityData[s.code] = s.level;
+                        organizer: currentItem.organizerName || currentItem.department || '',
+                        date: currentItem.activityDate || currentItem.startDate || '',
+                        level: currentItem.activityLevel || 2,
+                        description: currentItem.description || '',
+                        skills: currentItem.skills || [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    await db.collection('activities').add(activityData);
+                } else {
+                    // Update existing activity skills if empty
+                    const existingData = existingActivity.docs[0].data();
+                    if ((!existingData.skills || existingData.skills.length === 0) && currentItem.skills?.length > 0) {
+                        await db.collection('activities').doc(existingActivity.docs[0].id).update({
+                            skills: currentItem.skills
+                        });
+                    }
                 }
                 
                 // Add students to participation
@@ -1218,14 +1255,14 @@
                             studentId: studentId,
                             activityName: currentItem.activityName,
                             status: 'Approved',
-                            date: currentItem.startDate,
+                            date: currentItem.activityDate || currentItem.startDate || '',
                             source: 'organizer',
                             addedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
                 }
                 
-                alert('✅ อนุมัติเรียบร้อยแล้ว');
+                alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
                 closeDetailModal();
                 await loadAllData();
                 
@@ -1753,6 +1790,164 @@
             }
             
             showLoading(false);
+        }
+
+        // ============================================
+        // DATA REPAIR FUNCTIONS
+        // ============================================
+        async function scanActivitiesWithoutSkills() {
+            showLoading(true, 'กำลังตรวจสอบกิจกรรม...');
+            const resultEl = document.getElementById('repair-result');
+            
+            try {
+                const activitiesSnapshot = await db.collection('activities').get();
+                const withSkills = [];
+                const withoutSkills = [];
+                
+                activitiesSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const hasSkillsArray = data.skills && Array.isArray(data.skills) && data.skills.length > 0;
+                    
+                    // Check for old format (direct code keys like "1.1": 2)
+                    let hasOldFormat = false;
+                    CRITERIA_LIST.forEach(c => {
+                        if (data[c.code] || data[c.code.replace('.', '_')]) {
+                            hasOldFormat = true;
+                        }
+                    });
+                    
+                    if (hasSkillsArray || hasOldFormat) {
+                        withSkills.push({ id: doc.id, name: data.name, hasArray: hasSkillsArray, hasOld: hasOldFormat });
+                    } else {
+                        withoutSkills.push({ id: doc.id, name: data.name });
+                    }
+                });
+                
+                resultEl.innerHTML = `
+                    <h4>📊 ผลการตรวจสอบ | Scan Results</h4>
+                    <div class="scan-stats">
+                        <span class="scan-good">✅ มี Skills: ${withSkills.length} กิจกรรม</span>
+                        <span class="scan-bad">❌ ไม่มี Skills: ${withoutSkills.length} กิจกรรม</span>
+                    </div>
+                    ${withoutSkills.length > 0 ? `
+                        <div class="scan-list">
+                            <h5>กิจกรรมที่ไม่มี Skills:</h5>
+                            <ul>
+                                ${withoutSkills.map(a => `
+                                    <li>
+                                        <span>${a.name}</span>
+                                        <button class="btn-mini" onclick="editActivitySkills('${a.id}', '${a.name.replace(/'/g, "\\'")}')">
+                                            ✏️ แก้ไข
+                                        </button>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : '<p class="scan-success">✅ ทุกกิจกรรมมี Skills เรียบร้อย!</p>'}
+                `;
+                resultEl.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Scan error:', error);
+                resultEl.innerHTML = `<p class="scan-error">❌ เกิดข้อผิดพลาด: ${error.message}</p>`;
+                resultEl.style.display = 'block';
+            }
+            
+            showLoading(false);
+        }
+
+        let editingActivityId = null;
+
+        function showAddSkillsToActivity() {
+            const activityName = prompt('กรอกชื่อกิจกรรมที่ต้องการเพิ่ม Skills:\nEnter activity name to add skills:');
+            if (!activityName) return;
+            
+            // Search for activity
+            db.collection('activities').where('name', '==', activityName).get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        alert('❌ ไม่พบกิจกรรมชื่อ: ' + activityName);
+                        return;
+                    }
+                    const doc = snapshot.docs[0];
+                    editActivitySkills(doc.id, activityName);
+                })
+                .catch(err => alert('Error: ' + err.message));
+        }
+
+        function editActivitySkills(activityId, activityName) {
+            editingActivityId = activityId;
+            
+            const skillsHtml = CRITERIA_LIST.map(c => `
+                <label class="skill-checkbox-item">
+                    <input type="checkbox" class="repair-skill-cb" data-code="${c.code}">
+                    <span>${c.code} - ${c.name}</span>
+                    <select class="repair-skill-level" data-code="${c.code}">
+                        <option value="1">Lv.1</option>
+                        <option value="2" selected>Lv.2</option>
+                        <option value="3">Lv.3</option>
+                        <option value="4">Lv.4</option>
+                    </select>
+                </label>
+            `).join('');
+            
+            const resultEl = document.getElementById('repair-result');
+            resultEl.innerHTML = `
+                <h4>✏️ แก้ไข Skills: ${activityName}</h4>
+                <p>เลือกทักษะและระดับที่ต้องการเพิ่ม:</p>
+                <div class="skills-edit-grid">
+                    ${skillsHtml}
+                </div>
+                <div class="repair-buttons">
+                    <button class="btn-repair" onclick="saveActivitySkills('${activityId}')">
+                        💾 บันทึก | Save
+                    </button>
+                    <button class="btn-repair secondary" onclick="cancelEditSkills()">
+                        ❌ ยกเลิก | Cancel
+                    </button>
+                </div>
+            `;
+            resultEl.style.display = 'block';
+        }
+
+        async function saveActivitySkills(activityId) {
+            const skills = [];
+            
+            document.querySelectorAll('.repair-skill-cb:checked').forEach(cb => {
+                const code = cb.dataset.code;
+                const levelSelect = document.querySelector(`.repair-skill-level[data-code="${code}"]`);
+                const level = parseInt(levelSelect.value);
+                skills.push({ code, level });
+            });
+            
+            if (skills.length === 0) {
+                alert('⚠️ กรุณาเลือกอย่างน้อย 1 ทักษะ | Please select at least 1 skill');
+                return;
+            }
+            
+            showLoading(true, 'กำลังบันทึก...');
+            
+            try {
+                await db.collection('activities').doc(activityId).update({
+                    skills: skills,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert(`✅ บันทึกสำเร็จ! เพิ่ม ${skills.length} ทักษะ`);
+                cancelEditSkills();
+                scanActivitiesWithoutSkills(); // Refresh scan
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        function cancelEditSkills() {
+            editingActivityId = null;
+            document.getElementById('repair-result').style.display = 'none';
         }
 
         // Enable skill level select when checkbox is checked

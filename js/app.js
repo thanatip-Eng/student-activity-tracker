@@ -107,8 +107,11 @@ async function loadStudentActivities() {
             .where('studentId', '==', currentStudent.studentId)
             .get();
         
+        console.log('📊 Found participation records:', participationQuery.size);
+        
         for (const doc of participationQuery.docs) {
             const participation = doc.data();
+            console.log('📌 Participation:', participation.activityName, participation.status);
             
             const activityQuery = await activitiesCollection
                 .where('name', '==', participation.activityName)
@@ -126,9 +129,13 @@ async function loadStudentActivities() {
             
             if (!activityQuery.empty) {
                 const activity = activityQuery.docs[0].data();
+                console.log('📚 Activity data:', activity.name, 'skills:', activity.skills, 'raw:', activity);
                 activityData.skills = extractSkills(activity);
+                console.log('🎯 Extracted skills:', activityData.skills);
                 activityData.level = activity.level || 1;
                 activityData.description = activity.description || '';
+            } else {
+                console.warn('⚠️ Activity not found in activities collection:', participation.activityName);
             }
             
             studentActivities.push(activityData);
@@ -170,21 +177,35 @@ async function loadStudentActivities() {
 function extractSkills(activity) {
     const skills = [];
     
-    // Check for skills array
+    // Format 1: Check for skills array (from CSV import or new format)
     if (activity.skills && Array.isArray(activity.skills)) {
         return activity.skills;
     }
     
-    // Check for individual criteria fields
+    // Format 2: Check for criteria_X_X format
     CRITERIA_LIST.forEach(criteria => {
         const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
         if (activity[fieldName] && activity[fieldName] > 0) {
             skills.push({
                 code: criteria.code,
-                level: activity[fieldName]
+                level: parseInt(activity[fieldName])
             });
         }
     });
+    
+    // Format 3: Check for direct code format (e.g., "1.1": 2)
+    if (skills.length === 0) {
+        CRITERIA_LIST.forEach(criteria => {
+            // Check both "1.1" and "1_1" formats
+            const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
+            if (value && value > 0) {
+                skills.push({
+                    code: criteria.code,
+                    level: parseInt(value)
+                });
+            }
+        });
+    }
     
     return skills;
 }
