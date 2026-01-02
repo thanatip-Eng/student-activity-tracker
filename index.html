@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Activity Tracking System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🎓</span>
+                <div>
+                    <h1>Student Activity Tracking</h1>
+                    <p>ระบบติดตามกิจกรรมและ Competency นักศึกษา</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Section -->
+        <section id="search-section" class="search-section">
+            <div class="search-card">
+                <h2>🔍 ค้นหาข้อมูลนักศึกษา</h2>
+                <p>กรุณากรอก Email ที่ลงทะเบียนในระบบ</p>
+                <div class="search-form">
+                    <input type="email" id="email-input" placeholder="example@cmu.ac.th" autocomplete="email">
+                    <button id="search-btn" onclick="searchStudent()">
+                        <span>ค้นหา</span>
+                    </button>
+                </div>
+                <p id="search-error" class="error-message"></p>
+            </div>
+        </section>
+
+        <!-- Dashboard Section (Hidden by default) -->
+        <section id="dashboard-section" class="dashboard-section" style="display: none;">
+            <!-- Student Info Card -->
+            <div class="student-info-card">
+                <div class="student-avatar">
+                    <span id="avatar-initial">S</span>
+                </div>
+                <div class="student-details">
+                    <h2 id="student-name">-</h2>
+                    <p id="student-email">-</p>
+                    <p id="student-id">รหัสนักศึกษา: -</p>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    🚪 ออกจากระบบ
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-activities">0</span>
+                        <span class="stat-label">กิจกรรมทั้งหมด</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="approved-activities">0</span>
+                        <span class="stat-label">อนุมัติแล้ว</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="pending-activities">0</span>
+                        <span class="stat-label">รอดำเนินการ</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="competency-score">0</span>
+                        <span class="stat-label">คะแนนรวม</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Radar Chart -->
+                <div class="chart-card">
+                    <h3>📊 Competency Radar Chart</h3>
+                    <div class="chart-container">
+                        <canvas id="competencyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Competency Table -->
+                <div class="competency-card">
+                    <h3>📋 รายละเอียด Competency</h3>
+                    <div class="competency-table-wrapper">
+                        <table class="competency-table">
+                            <thead>
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Sub-Criteria</th>
+                                    <th>Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="competency-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activities List -->
+            <div class="activities-card">
+                <h3>📝 รายการกิจกรรม</h3>
+                <div class="activities-filter">
+                    <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                    <button class="filter-btn" data-filter="Approved">อนุมัติแล้ว</button>
+                    <button class="filter-btn" data-filter="Pending">รอดำเนินการ</button>
+                </div>
+                <div id="activities-list" class="activities-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-box">
+                <div class="spinner"></div>
+                <p>กำลังโหลดข้อมูล...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
