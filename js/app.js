@@ -40,6 +40,51 @@ let competencyChart = null;
 let currentFilter = 'all';
 
 // ============================================
+// CACHE SYSTEM - ลด Firebase Reads
+// ============================================
+const CACHE_DURATION = 5 * 60 * 1000; // 5 นาที
+let activitiesCache = null; // Cache activities ทั้งหมด
+let activitiesCacheTime = 0;
+
+// Load activities ครั้งเดียว แล้ว cache ไว้
+async function getActivitiesCache() {
+    const now = Date.now();
+    
+    // ถ้ามี cache และยังไม่หมดอายุ ใช้ cache
+    if (activitiesCache && (now - activitiesCacheTime) < CACHE_DURATION) {
+        console.log('📦 Using activities cache');
+        return activitiesCache;
+    }
+    
+    // ถ้าไม่มี cache หรือหมดอายุ โหลดใหม่
+    console.log('🔄 Loading activities from Firebase...');
+    const snapshot = await activitiesCollection.get();
+    
+    activitiesCache = {};
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        // ใช้ชื่อเป็น key (lowercase เพื่อ match ง่าย)
+        if (data.name) {
+            activitiesCache[data.name.toLowerCase()] = {
+                id: doc.id,
+                ...data
+            };
+        }
+    });
+    
+    activitiesCacheTime = now;
+    console.log('✅ Cached', Object.keys(activitiesCache).length, 'activities');
+    
+    return activitiesCache;
+}
+
+// ดึง activity จาก cache (ไม่ต้อง query)
+function getActivityFromCache(activityName) {
+    if (!activitiesCache || !activityName) return null;
+    return activitiesCache[activityName.toLowerCase()] || null;
+}
+
+// ============================================
 // SEARCH FUNCTION (NO PASSWORD)
 // ============================================
 async function searchStudent() {
@@ -97,26 +142,29 @@ async function searchStudent() {
 
 
 // ============================================
-// LOAD STUDENT ACTIVITIES
+// LOAD STUDENT ACTIVITIES (OPTIMIZED)
 // ============================================
 async function loadStudentActivities() {
     studentActivities = [];
     
     try {
+        // 1. โหลด activities cache ก่อน (ครั้งเดียว)
+        await getActivitiesCache();
+        
+        // 2. โหลด participations ของนักศึกษา
         const participationQuery = await participationCollection
             .where('studentId', '==', currentStudent.studentId)
             .get();
         
         console.log('📊 Found participation records:', participationQuery.size);
         
+        // 3. ใช้ cache แทนการ query ทีละตัว
         for (const doc of participationQuery.docs) {
             const participation = doc.data();
             console.log('📌 Participation:', participation.activityName, participation.status);
             
-            const activityQuery = await activitiesCollection
-                .where('name', '==', participation.activityName)
-                .limit(1)
-                .get();
+            // ดึงจาก cache แทน query
+            const activity = getActivityFromCache(participation.activityName);
             
             let activityData = {
                 id: doc.id,
@@ -127,21 +175,20 @@ async function loadStudentActivities() {
                 level: 1
             };
             
-            if (!activityQuery.empty) {
-                const activity = activityQuery.docs[0].data();
-                console.log('📚 Activity data:', activity.name, 'skills:', activity.skills, 'raw:', activity);
+            if (activity) {
+                console.log('📚 Activity from cache:', activity.name, 'skills:', activity.skills);
                 activityData.skills = extractSkills(activity);
                 console.log('🎯 Extracted skills:', activityData.skills);
                 activityData.level = activity.level || 1;
                 activityData.description = activity.description || '';
             } else {
-                console.warn('⚠️ Activity not found in activities collection:', participation.activityName);
+                console.warn('⚠️ Activity not found in cache:', participation.activityName);
             }
             
             studentActivities.push(activityData);
         }
         
-        // Also check submissions
+        // 4. โหลด submissions
         const submissionsQuery = await db.collection('submissions')
             .where('studentEmail', '==', currentStudent.email)
             .get();
@@ -170,6 +217,7 @@ async function loadStudentActivities() {
         console.error('Error loading activities:', error);
     }
 }
+
 
 // ============================================
 // EXTRACT SKILLS FROM ACTIVITY
