@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - Activity Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="js/main.js"></script>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <h1>🎓 Student Activity</h1>
+        <p>ระบบบันทึกกิจกรรมนักศึกษา</p>
+        
+        <div class="form-group">
+            <input type="email" id="emailInput" placeholder="กรอกอีเมลมหาวิทยาลัย (@cmu.ac.th)">
+        </div>
+        
+        <p id="errorMsg" style="color: red; display: none; font-size: 0.9em;"></p>
+        
+        <button id="loginBtn" onclick="window.handleLogin()">เข้าสู่ระบบ</button>
+    </div>
+</body>
+</html>

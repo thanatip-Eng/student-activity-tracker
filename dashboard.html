@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Activity Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module">
+        import './js/main.js';
+        // รอให้โหลดเสร็จแล้วรัน init
+        window.onload = window.initDashboard;
+    </script>
+</head>
+<body>
+    <nav>
+        <div class="logo">Activity Tracker</div>
+        <button onclick="window.handleLogout()" class="logout-btn">ออกจากระบบ</button>
+    </nav>
+
+    <div class="container">
+        <header class="profile-header">
+            <h2 id="studentName">...</h2>
+            <p>รหัสนักศึกษา: <span id="studentId">...</span> | คณะ: <span id="studentFaculty">...</span></p>
+            <div class="stats-box">
+                <span>ชั่วโมงรวมทั้งหมด:</span>
+                <span id="totalHours" class="big-number">0</span>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="window.showTab('history')">📜 ประวัติกิจกรรม</button>
+            <button class="tab-btn" onclick="window.showTab('submit')">✍️ ส่งกิจกรรมใหม่</button>
+        </div>
+
+        <div id="history" class="tab-content" style="display: block;">
+            <div id="activityList" class="activity-grid">
+                </div>
+        </div>
+
+        <div id="submit" class="tab-content" style="display: none;">
+            <form id="submissionForm" onsubmit="window.handleSubmit(event)">
+                <div class="form-group">
+                    <label>ชื่อกิจกรรม</label>
+                    <input type="text" id="activityName" required>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>วันที่จัดกิจกรรม</label>
+                        <input type="date" id="activityDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>จำนวนชั่วโมง</label>
+                        <input type="number" id="duration" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>รายละเอียด/สิ่งที่ได้เรียนรู้</label>
+                    <textarea id="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>ลิงก์หลักฐาน (Google Drive/Photos)</label>
+                    <input type="url" id="evidenceLink" placeholder="https://..." required>
+                </div>
+                <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
