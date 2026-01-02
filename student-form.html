@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แจ้งกิจกรรม - Student Activity Submission</title>
+    <title>แจ้งกิจกรรม | Submit Activity - Student Talent Development</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/form-style.css">
 </head>
@@ -12,29 +12,28 @@
         <!-- Header -->
         <header class="header">
             <div class="logo">
-                <span class="logo-icon">📝</span>
+                <img src="images/MainLogo.png" alt="Student Talent Development" class="logo-img">
                 <div>
-                    <h1>แจ้งกิจกรรมนักศึกษา</h1>
-                    <p>Student Activity Submission System</p>
+                    <h1>แจ้งกิจกรรม | Submit Activity</h1>
+                    <p>Student Talent Development System</p>
                 </div>
             </div>
             <nav class="nav-links">
-                <a href="index.html">🔍 ดูผลของฉัน</a>
+                <a href="index.html">🔍 ดูผลของฉัน | My Results</a>
             </nav>
         </header>
 
         <!-- Login Section -->
         <section id="login-section" class="login-section">
             <div class="login-card">
-                <h2>🔐 เข้าสู่ระบบ</h2>
-                <p>กรุณากรอก Email และรหัสผ่านเพื่อแจ้งกิจกรรม</p>
+                <h2>🔍 ค้นหานักศึกษา | Student Search</h2>
+                <p>กรอก Email เพื่อแจ้งกิจกรรม | Enter your Email to submit activity</p>
                 <div class="login-form">
-                    <input type="email" id="student-email" placeholder="email@cmu.ac.th">
-                    <input type="password" id="student-password" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัวอักษร)" minlength="4">
-                    <button onclick="loginStudent()">เข้าสู่ระบบ</button>
+                    <input type="email" id="student-email" placeholder="Email (example@cmu.ac.th)">
+                    <button onclick="loginStudent()">🔍 ค้นหา | Search</button>
                 </div>
                 <p id="login-error" class="error-message"></p>
-                <p class="login-note">💡 เข้าสู่ระบบครั้งแรก? กรอกรหัสผ่านที่ต้องการใช้</p>
+                <p class="login-note">💡 ใช้ Email ที่ลงทะเบียนไว้ | Use your registered Email</p>
             </div>
         </section>
 
@@ -45,16 +44,16 @@
                 <div class="student-info">
                     <span class="avatar" id="student-avatar">S</span>
                     <div>
-                        <strong id="display-name">นักศึกษา</strong>
+                        <strong id="display-name">นักศึกษา | Student</strong>
                         <span id="display-email">email@cmu.ac.th</span>
                     </div>
                 </div>
-                <button class="btn-logout" onclick="logoutStudent()">ออกจากระบบ</button>
+                <button class="btn-logout" onclick="logoutStudent()">ออกจากระบบ | Logout</button>
             </div>
 
             <!-- Submission Form -->
             <div class="form-card">
-                <h2>📋 แบบฟอร์มแจ้งกิจกรรม</h2>
+                <h2>📋 แบบฟอร์มแจ้งกิจกรรม | Activity Submission Form</h2>
                 
                 <form id="activity-form" onsubmit="submitActivity(event)">
                     <!-- Activity Name -->
@@ -206,57 +205,35 @@
         let currentStudent = null;
 
         // ============================================
-        // LOGIN FUNCTION
+        // LOGIN FUNCTION (NO PASSWORD)
         // ============================================
         async function loginStudent() {
             const email = document.getElementById('student-email').value.trim().toLowerCase();
-            const password = document.getElementById('student-password').value.trim();
             const errorEl = document.getElementById('login-error');
             
             if (!email) {
-                errorEl.textContent = '⚠️ กรุณากรอก Email';
+                errorEl.textContent = '⚠️ กรุณากรอก Email | Please enter Email';
                 return;
             }
             
-            if (!password) {
-                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน';
+            if (!email.includes('@')) {
+                errorEl.textContent = '⚠️ รูปแบบ Email ไม่ถูกต้อง | Invalid Email format';
                 return;
             }
             
-            if (password.length < 4) {
-                errorEl.textContent = '⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
-                return;
-            }
-            
-            showLoading(true, 'กำลังตรวจสอบข้อมูล...');
+            showLoading(true, 'กำลังค้นหา... | Searching...');
             
             try {
                 const query = await db.collection('students').where('email', '==', email).limit(1).get();
                 
                 if (query.empty) {
-                    errorEl.textContent = '❌ ไม่พบข้อมูลนักศึกษา กรุณาติดต่อ Admin';
+                    errorEl.textContent = '❌ ไม่พบข้อมูลในระบบ | Student not found. Please contact Admin';
                     showLoading(false);
                     return;
                 }
                 
                 const doc = query.docs[0];
                 const studentData = doc.data();
-                
-                // Check if password exists
-                if (!studentData.password) {
-                    // First time login - save new password
-                    await db.collection('students').doc(doc.id).update({
-                        password: password
-                    });
-                    studentData.password = password;
-                } else {
-                    // Validate password
-                    if (password !== studentData.password) {
-                        errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
-                        showLoading(false);
-                        return;
-                    }
-                }
                 
                 currentStudent = { id: doc.id, ...studentData };
                 
@@ -282,7 +259,7 @@
                 
             } catch (error) {
                 console.error('Login error:', error);
-                errorEl.textContent = '❌ เกิดข้อผิดพลาด กรุณาลองใหม่';
+                errorEl.textContent = '❌ เกิดข้อผิดพลาด | Error occurred. Please try again';
             }
             
             showLoading(false);
@@ -298,7 +275,6 @@
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('student-email').value = '';
-            document.getElementById('student-password').value = '';
             document.getElementById('login-error').textContent = '';
         }
 
@@ -472,15 +448,11 @@
             document.getElementById('success-modal').classList.remove('show');
         }
 
-        // Enter key handler
+        // Enter key handler - directly search when pressing Enter
         document.getElementById('student-email').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                document.getElementById('student-password').focus();
+                loginStudent();
             }
-        });
-        
-        document.getElementById('student-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loginStudent();
         });
 
         // Check for existing session on page load

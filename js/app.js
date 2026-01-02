@@ -40,30 +40,19 @@ let competencyChart = null;
 let currentFilter = 'all';
 
 // ============================================
-// SEARCH FUNCTION
+// SEARCH FUNCTION (NO PASSWORD)
 // ============================================
 async function searchStudent() {
     const email = document.getElementById('email-input').value.trim().toLowerCase();
-    const password = document.getElementById('password-input').value.trim();
     const errorEl = document.getElementById('search-error');
     
     if (!email) {
-        errorEl.textContent = '⚠️ กรุณากรอก Email';
+        errorEl.textContent = '⚠️ กรุณากรอก Email | Please enter Email';
         return;
     }
     
     if (!email.includes('@')) {
-        errorEl.textContent = '⚠️ รูปแบบ Email ไม่ถูกต้อง';
-        return;
-    }
-    
-    if (!password) {
-        errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน';
-        return;
-    }
-    
-    if (password.length < 4) {
-        errorEl.textContent = '⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
+        errorEl.textContent = '⚠️ รูปแบบ Email ไม่ถูกต้อง | Invalid Email format';
         return;
     }
     
@@ -74,25 +63,13 @@ async function searchStudent() {
         const studentQuery = await studentsCollection.where('email', '==', email).limit(1).get();
         
         if (studentQuery.empty) {
-            errorEl.textContent = '❌ ไม่พบข้อมูลนักศึกษาในระบบ กรุณาตรวจสอบ Email อีกครั้ง';
+            errorEl.textContent = '❌ ไม่พบข้อมูลในระบบ กรุณาตรวจสอบ Email | Student not found. Please check your Email';
             showLoading(false);
             return;
         }
         
         const studentDoc = studentQuery.docs[0];
         const studentData = studentDoc.data();
-        
-        // Check if password exists
-        if (!studentData.password) {
-            await studentsCollection.doc(studentDoc.id).update({ password: password });
-            studentData.password = password;
-        } else {
-            if (password !== studentData.password) {
-                errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
-                showLoading(false);
-                return;
-            }
-        }
         
         currentStudent = {
             id: studentDoc.id,
@@ -112,11 +89,12 @@ async function searchStudent() {
         
     } catch (error) {
         console.error('Search error:', error);
-        errorEl.textContent = '❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+        errorEl.textContent = '❌ เกิดข้อผิดพลาด กรุณาลองใหม่ | Error occurred. Please try again';
     }
     
     showLoading(false);
 }
+
 
 // ============================================
 // LOAD STUDENT ACTIVITIES
@@ -596,7 +574,6 @@ function logout() {
     sessionStorage.removeItem('studentSession');
     
     document.getElementById('email-input').value = '';
-    document.getElementById('password-input').value = '';
     document.getElementById('search-error').textContent = '';
     
     document.getElementById('dashboard-section').style.display = 'none';
@@ -621,18 +598,9 @@ function showLoading(show) {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email-input');
-    const passwordInput = document.getElementById('password-input');
     
     if (emailInput) {
         emailInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                passwordInput.focus();
-            }
-        });
-    }
-    
-    if (passwordInput) {
-        passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 searchStudent();
             }

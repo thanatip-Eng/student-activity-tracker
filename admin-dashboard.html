@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Activity Review System</title>
+    <title>Admin Dashboard - Student Talent Development</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin-style.css">
 </head>
@@ -12,17 +12,17 @@
         <!-- Header -->
         <header class="header">
             <div class="logo">
-                <span class="logo-icon">⚙️</span>
+                <img src="images/MainLogo.png" alt="Student Talent Development" class="logo-img">
                 <div>
                     <h1>Admin Dashboard</h1>
-                    <p>ระบบตรวจสอบและอนุมัติกิจกรรม</p>
+                    <p>ระบบตรวจสอบและอนุมัติกิจกรรม | Activity Review System</p>
                 </div>
             </div>
             <nav class="nav-links">
-                <a href="index.html">🔍 ค้นหานักศึกษา</a>
-                <a href="student-form.html">📝 นศ.แจ้งกิจกรรม</a>
-                <a href="organizer-form.html">👨‍💼 ผู้จัดกิจกรรม</a>
-                <a href="data-management.html">📊 จัดการข้อมูล</a>
+                <a href="index.html">🔍 ค้นหา | Search</a>
+                <a href="student-form.html">📝 แจ้งกิจกรรม | Submit</a>
+                <a href="organizer-form.html">👨‍💼 ผู้จัด | Organizer</a>
+                <a href="data-management.html">📊 จัดการ | Manage</a>
             </nav>
         </header>
 
@@ -32,42 +32,113 @@
                 <div class="stat-icon">⏳</div>
                 <div class="stat-content">
                     <span class="stat-number" id="pending-count">0</span>
-                    <span class="stat-label">รอตรวจสอบ</span>
+                    <span class="stat-label">รอตรวจสอบ | Pending</span>
                 </div>
             </div>
             <div class="stat-card approved">
                 <div class="stat-icon">✅</div>
                 <div class="stat-content">
                     <span class="stat-number" id="approved-count">0</span>
-                    <span class="stat-label">อนุมัติแล้ว</span>
+                    <span class="stat-label">อนุมัติแล้ว | Approved</span>
                 </div>
             </div>
             <div class="stat-card rejected">
                 <div class="stat-icon">❌</div>
                 <div class="stat-content">
                     <span class="stat-number" id="rejected-count">0</span>
-                    <span class="stat-label">ไม่อนุมัติ</span>
+                    <span class="stat-label">ไม่อนุมัติ | Rejected</span>
                 </div>
             </div>
             <div class="stat-card total">
                 <div class="stat-icon">📊</div>
                 <div class="stat-content">
                     <span class="stat-number" id="total-count">0</span>
-                    <span class="stat-label">ทั้งหมด</span>
+                    <span class="stat-label">ทั้งหมด | Total</span>
                 </div>
             </div>
         </div>
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" data-tab="student-submissions">📝 นศ.แจ้งกิจกรรม</button>
-            <button class="tab" data-tab="organizer-activities">👨‍💼 กิจกรรมผู้จัด</button>
-            <button class="tab" data-tab="transfer">📤 โอนข้อมูล</button>
-            <button class="tab" data-tab="organizers">🔐 จัดการสิทธิ์ผู้จัด</button>
+            <button class="tab active" data-tab="student-search">🔍 ค้นหานศ. | Search Student</button>
+            <button class="tab" data-tab="student-submissions">📝 นศ.แจ้ง | Student</button>
+            <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
+            <button class="tab" data-tab="transfer">📤 โอนข้อมูล | Transfer</button>
+            <button class="tab" data-tab="organizers">🔐 สิทธิ์ | Permissions</button>
+            <button class="tab" data-tab="export">📥 Export CSV</button>
+        </div>
+
+        <!-- Tab: Student Search -->
+        <div id="tab-student-search" class="tab-content active">
+            <div class="panel">
+                <h2>🔍 ค้นหานักศึกษา | Search Student</h2>
+                <p class="panel-desc">ค้นหาด้วย Email หรือ รหัสนักศึกษา | Search by Email or Student ID</p>
+                
+                <div class="search-box">
+                    <input type="text" id="admin-student-search" placeholder="Email หรือ รหัสนักศึกษา | Email or Student ID">
+                    <button class="btn-search" onclick="searchStudentAdmin()">🔍 ค้นหา | Search</button>
+                </div>
+                
+                <div id="student-search-result" class="student-search-result" style="display: none;">
+                    <!-- Student Info -->
+                    <div class="student-profile">
+                        <div class="profile-header">
+                            <div class="profile-avatar" id="result-avatar">S</div>
+                            <div class="profile-info">
+                                <h3 id="result-name">-</h3>
+                                <p id="result-email">-</p>
+                                <p id="result-student-id">-</p>
+                                <p id="result-department">-</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <span class="stat-num" id="result-total-activities">0</span>
+                                <span class="stat-lbl">กิจกรรม | Activities</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="stat-num" id="result-approved">0</span>
+                                <span class="stat-lbl">อนุมัติ | Approved</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="stat-num" id="result-skills-passed">0</span>
+                                <span class="stat-lbl">ทักษะผ่าน | Skills Passed</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="stat-num" id="result-total-score">0</span>
+                                <span class="stat-lbl">คะแนนรวม | Total Score</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Competency Summary -->
+                    <div class="result-section">
+                        <h4>📊 Competency Summary</h4>
+                        <div id="result-competency" class="competency-grid">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Activities List -->
+                    <div class="result-section">
+                        <h4>📝 รายการกิจกรรม | Activity List</h4>
+                        <div id="result-activities" class="result-activities-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="student-not-found" class="not-found-box" style="display: none;">
+                    <span class="icon">😕</span>
+                    <p>ไม่พบข้อมูลนักศึกษา | Student not found</p>
+                </div>
+            </div>
         </div>
 
         <!-- Tab: Student Submissions -->
-        <div id="tab-student-submissions" class="tab-content active">
+        <div id="tab-student-submissions" class="tab-content">
             <div class="panel">
                 <div class="panel-header">
                     <h2>📝 กิจกรรมที่นักศึกษาแจ้ง</h2>
@@ -149,7 +220,77 @@
                 </div>
 
                 <div id="organizers-list" class="organizers-list">
-                    <div class="loading-inline">กำลังโหลด...</div>
+                    <div class="loading-inline">กำลังโหลด... | Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Export CSV -->
+        <div id="tab-export" class="tab-content">
+            <div class="panel">
+                <h2>📥 Export ข้อมูลเป็น CSV | Export Data to CSV</h2>
+                <p class="panel-desc">ดาวน์โหลดข้อมูลทั้งหมดในรูปแบบ CSV | Download all data in CSV format</p>
+                
+                <div class="export-grid">
+                    <div class="export-card">
+                        <div class="export-icon">👥</div>
+                        <h4>นักศึกษา | Students</h4>
+                        <p>ข้อมูลนักศึกษาทั้งหมด | All student data</p>
+                        <button class="btn-export" onclick="exportStudentsCSV()">
+                            📥 Export Students
+                        </button>
+                    </div>
+                    
+                    <div class="export-card">
+                        <div class="export-icon">📚</div>
+                        <h4>กิจกรรม | Activities</h4>
+                        <p>รายการกิจกรรมทั้งหมด | All activities</p>
+                        <button class="btn-export" onclick="exportActivitiesCSV()">
+                            📥 Export Activities
+                        </button>
+                    </div>
+                    
+                    <div class="export-card">
+                        <div class="export-icon">🎯</div>
+                        <h4>การเข้าร่วม | Participation</h4>
+                        <p>ข้อมูลการเข้าร่วมกิจกรรม | Participation records</p>
+                        <button class="btn-export" onclick="exportParticipationCSV()">
+                            📥 Export Participation
+                        </button>
+                    </div>
+                    
+                    <div class="export-card">
+                        <div class="export-icon">📝</div>
+                        <h4>การแจ้งกิจกรรม | Submissions</h4>
+                        <p>กิจกรรมที่นักศึกษาแจ้ง | Student submissions</p>
+                        <button class="btn-export" onclick="exportSubmissionsCSV()">
+                            📥 Export Submissions
+                        </button>
+                    </div>
+                    
+                    <div class="export-card">
+                        <div class="export-icon">👨‍💼</div>
+                        <h4>กิจกรรมผู้จัด | Organizer Activities</h4>
+                        <p>กิจกรรมจากผู้จัด | Organizer activities</p>
+                        <button class="btn-export" onclick="exportOrganizerActivitiesCSV()">
+                            📥 Export Organizer Activities
+                        </button>
+                    </div>
+                    
+                    <div class="export-card">
+                        <div class="export-icon">🔐</div>
+                        <h4>ผู้จัดกิจกรรม | Organizers</h4>
+                        <p>รายชื่อผู้จัดกิจกรรม | Organizer list</p>
+                        <button class="btn-export" onclick="exportOrganizersCSV()">
+                            📥 Export Organizers
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="export-all">
+                    <button class="btn-export-all" onclick="exportAllCSV()">
+                        📦 Export ทั้งหมด | Export All Data (ZIP)
+                    </button>
                 </div>
             </div>
         </div>
@@ -240,24 +381,33 @@
         // CRITERIA DEFINITIONS
         // ============================================
         const CRITERIA_LIST = [
-            { code: "1.1", name: "Analytical Reasoning", nameTh: "การใช้เหตุผลเชิงวิเคราะห์" },
-            { code: "1.2", name: "Problem Solving", nameTh: "การแก้ปัญหาอย่างเป็นระบบ" },
-            { code: "1.3", name: "Systems Thinking", nameTh: "การคิดเชิงระบบ" },
-            { code: "2.1", name: "Presentation", nameTh: "ทักษะการนำเสนอ" },
-            { code: "2.2", name: "Listening", nameTh: "การฟังและความเข้าใจ" },
-            { code: "2.3", name: "English", nameTh: "การสื่อสารภาษาอังกฤษ" },
-            { code: "3.1", name: "Role Understanding", nameTh: "ความเข้าใจในบทบาท" },
-            { code: "3.2", name: "Task Management", nameTh: "การจัดการงาน" },
-            { code: "3.3", name: "Collaboration", nameTh: "การทำงานร่วมกัน" },
-            { code: "4.1", name: "Learning Agility", nameTh: "ความคล่องตัวในการเรียนรู้" },
-            { code: "4.2", name: "Digital Literacy", nameTh: "ความรู้ด้านดิจิทัล" },
-            { code: "4.3", name: "Tool Proficiency", nameTh: "ความเชี่ยวชาญเครื่องมือ" },
-            { code: "5.1", name: "Human-Centered Design", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง" },
-            { code: "5.2", name: "Project Management", nameTh: "การบริหารโครงการ" },
-            { code: "5.3", name: "Business Awareness", nameTh: "ความตระหนักทางธุรกิจ" },
-            { code: "6.1", name: "Personal Growth", nameTh: "การเติบโตส่วนบุคคล" },
-            { code: "6.2", name: "Resilience", nameTh: "ความยืดหยุ่นและการปรับตัว" },
-            { code: "6.3", name: "Empathy", nameTh: "ความเห็นอกเห็นใจ" }
+            { code: "1.1", name: "Analytical Reasoning", nameTh: "การใช้เหตุผลเชิงวิเคราะห์", domain: "Critical Thinking" },
+            { code: "1.2", name: "Problem Solving", nameTh: "การแก้ปัญหาอย่างเป็นระบบ", domain: "Critical Thinking" },
+            { code: "1.3", name: "Systems Thinking", nameTh: "การคิดเชิงระบบ", domain: "Critical Thinking" },
+            { code: "2.1", name: "Presentation", nameTh: "ทักษะการนำเสนอ", domain: "Communication" },
+            { code: "2.2", name: "Listening", nameTh: "การฟังและความเข้าใจ", domain: "Communication" },
+            { code: "2.3", name: "English", nameTh: "การสื่อสารภาษาอังกฤษ", domain: "Communication" },
+            { code: "3.1", name: "Role Understanding", nameTh: "ความเข้าใจในบทบาท", domain: "Teamwork" },
+            { code: "3.2", name: "Task Management", nameTh: "การจัดการงาน", domain: "Teamwork" },
+            { code: "3.3", name: "Collaboration", nameTh: "การทำงานร่วมกัน", domain: "Teamwork" },
+            { code: "4.1", name: "Learning Agility", nameTh: "ความคล่องตัวในการเรียนรู้", domain: "Digital & Learning" },
+            { code: "4.2", name: "Digital Literacy", nameTh: "ความรู้ด้านดิจิทัล", domain: "Digital & Learning" },
+            { code: "4.3", name: "Tool Proficiency", nameTh: "ความเชี่ยวชาญเครื่องมือ", domain: "Digital & Learning" },
+            { code: "5.1", name: "Human-Centered Design", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง", domain: "Innovation" },
+            { code: "5.2", name: "Project Management", nameTh: "การบริหารโครงการ", domain: "Innovation" },
+            { code: "5.3", name: "Business Awareness", nameTh: "ความตระหนักทางธุรกิจ", domain: "Innovation" },
+            { code: "6.1", name: "Personal Growth", nameTh: "การเติบโตส่วนบุคคล", domain: "Self Development" },
+            { code: "6.2", name: "Resilience", nameTh: "ความยืดหยุ่นและการปรับตัว", domain: "Self Development" },
+            { code: "6.3", name: "Empathy", nameTh: "ความเห็นอกเห็นใจ", domain: "Self Development" }
+        ];
+
+        const DOMAINS = [
+            { id: 1, name: "Critical Thinking", nameTh: "การคิดวิเคราะห์", color: "#667eea" },
+            { id: 2, name: "Communication", nameTh: "การสื่อสาร", color: "#27ae60" },
+            { id: 3, name: "Teamwork", nameTh: "การทำงานเป็นทีม", color: "#f39c12" },
+            { id: 4, name: "Digital & Learning", nameTh: "ดิจิทัลและการเรียนรู้", color: "#e74c3c" },
+            { id: 5, name: "Innovation", nameTh: "นวัตกรรม", color: "#9b59b6" },
+            { id: 6, name: "Self Development", nameTh: "พัฒนาตนเอง", color: "#1abc9c" }
         ];
 
         // ============================================
@@ -315,6 +465,265 @@
                 });
             });
         }
+
+        // ============================================
+        // ADMIN STUDENT SEARCH
+        // ============================================
+        async function searchStudentAdmin() {
+            const searchInput = document.getElementById('admin-student-search').value.trim().toLowerCase();
+            
+            if (!searchInput) {
+                alert('กรุณากรอก Email หรือ รหัสนักศึกษา | Please enter Email or Student ID');
+                return;
+            }
+            
+            showLoading(true, 'กำลังค้นหา... | Searching...');
+            
+            document.getElementById('student-search-result').style.display = 'none';
+            document.getElementById('student-not-found').style.display = 'none';
+            
+            try {
+                // Search by email first
+                let studentDoc = null;
+                let studentData = null;
+                
+                let query = await db.collection('students').where('email', '==', searchInput).limit(1).get();
+                
+                if (query.empty) {
+                    // Try search by studentId
+                    query = await db.collection('students').where('studentId', '==', searchInput).limit(1).get();
+                }
+                
+                if (query.empty) {
+                    // Try partial match - search all and filter
+                    const allStudents = await db.collection('students').get();
+                    for (const doc of allStudents.docs) {
+                        const data = doc.data();
+                        if (data.email?.toLowerCase().includes(searchInput) || 
+                            data.studentId?.toLowerCase().includes(searchInput) ||
+                            data.name?.toLowerCase().includes(searchInput)) {
+                            studentDoc = doc;
+                            studentData = data;
+                            break;
+                        }
+                    }
+                } else {
+                    studentDoc = query.docs[0];
+                    studentData = studentDoc.data();
+                }
+                
+                if (!studentData) {
+                    document.getElementById('student-not-found').style.display = 'block';
+                    showLoading(false);
+                    return;
+                }
+                
+                // Load student activities
+                const activities = await loadStudentActivitiesAdmin(studentData.studentId, studentData.email);
+                
+                // Calculate scores
+                const scores = calculateScoresAdmin(activities);
+                const domainScores = calculateDomainScoresAdmin(scores);
+                
+                // Display results
+                displayStudentResult(studentData, activities, scores, domainScores);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('เกิดข้อผิดพลาด | Error: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function loadStudentActivitiesAdmin(studentId, email) {
+            const activities = [];
+            
+            // Load from participation
+            const participationQuery = await db.collection('participation')
+                .where('studentId', '==', studentId)
+                .get();
+            
+            for (const doc of participationQuery.docs) {
+                const participation = doc.data();
+                
+                // Get activity details
+                const activityQuery = await db.collection('activities')
+                    .where('name', '==', participation.activityName)
+                    .limit(1)
+                    .get();
+                
+                let activityData = {
+                    id: doc.id,
+                    name: participation.activityName,
+                    status: participation.status || 'Approved',
+                    date: participation.date || '',
+                    skills: [],
+                    source: 'participation'
+                };
+                
+                if (!activityQuery.empty) {
+                    const activity = activityQuery.docs[0].data();
+                    activityData.skills = extractSkillsAdmin(activity);
+                }
+                
+                activities.push(activityData);
+            }
+            
+            // Load from submissions
+            const submissionsQuery = await db.collection('submissions')
+                .where('studentEmail', '==', email)
+                .get();
+            
+            for (const doc of submissionsQuery.docs) {
+                const submission = doc.data();
+                
+                const exists = activities.find(a => 
+                    a.name.toLowerCase() === submission.activityName?.toLowerCase()
+                );
+                
+                if (!exists) {
+                    activities.push({
+                        id: doc.id,
+                        name: submission.activityName || 'ไม่ระบุ',
+                        status: submission.status || 'Pending',
+                        date: submission.activityDate || submission.startDate || '',
+                        skills: submission.skills || [],
+                        source: 'submission'
+                    });
+                }
+            }
+            
+            return activities;
+        }
+
+        function extractSkillsAdmin(activity) {
+            const skills = [];
+            if (activity.skills && Array.isArray(activity.skills)) {
+                return activity.skills;
+            }
+            CRITERIA_LIST.forEach(criteria => {
+                const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
+                if (activity[fieldName] && activity[fieldName] > 0) {
+                    skills.push({ code: criteria.code, level: activity[fieldName] });
+                }
+            });
+            return skills;
+        }
+
+        function calculateScoresAdmin(activities) {
+            const scores = {};
+            CRITERIA_LIST.forEach(c => scores[c.code] = 0);
+            
+            const approved = activities.filter(a => a.status?.toLowerCase().includes('approved'));
+            approved.forEach(activity => {
+                if (activity.skills) {
+                    activity.skills.forEach(skill => {
+                        if (skill.code && skill.level) {
+                            scores[skill.code] = Math.max(scores[skill.code], skill.level);
+                        }
+                    });
+                }
+            });
+            
+            return scores;
+        }
+
+        function calculateDomainScoresAdmin(scores) {
+            const domainScores = {};
+            
+            DOMAINS.forEach(domain => {
+                const domainCriteria = CRITERIA_LIST.filter(c => c.domain === domain.name);
+                const domainLevels = domainCriteria.map(c => scores[c.code] || 0);
+                
+                const total = domainLevels.reduce((a, b) => a + b, 0);
+                const avg = domainLevels.length > 0 ? total / domainLevels.length : 0;
+                
+                domainScores[domain.name] = {
+                    total,
+                    avg: Math.round(avg * 10) / 10,
+                    levels: domainLevels,
+                    color: domain.color
+                };
+            });
+            
+            return domainScores;
+        }
+
+        function displayStudentResult(student, activities, scores, domainScores) {
+            // Update profile info
+            document.getElementById('result-avatar').textContent = student.name?.charAt(0) || 'S';
+            document.getElementById('result-name').textContent = student.name || 'ไม่ระบุชื่อ';
+            document.getElementById('result-email').textContent = student.email || '-';
+            document.getElementById('result-student-id').textContent = `รหัส | ID: ${student.studentId || '-'}`;
+            document.getElementById('result-department').textContent = student.department || '';
+            
+            // Update stats
+            const approved = activities.filter(a => a.status?.toLowerCase().includes('approved'));
+            const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+            const skillsPassed = DOMAINS.filter(d => domainScores[d.name].avg >= 2).length;
+            
+            document.getElementById('result-total-activities').textContent = activities.length;
+            document.getElementById('result-approved').textContent = approved.length;
+            document.getElementById('result-skills-passed').textContent = `${skillsPassed}/6`;
+            document.getElementById('result-total-score').textContent = totalScore;
+            
+            // Render competency grid
+            const compContainer = document.getElementById('result-competency');
+            compContainer.innerHTML = DOMAINS.map(domain => {
+                const ds = domainScores[domain.name];
+                const statusClass = ds.avg >= 3 ? 'excellent' : ds.avg >= 2 ? 'good' : ds.avg >= 1 ? 'developing' : 'none';
+                const statusText = ds.avg >= 3 ? '⭐ Excellent' : ds.avg >= 2 ? '✅ Passed' : ds.avg >= 1 ? '📈 Developing' : '—';
+                
+                return `
+                    <div class="comp-card" style="border-left: 4px solid ${domain.color}">
+                        <div class="comp-header">
+                            <span class="comp-name">${domain.name}</span>
+                            <span class="comp-level ${statusClass}">Lv.${ds.avg}</span>
+                        </div>
+                        <div class="comp-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Render activities list
+            const actContainer = document.getElementById('result-activities');
+            if (activities.length === 0) {
+                actContainer.innerHTML = '<div class="empty-msg">ไม่มีกิจกรรม | No activities</div>';
+            } else {
+                actContainer.innerHTML = activities.map(act => {
+                    const statusClass = act.status?.toLowerCase().includes('approved') ? 'approved' : 
+                                       act.status?.toLowerCase().includes('rejected') ? 'rejected' : 'pending';
+                    const statusText = act.status?.toLowerCase().includes('approved') ? '✅ Approved' : 
+                                      act.status?.toLowerCase().includes('rejected') ? '❌ Rejected' : '⏳ Pending';
+                    
+                    const skillsHtml = act.skills?.map(s => 
+                        `<span class="skill-mini">${s.code}: Lv.${s.level}</span>`
+                    ).join('') || '';
+                    
+                    return `
+                        <div class="result-activity ${statusClass}">
+                            <div class="act-main">
+                                <span class="act-name">${act.name}</span>
+                                <span class="act-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="act-meta">
+                                <span>📅 ${act.date || '-'}</span>
+                                <span>📁 ${act.source === 'submission' ? 'นศ.แจ้ง' : 'ระบบ'}</span>
+                            </div>
+                            ${skillsHtml ? `<div class="act-skills">${skillsHtml}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            document.getElementById('student-search-result').style.display = 'block';
+        }
+
+        // Enter key handler for student search
+        document.getElementById('admin-student-search')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchStudentAdmin();
+        });
 
         // ============================================
         // LOAD DATA
@@ -1136,6 +1545,210 @@
                 
             } catch (error) {
                 console.error('Delete organizer error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        // ============================================
+        // CSV EXPORT FUNCTIONS
+        // ============================================
+        function convertToCSV(data, headers) {
+            if (!data || data.length === 0) return '';
+            
+            const csvHeaders = headers.join(',');
+            const csvRows = data.map(row => {
+                return headers.map(header => {
+                    let value = row[header] || '';
+                    // Handle arrays
+                    if (Array.isArray(value)) {
+                        value = JSON.stringify(value);
+                    }
+                    // Handle objects
+                    if (typeof value === 'object' && value !== null) {
+                        value = JSON.stringify(value);
+                    }
+                    // Escape quotes and wrap in quotes if contains comma
+                    value = String(value).replace(/"/g, '""');
+                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                        value = `"${value}"`;
+                    }
+                    return value;
+                }).join(',');
+            });
+            
+            return [csvHeaders, ...csvRows].join('\n');
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function exportStudentsCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลนักศึกษา...');
+            
+            try {
+                const snapshot = await db.collection('students').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    password: '***' // Hide password
+                }));
+                
+                const headers = ['studentId', 'name', 'email', 'department', 'year', 'createdAt'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `students_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportActivitiesCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลกิจกรรม...');
+            
+            try {
+                const snapshot = await db.collection('activities').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const headers = ['name', 'organizer', 'date', 'level', 'status', 'description'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `activities_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportParticipationCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลการเข้าร่วม...');
+            
+            try {
+                const snapshot = await db.collection('participation').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const headers = ['studentId', 'activityName', 'date', 'status', 'skills'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `participation_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportSubmissionsCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลการแจ้งกิจกรรม...');
+            
+            try {
+                const snapshot = await db.collection('submissions').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const headers = ['studentId', 'studentName', 'studentEmail', 'activityName', 'activityOrganizer', 'startDate', 'endDate', 'activityLevel', 'status', 'submittedAt'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `submissions_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportOrganizerActivitiesCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลกิจกรรมผู้จัด...');
+            
+            try {
+                const snapshot = await db.collection('organizerActivities').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                const headers = ['activityName', 'organizerName', 'organizerEmail', 'department', 'activityDate', 'status', 'studentIds', 'skills'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `organizer_activities_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportOrganizersCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลผู้จัด...');
+            
+            try {
+                const snapshot = await db.collection('organizers').get();
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    password: '***' // Hide password
+                }));
+                
+                const headers = ['email', 'name', 'department', 'phone', 'createdAt'];
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `organizers_${new Date().toISOString().slice(0,10)}.csv`);
+                
+                alert(`✅ Export สำเร็จ! ${data.length} รายการ`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function exportAllCSV() {
+            showLoading(true, 'กำลัง Export ข้อมูลทั้งหมด...');
+            
+            try {
+                // Export each collection
+                await exportStudentsCSV();
+                await exportActivitiesCSV();
+                await exportParticipationCSV();
+                await exportSubmissionsCSV();
+                await exportOrganizerActivitiesCSV();
+                await exportOrganizersCSV();
+                
+                alert('✅ Export ข้อมูลทั้งหมดสำเร็จ!');
+            } catch (error) {
+                console.error('Export all error:', error);
                 alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             }
             

@@ -37,6 +37,11 @@ body {
     gap: 15px;
 }
 
+.logo-img {
+    height: 50px;
+    width: auto;
+}
+
 .logo-icon {
     font-size: 2.5em;
 }

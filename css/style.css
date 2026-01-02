@@ -37,6 +37,11 @@ body {
     gap: 15px;
 }
 
+.logo-img {
+    height: 60px;
+    width: auto;
+}
+
 .logo-icon {
     font-size: 3em;
 }
@@ -50,6 +55,44 @@ body {
 .logo p {
     color: #666;
     font-size: 0.95em;
+}
+
+/* Organization Banner */
+.org-banner {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 15px 25px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.org-logo {
+    height: 50px;
+    width: auto;
+}
+
+.org-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.org-name {
+    font-weight: 700;
+    font-size: 1.1em;
+    color: #1a1a2e;
+}
+
+.org-sub {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.org-sub-th {
+    font-size: 0.85em;
+    color: #888;
 }
 
 .nav-links {
@@ -1059,3 +1102,45 @@ body {
     }
 }
 
+/* Footer */
+.footer {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 30px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.footer-logo {
+    height: 80px;
+    width: auto;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+.footer p {
+    color: #555;
+    font-size: 0.95em;
+    margin: 5px 0;
+}
+
+/* Responsive adjustments for org-banner and footer */
+@media (max-width: 768px) {
+    .org-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .org-info {
+        align-items: center;
+    }
+    
+    .logo-img {
+        height: 45px;
+    }
+    
+    .org-logo {
+        height: 40px;
+    }
+}
