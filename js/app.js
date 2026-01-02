@@ -239,7 +239,7 @@ function calculateCompetencyScores() {
 }
 
 // ============================================
-// CALCULATE DOMAIN SCORES
+// CALCULATE DOMAIN SCORES - USE MAX NOT AVG
 // ============================================
 function calculateDomainScores(scores) {
     const domainScores = {};
@@ -250,6 +250,9 @@ function calculateDomainScores(scores) {
         
         const total = domainLevels.reduce((a, b) => a + b, 0);
         const max = domainCriteria.length * 4;
+        
+        // USE MAX of sub-skills instead of average
+        const maxLevel = Math.max(...domainLevels, 0);
         const avg = domainLevels.length > 0 ? total / domainLevels.length : 0;
         const percentage = max > 0 ? (total / max) * 100 : 0;
         
@@ -259,6 +262,7 @@ function calculateDomainScores(scores) {
         domainScores[domain.name] = {
             total,
             max,
+            maxLevel, // MAX of sub-skills
             avg: Math.round(avg * 10) / 10,
             percentage: Math.round(percentage),
             levels: domainLevels,
@@ -290,12 +294,14 @@ function showDashboard() {
     const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
     const domainScores = calculateDomainScores(scores);
     
-    // Count domains that have avg level >= 2
-    const skillsPassedCount = DOMAINS.filter(d => domainScores[d.name].avg >= 2).length;
+    // Count SUB-SKILLS (not domains) that have level >= 2
+    // Total 18 sub-skills, count how many have MAX level >= 2
+    const skillsPassedCount = Object.values(scores).filter(level => level >= 2).length;
+    const totalSubSkills = CRITERIA_LIST.length; // 18
     
     document.getElementById('total-activities').textContent = studentActivities.length;
     document.getElementById('approved-activities').textContent = approvedCount;
-    document.getElementById('skill-achieved').textContent = skillsPassedCount;
+    document.getElementById('skill-achieved').textContent = `${skillsPassedCount}/${totalSubSkills}`;
     document.getElementById('competency-score').textContent = totalScore;
     
     renderCompetencyChart(scores);
@@ -305,7 +311,7 @@ function showDashboard() {
 }
 
 // ============================================
-// RENDER RADAR CHART WITH TARGETS
+// RENDER RADAR CHART WITH TARGETS - USE MAX
 // ============================================
 function renderCompetencyChart(scores) {
     const ctx = document.getElementById('competencyChart').getContext('2d');
@@ -316,7 +322,9 @@ function renderCompetencyChart(scores) {
     
     const domainScores = calculateDomainScores(scores);
     const labels = DOMAINS.map(d => d.name);
-    const data = DOMAINS.map(d => domainScores[d.name].avg);
+    
+    // USE MAX level of sub-skills for each domain
+    const data = DOMAINS.map(d => domainScores[d.name].maxLevel);
     
     // Min target (Level 2) and Ideal target (Level 3)
     const minTarget = [2, 2, 2, 2, 2, 2];
@@ -328,7 +336,7 @@ function renderCompetencyChart(scores) {
             labels: labels,
             datasets: [
                 {
-                    label: 'ระดับปัจจุบัน',
+                    label: 'ระดับปัจจุบัน | Current',
                     data: data,
                     backgroundColor: 'rgba(102, 126, 234, 0.3)',
                     borderColor: '#667eea',
@@ -340,7 +348,7 @@ function renderCompetencyChart(scores) {
                     pointHoverRadius: 8
                 },
                 {
-                    label: 'ขั้นต่ำ (Lv.2)',
+                    label: 'ขั้นต่ำ | Min (Lv.2)',
                     data: minTarget,
                     backgroundColor: 'rgba(241, 196, 15, 0.1)',
                     borderColor: '#f1c40f',
@@ -409,7 +417,7 @@ function renderCompetencyChart(scores) {
 }
 
 // ============================================
-// RENDER COMPETENCY SUMMARY
+// RENDER COMPETENCY SUMMARY - USE MAX
 // ============================================
 function renderCompetencySummary(scores, domainScores) {
     const container = document.getElementById('competency-summary');
@@ -418,13 +426,13 @@ function renderCompetencySummary(scores, domainScores) {
         const ds = domainScores[domain.name];
         const domainCriteria = CRITERIA_LIST.filter(c => c.domain === domain.name);
         
-        // Determine status
+        // Determine status based on MAX level (not avg)
         let statusClass = 'low';
         let statusText = '⚠️ ต้องพัฒนา';
-        if (ds.avg >= 3) {
+        if (ds.maxLevel >= 3) {
             statusClass = 'excellent';
             statusText = '⭐ ยอดเยี่ยม';
-        } else if (ds.avg >= 2) {
+        } else if (ds.maxLevel >= 2) {
             statusClass = 'good';
             statusText = '✅ ผ่านเกณฑ์';
         }
@@ -449,7 +457,7 @@ function renderCompetencySummary(scores, domainScores) {
                         <span>${domain.name}</span>
                     </div>
                     <div class="domain-summary-level">
-                        <span class="avg-level">Lv.${ds.avg}</span>
+                        <span class="avg-level">Lv.${ds.maxLevel}</span>
                         <span class="status-text ${statusClass}">${statusText}</span>
                     </div>
                 </div>

@@ -1193,9 +1193,9 @@
             list.innerHTML = '<div class="loading-inline">กำลังโหลด... | Loading...</div>';
             
             try {
+                // Remove orderBy to avoid needing composite index
                 const q = await db.collection('organizerActivities')
                     .where('organizerEmail', '==', currentOrganizer.email)
-                    .orderBy('createdAt', 'desc')
                     .get();
                 
                 if (q.empty) {
@@ -1207,7 +1207,14 @@
                     return;
                 }
                 
-                list.innerHTML = q.docs.map(doc => {
+                // Sort client-side by createdAt (newest first)
+                const sortedDocs = q.docs.sort((a, b) => {
+                    const aTime = a.data().createdAt?.toMillis?.() || 0;
+                    const bTime = b.data().createdAt?.toMillis?.() || 0;
+                    return bTime - aTime;
+                });
+                
+                list.innerHTML = sortedDocs.map(doc => {
                     const d = doc.data();
                     const statusClass = (d.status || 'draft').toLowerCase();
                     const statusText = {

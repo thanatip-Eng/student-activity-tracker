@@ -61,6 +61,7 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" data-tab="student-search">🔍 ค้นหานศ. | Search Student</button>
+            <button class="tab" data-tab="activities-manage">📚 จัดการกิจกรรม | Activities</button>
             <button class="tab" data-tab="student-submissions">📝 นศ.แจ้ง | Student</button>
             <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
             <button class="tab" data-tab="transfer">📤 โอนข้อมูล | Transfer</button>
@@ -133,6 +134,42 @@
                 <div id="student-not-found" class="not-found-box" style="display: none;">
                     <span class="icon">😕</span>
                     <p>ไม่พบข้อมูลนักศึกษา | Student not found</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Activities Management -->
+        <div id="tab-activities-manage" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📚 จัดการกิจกรรม | Activity Management</h2>
+                    <button class="btn-add-organizer" onclick="openAddActivityModal()">
+                        ➕ เพิ่มกิจกรรมใหม่ | Add Activity
+                    </button>
+                </div>
+                <p class="panel-desc">เพิ่ม/แก้ไข/ลบ กิจกรรมในระบบ | Add/Edit/Delete activities in the system</p>
+                
+                <!-- Search Box -->
+                <div class="search-box" style="margin-bottom: 20px;">
+                    <input type="text" id="activity-search-input" placeholder="ค้นหากิจกรรม... | Search activity...">
+                    <button class="btn-search" onclick="searchActivitiesAdmin()">🔍 ค้นหา | Search</button>
+                    <button class="btn-search" style="background: #27ae60;" onclick="loadAllActivitiesAdmin()">📋 ทั้งหมด | All</button>
+                </div>
+                
+                <!-- Activities Stats -->
+                <div class="organizers-stats" style="margin-bottom: 20px;">
+                    <div class="org-stat">
+                        <span class="org-stat-number" id="total-activities-admin">0</span>
+                        <span class="org-stat-label">กิจกรรมทั้งหมด | Total</span>
+                    </div>
+                    <div class="org-stat">
+                        <span class="org-stat-number" id="activities-with-skills">0</span>
+                        <span class="org-stat-label">มี Skills | With Skills</span>
+                    </div>
+                </div>
+                
+                <div id="activities-manage-list" class="organizers-list">
+                    <div class="loading-inline">กรุณาค้นหาหรือกด "ทั้งหมด" | Search or click "All"</div>
                 </div>
             </div>
         </div>
@@ -380,6 +417,52 @@
             </div>
         </div>
 
+        <!-- Activity Management Modal -->
+        <div id="activity-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3 id="activity-modal-title">➕ เพิ่มกิจกรรม | Add Activity</h3>
+                    <button class="modal-close" onclick="closeActivityModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-activity-id">
+                    
+                    <div class="form-group">
+                        <label>ชื่อกิจกรรม | Activity Name <span style="color:red">*</span></label>
+                        <input type="text" id="act-name" placeholder="ชื่อกิจกรรม">
+                    </div>
+                    
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label>ผู้จัด | Organizer</label>
+                            <input type="text" id="act-organizer" placeholder="ชื่อผู้จัด/หน่วยงาน">
+                        </div>
+                        <div class="form-group">
+                            <label>วันที่ | Date</label>
+                            <input type="date" id="act-date">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>รายละเอียด | Description</label>
+                        <textarea id="act-description" rows="2" placeholder="รายละเอียดกิจกรรม..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🎯 ทักษะและระดับ | Skills & Levels</label>
+                        <p style="font-size:0.85em; color:#666; margin-bottom:10px;">เลือกทักษะและกำหนดระดับ (1-4) | Select skills and set levels</p>
+                        <div id="activity-skills-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:8px; max-height:300px; overflow-y:auto; padding:10px; background:#f8f9fa; border-radius:8px;">
+                            <!-- Skills will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeActivityModal()">ยกเลิก | Cancel</button>
+                    <button class="btn-primary" onclick="saveActivityAdmin()">💾 บันทึก | Save</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading Overlay -->
         <div id="loading-overlay" class="loading-overlay">
             <div class="loading-box">
@@ -458,6 +541,13 @@
                     // Load organizers when tab is clicked
                     if (tab.dataset.tab === 'organizers') {
                         loadOrganizers();
+                    }
+                    
+                    // Load activities management when tab is clicked
+                    if (tab.dataset.tab === 'activities-manage') {
+                        if (allActivitiesCache.length === 0) {
+                            loadAllActivitiesAdmin();
+                        }
                     }
                 });
             });
@@ -1958,6 +2048,260 @@
                 levelSelect.disabled = !e.target.checked;
             }
         });
+
+        // ============================================
+        // ACTIVITY MANAGEMENT FUNCTIONS
+        // ============================================
+        let allActivitiesCache = [];
+
+        async function loadAllActivitiesAdmin() {
+            const list = document.getElementById('activities-manage-list');
+            list.innerHTML = '<div class="loading-inline">กำลังโหลด... | Loading...</div>';
+            
+            try {
+                const snapshot = await db.collection('activities').get();
+                allActivitiesCache = [];
+                
+                let withSkills = 0;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    allActivitiesCache.push({ id: doc.id, ...data });
+                    if (data.skills && data.skills.length > 0) withSkills++;
+                });
+                
+                // Sort by name
+                allActivitiesCache.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                
+                document.getElementById('total-activities-admin').textContent = allActivitiesCache.length;
+                document.getElementById('activities-with-skills').textContent = withSkills;
+                
+                renderActivitiesAdminList(allActivitiesCache);
+                
+            } catch (error) {
+                console.error('Load activities error:', error);
+                list.innerHTML = `<div class="empty-state"><p>❌ Error: ${error.message}</p></div>`;
+            }
+        }
+
+        function searchActivitiesAdmin() {
+            const searchTerm = document.getElementById('activity-search-input').value.trim().toLowerCase();
+            if (!searchTerm) {
+                loadAllActivitiesAdmin();
+                return;
+            }
+            
+            const filtered = allActivitiesCache.filter(a => 
+                (a.name || '').toLowerCase().includes(searchTerm) ||
+                (a.organizer || '').toLowerCase().includes(searchTerm)
+            );
+            
+            renderActivitiesAdminList(filtered);
+        }
+
+        function renderActivitiesAdminList(activities) {
+            const list = document.getElementById('activities-manage-list');
+            
+            if (activities.length === 0) {
+                list.innerHTML = `<div class="empty-state"><p>📭 ไม่พบกิจกรรม | No activities found</p></div>`;
+                return;
+            }
+            
+            list.innerHTML = activities.map(act => {
+                const skillsHtml = act.skills && act.skills.length > 0 
+                    ? act.skills.map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join(' ')
+                    : '<span style="color:#e74c3c;">⚠️ ไม่มี skills</span>';
+                
+                return `
+                    <div class="organizer-item" style="border-left: 4px solid ${act.skills?.length ? '#27ae60' : '#e74c3c'};">
+                        <div class="org-info" style="flex:1;">
+                            <div class="org-email" style="font-weight:600; color:#1a472a;">
+                                ${act.name || 'ไม่ระบุชื่อ'}
+                            </div>
+                            <div class="org-name" style="font-size:0.85em; color:#666;">
+                                📅 ${act.date || '-'} | 👤 ${act.organizer || '-'}
+                            </div>
+                            <div style="margin-top:5px;">
+                                ${skillsHtml}
+                            </div>
+                        </div>
+                        <div class="org-actions">
+                            <button class="btn-mini btn-edit" onclick="editActivityAdmin('${act.id}')">✏️ แก้ไข</button>
+                            <button class="btn-mini btn-delete" onclick="deleteActivityAdmin('${act.id}', '${(act.name || '').replace(/'/g, "\\'")}')">🗑️ ลบ</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddActivityModal() {
+            document.getElementById('activity-modal-title').textContent = '➕ เพิ่มกิจกรรม | Add Activity';
+            document.getElementById('edit-activity-id').value = '';
+            document.getElementById('act-name').value = '';
+            document.getElementById('act-organizer').value = '';
+            document.getElementById('act-date').value = '';
+            document.getElementById('act-description').value = '';
+            
+            // Populate skills grid
+            const grid = document.getElementById('activity-skills-grid');
+            grid.innerHTML = CRITERIA_LIST.map(c => `
+                <div style="display:flex; align-items:center; gap:5px; background:white; padding:8px; border-radius:6px;">
+                    <input type="checkbox" class="act-skill-cb" data-code="${c.code}" id="act-skill-${c.code}">
+                    <label for="act-skill-${c.code}" style="flex:1; font-size:0.85em; cursor:pointer;">
+                        <strong>${c.code}</strong> ${c.nameTh}
+                    </label>
+                    <select class="act-skill-level" data-code="${c.code}" disabled style="width:60px; padding:3px;">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            grid.querySelectorAll('.act-skill-cb').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const code = e.target.dataset.code;
+                    const levelSelect = grid.querySelector(`.act-skill-level[data-code="${code}"]`);
+                    levelSelect.disabled = !e.target.checked;
+                });
+            });
+            
+            document.getElementById('activity-modal').classList.add('show');
+        }
+
+        async function editActivityAdmin(activityId) {
+            const activity = allActivitiesCache.find(a => a.id === activityId);
+            if (!activity) {
+                alert('ไม่พบกิจกรรม');
+                return;
+            }
+            
+            document.getElementById('activity-modal-title').textContent = '✏️ แก้ไขกิจกรรม | Edit Activity';
+            document.getElementById('edit-activity-id').value = activityId;
+            document.getElementById('act-name').value = activity.name || '';
+            document.getElementById('act-organizer').value = activity.organizer || '';
+            document.getElementById('act-date').value = activity.date || '';
+            document.getElementById('act-description').value = activity.description || '';
+            
+            // Populate skills grid
+            const grid = document.getElementById('activity-skills-grid');
+            grid.innerHTML = CRITERIA_LIST.map(c => {
+                const existingSkill = activity.skills?.find(s => s.code === c.code);
+                const checked = existingSkill ? 'checked' : '';
+                const level = existingSkill?.level || 2;
+                const disabled = existingSkill ? '' : 'disabled';
+                
+                return `
+                    <div style="display:flex; align-items:center; gap:5px; background:${existingSkill ? '#e8f5e9' : 'white'}; padding:8px; border-radius:6px;">
+                        <input type="checkbox" class="act-skill-cb" data-code="${c.code}" id="act-skill-${c.code}" ${checked}>
+                        <label for="act-skill-${c.code}" style="flex:1; font-size:0.85em; cursor:pointer;">
+                            <strong>${c.code}</strong> ${c.nameTh}
+                        </label>
+                        <select class="act-skill-level" data-code="${c.code}" ${disabled} style="width:60px; padding:3px;">
+                            <option value="1" ${level === 1 ? 'selected' : ''}>1</option>
+                            <option value="2" ${level === 2 ? 'selected' : ''}>2</option>
+                            <option value="3" ${level === 3 ? 'selected' : ''}>3</option>
+                            <option value="4" ${level === 4 ? 'selected' : ''}>4</option>
+                        </select>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add event listeners
+            grid.querySelectorAll('.act-skill-cb').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const code = e.target.dataset.code;
+                    const levelSelect = grid.querySelector(`.act-skill-level[data-code="${code}"]`);
+                    levelSelect.disabled = !e.target.checked;
+                    e.target.closest('div').style.background = e.target.checked ? '#e8f5e9' : 'white';
+                });
+            });
+            
+            document.getElementById('activity-modal').classList.add('show');
+        }
+
+        function closeActivityModal() {
+            document.getElementById('activity-modal').classList.remove('show');
+        }
+
+        async function saveActivityAdmin() {
+            const activityId = document.getElementById('edit-activity-id').value;
+            const name = document.getElementById('act-name').value.trim();
+            const organizer = document.getElementById('act-organizer').value.trim();
+            const date = document.getElementById('act-date').value;
+            const description = document.getElementById('act-description').value.trim();
+            
+            if (!name) {
+                alert('⚠️ กรุณาระบุชื่อกิจกรรม | Please enter activity name');
+                return;
+            }
+            
+            // Collect skills
+            const skills = [];
+            document.querySelectorAll('.act-skill-cb:checked').forEach(cb => {
+                const code = cb.dataset.code;
+                const levelSelect = document.querySelector(`.act-skill-level[data-code="${code}"]`);
+                skills.push({ 
+                    code, 
+                    level: parseInt(levelSelect.value),
+                    nameTh: CRITERIA_LIST.find(c => c.code === code)?.nameTh || ''
+                });
+            });
+            
+            showLoading(true, 'กำลังบันทึก... | Saving...');
+            
+            try {
+                const activityData = {
+                    name,
+                    organizer,
+                    date,
+                    description,
+                    skills,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (activityId) {
+                    // Update existing
+                    await db.collection('activities').doc(activityId).update(activityData);
+                    alert('✅ อัพเดตกิจกรรมเรียบร้อย | Activity updated');
+                } else {
+                    // Create new
+                    activityData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('activities').add(activityData);
+                    alert('✅ เพิ่มกิจกรรมเรียบร้อย | Activity added');
+                }
+                
+                closeActivityModal();
+                loadAllActivitiesAdmin();
+                
+            } catch (error) {
+                console.error('Save activity error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function deleteActivityAdmin(activityId, activityName) {
+            if (!confirm(`⚠️ ยืนยันการลบกิจกรรม "${activityName}"?\nConfirm delete this activity?`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลังลบ... | Deleting...');
+            
+            try {
+                await db.collection('activities').doc(activityId).delete();
+                alert('✅ ลบกิจกรรมเรียบร้อย | Activity deleted');
+                loadAllActivitiesAdmin();
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
     </script>
 </body>
 </html>
