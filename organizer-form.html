@@ -242,6 +242,116 @@
             box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
         }
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        
+        /* Role Selection */
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .role-card {
+            border: 3px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .role-card:hover {
+            border-color: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .role-card.selected {
+            border-color: #27ae60;
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+        }
+        .role-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #27ae60;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .role-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .role-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #1a472a;
+            margin-bottom: 5px;
+        }
+        .role-subtitle {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .role-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .role-card.organizer .role-level { background: #fff3e0; color: #e65100; }
+        .role-card.staff .role-level { background: #e3f2fd; color: #1565c0; }
+        .role-card.participant .role-level { background: #f3e5f5; color: #7b1fa2; }
+        .role-skills {
+            font-size: 0.85em;
+            color: #555;
+            line-height: 1.6;
+        }
+        .role-skills li {
+            margin-bottom: 3px;
+        }
+        
+        /* Role Info Box */
+        .role-info-box {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .role-info-box h4 {
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+        .role-info-box p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        .role-info-box .example {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .role-info-box .example h5 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .role-info-box .example ul {
+            margin-left: 20px;
+            color: #555;
+        }
+        .role-info-box .example li {
+            margin-bottom: 5px;
+        }
+        
         .skills-selector { background: #f0fff4; border-radius: 12px; padding: 20px; }
         .selected-skills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .no-skills { color: #999; font-style: italic; }
@@ -301,6 +411,25 @@
         .btn-save:hover { background: #e8f5e9; }
         .btn-submit { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4); }
+        
+        .btn-another-role {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+        .btn-another-role:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4);
+        }
+        
         .activity-item {
             background: #f8f9fa;
             border-radius: 12px;
@@ -319,6 +448,17 @@
         .activity-status.pending { background: #fff3e0; color: #e67e22; }
         .activity-status.approved { background: #e8f5e9; color: #27ae60; }
         .activity-status.rejected { background: #ffebee; color: #e74c3c; }
+        .activity-role {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .activity-role.organizer { background: #fff3e0; color: #e65100; }
+        .activity-role.staff { background: #e3f2fd; color: #1565c0; }
+        .activity-role.participant { background: #f3e5f5; color: #7b1fa2; }
         .activity-meta { color: #666; font-size: 0.9em; margin-bottom: 10px; }
         .activity-skills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
         .skill-mini { background: #e3f2fd; color: #1976d2; padding: 3px 10px; border-radius: 15px; font-size: 0.8em; }
@@ -343,7 +483,7 @@
         .skill-item:hover { background: #e8f5e9; }
         .skill-item.selected { background: #e8f5e9; border: 2px solid #27ae60; }
         .skill-info { flex: 1; display: flex; align-items: center; gap: 8px; }
-        .skill-info label { cursor: pointer; }
+        .skill-info label { cursor: pointer; font-size: 0.9em; }
         .skill-level { padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd; }
         .modal-footer { padding: 20px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
         .btn-modal { padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
@@ -353,12 +493,35 @@
         .loading-overlay.show { display: flex; }
         .spinner { width: 50px; height: 50px; border: 4px solid #e0e0e0; border-top-color: #27ae60; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Preset Skills Display */
+        .preset-skills-info {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .preset-skills-info h5 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        .preset-skill-tag {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 3px;
+        }
+        
         @media (max-width: 600px) {
             .login-card { padding: 30px 20px; }
             .header { flex-direction: column; text-align: center; }
             .btn-submit-group { flex-direction: column; }
             .organizer-bar { flex-direction: column; gap: 15px; text-align: center; }
             .first-login-info { padding: 20px 15px; }
+            .role-selector { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -395,32 +558,21 @@
                         <span class="step-number">1</span>
                         <div class="step-text">
                             <strong>ครั้งแรก (First Login):</strong><br>
-                            กรอก Email และ <strong>กำหนดรหัสผ่านที่ต้องการใช้</strong> (อย่างน้อย 4 ตัวอักษร)<br>
-                            Enter your Email and <strong>create your password</strong> (min 4 characters)
+                            กรอก Email และ <strong>กำหนดรหัสผ่านที่ต้องการใช้</strong><br>
+                            Enter Email and <strong>create your password</strong>
                         </div>
                     </div>
                     
                     <div class="info-step">
                         <span class="step-number">2</span>
                         <div class="step-text">
-                            <strong>ครั้งต่อไป (Next Login):</strong><br>
-                            ใช้ Email และรหัสผ่านเดิมที่ตั้งไว้ครั้งแรก<br>
-                            Use the same Email and password you set initially
-                        </div>
-                    </div>
-                    
-                    <div class="info-step">
-                        <span class="step-number">3</span>
-                        <div class="step-text">
-                            <strong>รหัสผ่านใช้ได้ตลอด (Password is Permanent):</strong><br>
-                            รหัสผ่านที่กำหนดจะใช้งานได้ตลอดไป ไม่หมดอายุ<br>
-                            Your password will work forever, no expiration
+                            <strong>ครั้งต่อไป:</strong> ใช้ Email และรหัสผ่านเดิม<br>
+                            <strong>Next time:</strong> Use same credentials
                         </div>
                     </div>
                     
                     <div class="contact-box">
                         <p>🔐 <strong>ลืมรหัสผ่าน? | Forgot Password?</strong></p>
-                        <p>กรุณาติดต่อเพื่อขอรีเซ็ตรหัสผ่าน | Contact us to reset password:</p>
                         <a href="mailto:talentdev@eng.cmu.ac.th">📧 talentdev@eng.cmu.ac.th</a>
                     </div>
                 </div>
@@ -446,11 +598,73 @@
 
             <div id="tab-new-activity" class="tab-content active">
                 <div class="form-card">
-                    <h2>📋 ลงทะเบียนกิจกรรมใหม่ | Register New Activity</h2>
+                    <h2>📋 ลงทะเบียนกิจกรรม | Register Activity</h2>
+                    
+                    <!-- Role Info Box -->
+                    <div class="role-info-box">
+                        <h4>💡 แนวคิดการแยกบทบาท | Role-Based Registration</h4>
+                        <p>
+                            กิจกรรมเดียวกัน ผู้เข้าร่วมแต่ละบทบาทจะได้รับทักษะแตกต่างกัน<br>
+                            Same activity, different roles receive different skills
+                        </p>
+                        <div class="example">
+                            <h5>📌 ตัวอย่าง | Example: "Workshop Generative AI"</h5>
+                            <ul>
+                                <li><strong>ทีมผู้จัด:</strong> ได้ทักษะผู้นำ, การออกแบบกิจกรรม (Lv.3-4)</li>
+                                <li><strong>Staff:</strong> ได้ทักษะการทำงานร่วมกัน (Lv.2)</li>
+                                <li><strong>ผู้เข้าร่วม:</strong> ได้ความรู้จาก workshop (Lv.1-2)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
                     <form id="activity-form" onsubmit="saveActivity(event)">
                         <input type="hidden" id="edit-activity-id">
                         
-                        <div class="section-title">👤 ข้อมูลผู้จัด | Organizer Info</div>
+                        <!-- Step 1: Select Role -->
+                        <div class="section-title">👤 ขั้นตอน 1: เลือกบทบาทผู้เข้าร่วม | Step 1: Select Role <span class="required">*</span></div>
+                        
+                        <div class="role-selector">
+                            <div class="role-card organizer" data-role="organizer" onclick="selectRole('organizer')">
+                                <div class="role-icon">👑</div>
+                                <div class="role-title">ทีมผู้จัดกิจกรรม</div>
+                                <div class="role-subtitle">Organizer Team</div>
+                                <div class="role-level">Level 3-4 ผู้นำ/สร้างสรรค์</div>
+                                <ul class="role-skills">
+                                    <li>✓ ออกแบบและวางแผนกิจกรรม</li>
+                                    <li>✓ เป็นวิทยากร/ผู้นำเสนอ</li>
+                                    <li>✓ ประสานงานทีม</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="role-card staff" data-role="staff" onclick="selectRole('staff')">
+                                <div class="role-icon">🤝</div>
+                                <div class="role-title">Staff ช่วยงาน</div>
+                                <div class="role-subtitle">Event Staff</div>
+                                <div class="role-level">Level 2 ปฏิบัติ</div>
+                                <ul class="role-skills">
+                                    <li>✓ ทำงานตามหน้าที่ที่ได้รับ</li>
+                                    <li>✓ ช่วยเหลือทีมผู้จัด</li>
+                                    <li>✓ ดูแลผู้เข้าร่วม</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="role-card participant" data-role="participant" onclick="selectRole('participant')">
+                                <div class="role-icon">👥</div>
+                                <div class="role-title">ผู้เข้าร่วมกิจกรรม</div>
+                                <div class="role-subtitle">Participant</div>
+                                <div class="role-level">Level 1-2 เรียนรู้</div>
+                                <ul class="role-skills">
+                                    <li>✓ รับความรู้จากการบรรยาย</li>
+                                    <li>✓ ฝึกทักษะใน workshop</li>
+                                    <li>✓ เข้าร่วมกิจกรรม</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="selected-role" value="">
+                        
+                        <!-- Step 2: Activity Info -->
+                        <div class="section-title">📝 ขั้นตอน 2: ข้อมูลกิจกรรม | Step 2: Activity Info</div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>ชื่อผู้จัด/หน่วยงาน | Organizer Name <span class="required">*</span></label>
@@ -458,76 +672,69 @@
                             </div>
                             <div class="form-group">
                                 <label>สังกัด | Department <span class="required">*</span></label>
-                                <input type="text" id="department" required placeholder="เช่น คณะวิศวกรรมศาสตร์ | e.g. Faculty of Engineering">
+                                <input type="text" id="department" required placeholder="เช่น คณะวิศวกรรมศาสตร์">
                             </div>
                         </div>
                         
-                        <div class="section-title">📝 ข้อมูลกิจกรรม | Activity Info</div>
                         <div class="form-group">
                             <label>ชื่อกิจกรรม | Activity Name <span class="required">*</span></label>
-                            <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners">
+                            <input type="text" id="activity-name" required placeholder="เช่น Workshop Generative AI เพื่อการเรียน">
+                            <small style="color: #666;">ระบบจะต่อท้ายบทบาทให้อัตโนมัติ | Role will be appended automatically</small>
                         </div>
+                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label>วันที่เริ่ม | Start Date <span class="required">*</span></label>
-                                <input type="date" id="start-date" required>
+                                <label>วันที่จัดกิจกรรม | Activity Date <span class="required">*</span></label>
+                                <input type="date" id="activity-date" required>
                             </div>
                             <div class="form-group">
-                                <label>วันที่สิ้นสุด | End Date <span class="required">*</span></label>
-                                <input type="date" id="end-date" required>
+                                <label>ระยะเวลา | Duration</label>
+                                <input type="text" id="duration" placeholder="เช่น 3 ชั่วโมง | e.g. 3 hours">
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>ระยะเวลา | Duration <span class="required">*</span></label>
-                                <input type="number" id="duration" required min="1" placeholder="จำนวน | Amount">
-                            </div>
-                            <div class="form-group">
-                                <label>หน่วย | Unit</label>
-                                <select id="duration-unit">
-                                    <option value="ชั่วโมง | Hours">ชั่วโมง | Hours</option>
-                                    <option value="วัน | Days">วัน | Days</option>
-                                    <option value="สัปดาห์ | Weeks">สัปดาห์ | Weeks</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>ระดับกิจกรรม | Activity Level <span class="required">*</span></label>
-                            <select id="activity-level" required>
-                                <option value="1">ระดับ 1 | Level 1 - เข้าร่วม/รับฟัง | Participation</option>
-                                <option value="2" selected>ระดับ 2 | Level 2 - ปฏิบัติ/ฝึกหัด | Practice</option>
-                                <option value="3">ระดับ 3 | Level 3 - ประยุกต์/ดำเนินการ | Application</option>
-                                <option value="4">ระดับ 4 | Level 4 - สร้างสรรค์/เป็นผู้นำ | Leadership</option>
-                            </select>
-                        </div>
+                        
                         <div class="form-group">
                             <label>รายละเอียดกิจกรรม | Description</label>
-                            <textarea id="description" rows="4" placeholder="อธิบายกิจกรรมโดยย่อ... | Brief activity description..."></textarea>
+                            <textarea id="description" rows="3" placeholder="อธิบายกิจกรรมโดยย่อ..."></textarea>
                         </div>
 
-                        <div class="section-title">🎯 ทักษะที่ได้รับ | Skills Gained <span class="required">*</span></div>
+                        <!-- Step 3: Skills -->
+                        <div class="section-title">🎯 ขั้นตอน 3: ทักษะที่ได้รับ | Step 3: Skills <span class="required">*</span></div>
+                        
+                        <div id="preset-skills-display" class="preset-skills-info" style="display: none;">
+                            <h5>⚡ ทักษะที่แนะนำตามบทบาท | Recommended Skills for Role</h5>
+                            <div id="preset-skills-list"></div>
+                            <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                                คุณสามารถปรับเปลี่ยนทักษะได้ด้านล่าง | You can modify skills below
+                            </p>
+                        </div>
+                        
                         <div class="skills-selector">
                             <div id="selected-skills" class="selected-skills">
                                 <p class="no-skills">ยังไม่ได้เลือกทักษะ | No skills selected</p>
                             </div>
                             <button type="button" class="btn-add-skill" onclick="openSkillModal()">
-                                ➕ เลือกทักษะ | Select Skills
+                                ➕ เลือก/แก้ไขทักษะ | Select/Edit Skills
                             </button>
                         </div>
 
-                        <div class="section-title">👥 รายชื่อนักศึกษา | Student List <span class="required">*</span></div>
+                        <!-- Step 4: Students -->
+                        <div class="section-title">👥 ขั้นตอน 4: รายชื่อนักศึกษา | Step 4: Student List <span class="required">*</span></div>
                         <div class="form-group">
                             <label>รหัสนักศึกษา | Student IDs (หนึ่งรหัสต่อบรรทัด | one per line)</label>
                             <textarea id="student-ids" class="student-ids-input" rows="6" 
                                 placeholder="640610001
 640610002
 640610003"></textarea>
-                            <small style="color: #666;">ใส่รหัสนักศึกษา (9 หลัก) ที่เข้าร่วมกิจกรรม | Enter student IDs (9 digits) who participated</small>
+                            <small id="student-count" style="color: #27ae60; font-weight: 600;">0 รายชื่อ | 0 students</small>
                         </div>
 
                         <div class="btn-submit-group">
                             <button type="submit" class="btn-save">💾 บันทึกร่าง | Save Draft</button>
-                            <button type="button" class="btn-submit" onclick="saveAndSubmit()">📤 ส่งขออนุมัติ | Submit for Approval</button>
+                            <button type="button" class="btn-submit" onclick="saveAndSubmit()">📤 ส่งขออนุมัติ | Submit</button>
+                            <button type="button" class="btn-another-role" onclick="saveAndCreateAnotherRole()">
+                                🔄 บันทึก & สร้าง Role ใหม่ | Save & New Role
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -593,9 +800,93 @@
             { code: "6.3", nameTh: "ความเห็นอกเห็นใจ", nameEn: "Empathy", domain: "Self Development" }
         ];
         const DOMAINS = ["Critical Thinking", "Communication", "Teamwork", "Digital & Learning", "Innovation", "Self Development"];
-        let currentOrganizer = null, selectedSkills = [], currentActivityId = null;
+        
+        // Role presets
+        const ROLE_PRESETS = {
+            organizer: {
+                name: "ทีมผู้จัด | Organizer",
+                suffix: "(ทีมผู้จัด)",
+                suffixEn: "(Organizer)",
+                defaultLevel: 4,
+                skills: [
+                    { code: "2.1", level: 4 }, // Presentation
+                    { code: "3.1", level: 4 }, // Role Understanding
+                    { code: "3.2", level: 4 }, // Task Management
+                    { code: "5.1", level: 3 }, // Human-Centered Design
+                    { code: "5.2", level: 4 }, // Project Management
+                    { code: "6.1", level: 3 }  // Personal Growth
+                ]
+            },
+            staff: {
+                name: "Staff | Staff",
+                suffix: "(Staff)",
+                suffixEn: "(Staff)",
+                defaultLevel: 2,
+                skills: [
+                    { code: "3.1", level: 2 }, // Role Understanding
+                    { code: "3.2", level: 2 }, // Task Management
+                    { code: "3.3", level: 2 }, // Collaboration
+                    { code: "6.2", level: 2 }  // Resilience
+                ]
+            },
+            participant: {
+                name: "ผู้เข้าร่วม | Participant",
+                suffix: "(ผู้เข้าร่วม)",
+                suffixEn: "(Participant)",
+                defaultLevel: 2,
+                skills: [
+                    { code: "4.1", level: 2 }, // Learning Agility
+                    { code: "4.2", level: 2 }  // Digital Literacy
+                ]
+            }
+        };
+        
+        let currentOrganizer = null;
+        let selectedSkills = [];
+        let currentRole = null;
+        let savedActivityBase = null; // Store base activity info for creating multiple roles
 
-        // LOGIN - Anyone can register (no permission check)
+        // Student count update
+        document.getElementById('student-ids').addEventListener('input', function() {
+            const ids = this.value.trim().split('\n').filter(id => id.trim().length > 0);
+            document.getElementById('student-count').textContent = `${ids.length} รายชื่อ | ${ids.length} students`;
+        });
+
+        // Role Selection
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('selected-role').value = role;
+            
+            // Update UI
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`.role-card[data-role="${role}"]`).classList.add('selected');
+            
+            // Apply preset skills
+            const preset = ROLE_PRESETS[role];
+            selectedSkills = preset.skills.map(s => {
+                const criteria = CRITERIA_LIST.find(c => c.code === s.code);
+                return {
+                    code: s.code,
+                    level: s.level,
+                    nameTh: criteria.nameTh,
+                    nameEn: criteria.nameEn
+                };
+            });
+            
+            // Show preset skills info
+            const presetDisplay = document.getElementById('preset-skills-display');
+            const presetList = document.getElementById('preset-skills-list');
+            presetDisplay.style.display = 'block';
+            presetList.innerHTML = selectedSkills.map(s => 
+                `<span class="preset-skill-tag">${s.code} ${s.nameTh} Lv.${s.level}</span>`
+            ).join('');
+            
+            renderSelectedSkills();
+        }
+
+        // LOGIN - Anyone can register
         async function loginOrganizer() {
             const email = document.getElementById('organizer-email').value.trim().toLowerCase();
             const password = document.getElementById('organizer-password').value.trim();
@@ -607,18 +898,17 @@
                 return; 
             }
             if (!password || password.length < 4) { 
-                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร) | Password must be at least 4 characters'; 
+                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)'; 
                 return; 
             }
             
             showLoading(true, 'กำลังเข้าสู่ระบบ... | Logging in...');
             
             try {
-                // Check if organizer exists
                 const q = await db.collection('organizers').where('email', '==', email).limit(1).get();
                 
                 if (q.empty) {
-                    // First time login - create new organizer record
+                    // First time - create new organizer
                     const newOrganizer = {
                         email: email,
                         name: email.split('@')[0],
@@ -628,12 +918,10 @@
                     const docRef = await db.collection('organizers').add(newOrganizer);
                     currentOrganizer = { id: docRef.id, ...newOrganizer };
                 } else {
-                    // Existing organizer - verify password
                     const doc = q.docs[0];
                     const data = doc.data();
                     
                     if (!data.password) {
-                        // Password not set yet - set it now
                         await db.collection('organizers').doc(doc.id).update({ password });
                         data.password = password;
                     } else if (password !== data.password) {
@@ -645,7 +933,6 @@
                     currentOrganizer = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
                 }
                 
-                // Show main section
                 document.getElementById('organizer-avatar').textContent = currentOrganizer.name.charAt(0).toUpperCase();
                 document.getElementById('display-name').textContent = currentOrganizer.name;
                 document.getElementById('display-email').textContent = email;
@@ -664,7 +951,11 @@
         function logoutOrganizer() {
             currentOrganizer = null; 
             selectedSkills = [];
+            currentRole = null;
+            savedActivityBase = null;
             document.getElementById('activity-form').reset();
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('preset-skills-display').style.display = 'none';
             document.getElementById('main-section').style.display = 'none';
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('organizer-email').value = '';
@@ -691,11 +982,11 @@
                     <div class="skill-item" data-code="${s.code}">
                         <div class="skill-info">
                             <input type="checkbox" id="skill-${s.code}">
-                            <label for="skill-${s.code}"><strong>${s.code}</strong> ${s.nameTh}<br><small>${s.nameEn}</small></label>
+                            <label for="skill-${s.code}"><strong>${s.code}</strong> ${s.nameTh}</label>
                         </div>
                         <select class="skill-level" disabled>
                             <option value="1">Lv.1</option>
-                            <option value="2" selected>Lv.2</option>
+                            <option value="2">Lv.2</option>
                             <option value="3">Lv.3</option>
                             <option value="4">Lv.4</option>
                         </select>
@@ -726,7 +1017,7 @@
                 } else { 
                     cb.checked = false; 
                     sel.disabled = true; 
-                    sel.value = '2'; 
+                    sel.value = currentRole ? ROLE_PRESETS[currentRole].defaultLevel : 2; 
                     item.classList.remove('selected'); 
                 }
             });
@@ -769,6 +1060,32 @@
             renderSelectedSkills(); 
         }
 
+        // Validation
+        function validateForm() {
+            if (!currentRole) {
+                alert('⚠️ กรุณาเลือกบทบาทผู้เข้าร่วม | Please select a role');
+                return false;
+            }
+            if (selectedSkills.length === 0) { 
+                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ | Please select at least 1 skill'); 
+                return false; 
+            }
+            const studentIdsRaw = document.getElementById('student-ids').value.trim();
+            const studentIds = studentIdsRaw.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+            if (studentIds.length === 0) {
+                alert('⚠️ กรุณาใส่รหัสนักศึกษาอย่างน้อย 1 คน | Please enter at least 1 student ID');
+                return false;
+            }
+            return true;
+        }
+
+        // Build activity name with role suffix
+        function buildActivityName() {
+            const baseName = document.getElementById('activity-name').value.trim();
+            const preset = ROLE_PRESETS[currentRole];
+            return `${baseName} ${preset.suffix}`;
+        }
+
         // Save activity
         async function saveActivity(e) { 
             e.preventDefault(); 
@@ -778,41 +1095,61 @@
         async function saveAndSubmit() { 
             await saveActivityData('Pending'); 
         }
+        
+        async function saveAndCreateAnotherRole() {
+            if (!validateForm()) return;
+            
+            // Save current activity base info
+            savedActivityBase = {
+                organizerName: document.getElementById('organizer-name').value.trim(),
+                department: document.getElementById('department').value.trim(),
+                activityName: document.getElementById('activity-name').value.trim(),
+                activityDate: document.getElementById('activity-date').value,
+                duration: document.getElementById('duration').value,
+                description: document.getElementById('description').value.trim()
+            };
+            
+            // Save current role
+            await saveActivityData('Draft');
+            
+            // Reset for next role
+            currentRole = null;
+            document.getElementById('selected-role').value = '';
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('preset-skills-display').style.display = 'none';
+            selectedSkills = [];
+            renderSelectedSkills();
+            document.getElementById('student-ids').value = '';
+            document.getElementById('student-count').textContent = '0 รายชื่อ | 0 students';
+            
+            alert('✅ บันทึกแล้ว! กรุณาเลือกบทบาทใหม่สำหรับกิจกรรมเดียวกัน\nSaved! Please select new role for same activity');
+        }
 
         async function saveActivityData(status) {
             if (!currentOrganizer) { 
                 alert('⚠️ กรุณาเข้าสู่ระบบก่อน | Please login first'); 
                 return; 
             }
-            if (selectedSkills.length === 0) { 
-                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ | Please select at least 1 skill'); 
-                return; 
-            }
+            if (!validateForm()) return;
             
             const studentIdsRaw = document.getElementById('student-ids').value.trim();
-            const studentIds = studentIdsRaw.split('\n')
-                .map(id => id.trim())
-                .filter(id => id.length > 0);
+            const studentIds = studentIdsRaw.split('\n').map(id => id.trim()).filter(id => id.length > 0);
             
-            if (studentIds.length === 0) {
-                alert('⚠️ กรุณาใส่รหัสนักศึกษาอย่างน้อย 1 คน | Please enter at least 1 student ID');
-                return;
-            }
-            
-            showLoading(true, status === 'Draft' ? 'กำลังบันทึก... | Saving...' : 'กำลังส่งขออนุมัติ... | Submitting...');
+            showLoading(true, status === 'Draft' ? 'กำลังบันทึก...' : 'กำลังส่งขออนุมัติ...');
             
             try {
                 const activityData = {
                     organizerEmail: currentOrganizer.email,
                     organizerName: document.getElementById('organizer-name').value.trim(),
                     department: document.getElementById('department').value.trim(),
-                    activityName: document.getElementById('activity-name').value.trim(),
-                    startDate: document.getElementById('start-date').value,
-                    endDate: document.getElementById('end-date').value,
+                    activityNameBase: document.getElementById('activity-name').value.trim(),
+                    activityName: buildActivityName(),
+                    activityDate: document.getElementById('activity-date').value,
                     duration: document.getElementById('duration').value,
-                    durationUnit: document.getElementById('duration-unit').value,
-                    activityLevel: parseInt(document.getElementById('activity-level').value),
                     description: document.getElementById('description').value.trim(),
+                    role: currentRole,
+                    roleName: ROLE_PRESETS[currentRole].name,
+                    activityLevel: ROLE_PRESETS[currentRole].defaultLevel,
                     skills: selectedSkills,
                     studentIds: studentIds,
                     status: status,
@@ -829,13 +1166,20 @@
 
                 const msg = status === 'Draft' 
                     ? '✅ บันทึกร่างเรียบร้อย! | Draft saved!' 
-                    : '✅ ส่งขออนุมัติเรียบร้อย! | Submitted for approval!';
+                    : '✅ ส่งขออนุมัติเรียบร้อย! | Submitted!';
                 alert(msg);
                 
-                document.getElementById('activity-form').reset();
-                document.getElementById('edit-activity-id').value = '';
-                selectedSkills = [];
-                renderSelectedSkills();
+                // Reset form if not creating another role
+                if (!savedActivityBase) {
+                    document.getElementById('activity-form').reset();
+                    document.getElementById('edit-activity-id').value = '';
+                    currentRole = null;
+                    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+                    document.getElementById('preset-skills-display').style.display = 'none';
+                    selectedSkills = [];
+                    renderSelectedSkills();
+                    document.getElementById('student-count').textContent = '0 รายชื่อ | 0 students';
+                }
                 
             } catch (e) {
                 alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message);
@@ -867,60 +1211,71 @@
                     const d = doc.data();
                     const statusClass = (d.status || 'draft').toLowerCase();
                     const statusText = {
-                        'draft': '📝 ร่าง | Draft',
-                        'pending': '⏳ รอตรวจสอบ | Pending',
-                        'approved': '✅ อนุมัติ | Approved',
-                        'rejected': '❌ ไม่อนุมัติ | Rejected'
+                        'draft': '📝 ร่าง',
+                        'pending': '⏳ รอตรวจสอบ',
+                        'approved': '✅ อนุมัติ',
+                        'rejected': '❌ ไม่อนุมัติ'
                     }[statusClass] || d.status;
+                    
+                    const roleClass = d.role || 'participant';
+                    const roleName = d.roleName || ROLE_PRESETS[d.role]?.name || 'ผู้เข้าร่วม';
                     
                     return `
                         <div class="activity-item ${statusClass}">
                             <div class="activity-header">
-                                <span class="activity-title">${d.activityName}</span>
+                                <span class="activity-title">
+                                    ${d.activityName || d.activityNameBase}
+                                    <span class="activity-role ${roleClass}">${roleName}</span>
+                                </span>
                                 <span class="activity-status ${statusClass}">${statusText}</span>
                             </div>
                             <div class="activity-meta">
-                                📅 ${d.startDate || '-'} | 👥 ${(d.studentIds || []).length} คน | students | 📊 Lv.${d.activityLevel || 2}
+                                📅 ${d.activityDate || '-'} | 👥 ${(d.studentIds || []).length} คน | 📊 Lv.${d.activityLevel || 2}
                             </div>
                             <div class="activity-skills">
                                 ${(d.skills || []).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join('')}
                             </div>
-                            ${d.status === 'Rejected' && d.rejectReason ? `<div style="color:#e74c3c;font-size:0.9em;margin-bottom:10px;">❌ เหตุผล | Reason: ${d.rejectReason}</div>` : ''}
+                            ${d.status === 'Rejected' && d.rejectReason ? `<div style="color:#e74c3c;font-size:0.9em;margin-bottom:10px;">❌ เหตุผล: ${d.rejectReason}</div>` : ''}
                             <div class="activity-actions">
                                 ${d.status === 'Draft' || d.status === 'Rejected' ? `
-                                    <button class="btn-action btn-edit" onclick="editActivity('${doc.id}')">✏️ แก้ไข | Edit</button>
-                                    <button class="btn-action btn-delete" onclick="deleteActivity('${doc.id}')">🗑️ ลบ | Delete</button>
+                                    <button class="btn-action btn-edit" onclick="editActivity('${doc.id}')">✏️ แก้ไข</button>
+                                    <button class="btn-action btn-delete" onclick="deleteActivity('${doc.id}')">🗑️ ลบ</button>
                                 ` : ''}
                             </div>
                         </div>`;
                 }).join('');
                 
             } catch (e) {
-                list.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด | Error: ${e.message}</p></div>`;
+                list.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด: ${e.message}</p></div>`;
             }
         }
 
         async function editActivity(id) {
-            showLoading(true, 'กำลังโหลด... | Loading...');
+            showLoading(true, 'กำลังโหลด...');
             try {
                 const doc = await db.collection('organizerActivities').doc(id).get();
-                if (!doc.exists) { alert('ไม่พบกิจกรรม | Activity not found'); return; }
+                if (!doc.exists) { alert('ไม่พบกิจกรรม'); return; }
                 const d = doc.data();
                 
                 document.getElementById('edit-activity-id').value = id;
                 document.getElementById('organizer-name').value = d.organizerName || '';
                 document.getElementById('department').value = d.department || '';
-                document.getElementById('activity-name').value = d.activityName || '';
-                document.getElementById('start-date').value = d.startDate || '';
-                document.getElementById('end-date').value = d.endDate || '';
+                document.getElementById('activity-name').value = d.activityNameBase || d.activityName || '';
+                document.getElementById('activity-date').value = d.activityDate || '';
                 document.getElementById('duration').value = d.duration || '';
-                document.getElementById('duration-unit').value = d.durationUnit || 'ชั่วโมง | Hours';
-                document.getElementById('activity-level').value = d.activityLevel || 2;
                 document.getElementById('description').value = d.description || '';
                 document.getElementById('student-ids').value = (d.studentIds || []).join('\n');
                 
+                // Select role
+                if (d.role) {
+                    selectRole(d.role);
+                }
+                
                 selectedSkills = d.skills || [];
                 renderSelectedSkills();
+                
+                // Update student count
+                document.getElementById('student-count').textContent = `${(d.studentIds || []).length} รายชื่อ`;
                 
                 // Switch to new activity tab
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -928,22 +1283,22 @@
                 document.querySelector('[data-tab="new-activity"]').classList.add('active');
                 document.getElementById('tab-new-activity').classList.add('active');
                 
-            } catch (e) { alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message); }
+            } catch (e) { alert('❌ เกิดข้อผิดพลาด: ' + e.message); }
             showLoading(false);
         }
 
         async function deleteActivity(id) {
-            if (!confirm('⚠️ ยืนยันการลบกิจกรรมนี้?\nConfirm delete this activity?')) return;
-            showLoading(true, 'กำลังลบ... | Deleting...');
+            if (!confirm('⚠️ ยืนยันการลบกิจกรรมนี้?')) return;
+            showLoading(true, 'กำลังลบ...');
             try {
                 await db.collection('organizerActivities').doc(id).delete();
-                alert('✅ ลบเรียบร้อย | Deleted successfully');
+                alert('✅ ลบเรียบร้อย');
                 await loadMyActivities();
-            } catch (e) { alert('❌ เกิดข้อผิดพลาด | Error: ' + e.message); }
+            } catch (e) { alert('❌ เกิดข้อผิดพลาด: ' + e.message); }
             showLoading(false);
         }
 
-        function showLoading(show, text = 'กำลังโหลด... | Loading...') {
+        function showLoading(show, text = 'กำลังโหลด...') {
             const overlay = document.getElementById('loading-overlay');
             document.getElementById('loading-text').textContent = text;
             if (show) overlay.classList.add('show');
