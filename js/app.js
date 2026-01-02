@@ -287,21 +287,31 @@ function showDashboard() {
     document.getElementById('student-email').textContent = currentStudent.email || '-';
     document.getElementById('student-id').textContent = `รหัสนักศึกษา: ${currentStudent.studentId || '-'}`;
     
-    const approvedCount = studentActivities.filter(a => 
-        a.status?.toLowerCase().includes('approved')).length;
+    const approvedActivities = studentActivities.filter(a => 
+        a.status?.toLowerCase().includes('approved'));
+    const approvedCount = approvedActivities.length;
     
+    // Calculate MAX scores per skill (for radar & summary)
     const scores = calculateCompetencyScores();
-    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
     const domainScores = calculateDomainScores(scores);
     
-    // Count SUB-SKILLS (not domains) that have level >= 2
-    // Total 18 sub-skills, count how many have MAX level >= 2
-    const skillsPassedCount = Object.values(scores).filter(level => level >= 2).length;
-    const totalSubSkills = CRITERIA_LIST.length; // 18
+    // Count DOMAINS (X/6) that have MAX level >= 2
+    const domainsPassedCount = DOMAINS.filter(d => domainScores[d.name].maxLevel >= 2).length;
+    const totalDomains = DOMAINS.length; // 6
+    
+    // Calculate TOTAL SCORE = sum all skill levels from all approved activities (including duplicates)
+    let totalScore = 0;
+    approvedActivities.forEach(activity => {
+        if (activity.skills && Array.isArray(activity.skills)) {
+            activity.skills.forEach(skill => {
+                totalScore += (skill.level || 0);
+            });
+        }
+    });
     
     document.getElementById('total-activities').textContent = studentActivities.length;
     document.getElementById('approved-activities').textContent = approvedCount;
-    document.getElementById('skill-achieved').textContent = `${skillsPassedCount}/${totalSubSkills}`;
+    document.getElementById('skill-achieved').textContent = `${domainsPassedCount}/${totalDomains}`;
     document.getElementById('competency-score').textContent = totalScore;
     
     renderCompetencyChart(scores);
