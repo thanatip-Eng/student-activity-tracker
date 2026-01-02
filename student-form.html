@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งกิจกรรม - Student Activity Submission</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/form-style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">📝</span>
+                <div>
+                    <h1>แจ้งกิจกรรมนักศึกษา</h1>
+                    <p>Student Activity Submission System</p>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">🔍 ดูผลของฉัน</a>
+                <a href="organizer-form.html">👨‍💼 สำหรับผู้จัด</a>
+            </nav>
+        </header>
+
+        <!-- Login Section -->
+        <section id="login-section" class="login-section">
+            <div class="login-card">
+                <h2>🔐 เข้าสู่ระบบ</h2>
+                <p>กรุณากรอก Email นักศึกษาเพื่อแจ้งกิจกรรม</p>
+                <div class="login-form">
+                    <input type="email" id="student-email" placeholder="email@cmu.ac.th">
+                    <button onclick="loginStudent()">เข้าสู่ระบบ</button>
+                </div>
+                <p id="login-error" class="error-message"></p>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section id="form-section" class="form-section" style="display: none;">
+            <!-- Student Info Bar -->
+            <div class="student-bar">
+                <div class="student-info">
+                    <span class="avatar" id="student-avatar">S</span>
+                    <div>
+                        <strong id="display-name">นักศึกษา</strong>
+                        <span id="display-email">email@cmu.ac.th</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="logoutStudent()">ออกจากระบบ</button>
+            </div>
+
+            <!-- Submission Form -->
+            <div class="form-card">
+                <h2>📋 แบบฟอร์มแจ้งกิจกรรม</h2>
+                
+                <form id="activity-form" onsubmit="submitActivity(event)">
+                    <!-- Activity Name -->
+                    <div class="form-group">
+                        <label>ชื่อกิจกรรม <span class="required">*</span></label>
+                        <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners">
+                    </div>
+
+                    <!-- Activity Organizer -->
+                    <div class="form-group">
+                        <label>หน่วยงาน/ผู้จัดกิจกรรม <span class="required">*</span></label>
+                        <input type="text" id="activity-organizer" required placeholder="เช่น คณะวิศวกรรมศาสตร์, บริษัท ABC">
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>วันที่เริ่ม <span class="required">*</span></label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>วันที่สิ้นสุด <span class="required">*</span></label>
+                            <input type="date" id="end-date" required>
+                        </div>
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>ระยะเวลา <span class="required">*</span></label>
+                            <input type="number" id="duration" required min="1" placeholder="จำนวน">
+                        </div>
+                        <div class="form-group">
+                            <label>หน่วย</label>
+                            <select id="duration-unit">
+                                <option value="ชั่วโมง">ชั่วโมง</option>
+                                <option value="วัน">วัน</option>
+                                <option value="สัปดาห์">สัปดาห์</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Activity Level -->
+                    <div class="form-group">
+                        <label>ระดับกิจกรรม <span class="required">*</span></label>
+                        <div class="level-options">
+                            <label class="level-option">
+                                <input type="radio" name="activity-level" value="1" required>
+                                <div class="level-card">
+                                    <span class="level-number">1</span>
+                                    <span class="level-title">ฟังบรรยาย</span>
+                                    <span class="level-desc">เข้าร่วมฟัง/ดูการนำเสนอ</span>
+                                </div>
+                            </label>
+                            <label class="level-option">
+                                <input type="radio" name="activity-level" value="2">
+                                <div class="level-card">
+                                    <span class="level-number">2</span>
+                                    <span class="level-title">Workshop</span>
+                                    <span class="level-desc">ลงมือปฏิบัติ/ทำกิจกรรม</span>
+                                </div>
+                            </label>
+                            <label class="level-option">
+                                <input type="radio" name="activity-level" value="3">
+                                <div class="level-card">
+                                    <span class="level-number">3</span>
+                                    <span class="level-title">โครงงานจริง</span>
+                                    <span class="level-desc">ทำโปรเจคจริง/แข่งขัน</span>
+                                </div>
+                            </label>
+                            <label class="level-option">
+                                <input type="radio" name="activity-level" value="4">
+                                <div class="level-card">
+                                    <span class="level-number">4</span>
+                                    <span class="level-title">ผู้จัด/ผู้นำ</span>
+                                    <span class="level-desc">เป็นผู้จัด/หัวหน้าทีม</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label>รายละเอียดกิจกรรม <span class="required">*</span></label>
+                        <textarea id="description" required rows="4" placeholder="อธิบายสิ่งที่ทำในกิจกรรม บทบาทของคุณ และสิ่งที่ได้เรียนรู้..."></textarea>
+                    </div>
+
+                    <!-- Evidence -->
+                    <div class="form-group">
+                        <label>หลักฐาน (Link รูปภาพ/เอกสาร)</label>
+                        <input type="url" id="evidence-link" placeholder="https://drive.google.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>คำอธิบายหลักฐาน</label>
+                        <input type="text" id="evidence-desc" placeholder="เช่น รูปถ่ายใบประกาศ, Certificate">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">
+                            🚀 ส่งแจ้งกิจกรรม
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- My Submissions -->
+            <div class="submissions-card">
+                <h2>📜 ประวัติการแจ้งกิจกรรมของฉัน</h2>
+                <div id="my-submissions" class="submissions-list">
+                    <div class="empty-state">
+                        <span class="icon">📭</span>
+                        <p>ยังไม่มีการแจ้งกิจกรรม</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-box">
+                <div class="spinner"></div>
+                <p id="loading-text">กำลังโหลด...</p>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="success-modal" class="modal-overlay">
+            <div class="modal success-modal">
+                <div class="modal-icon">✅</div>
+                <h3>ส่งแจ้งกิจกรรมสำเร็จ!</h3>
+                <p>กิจกรรมของคุณถูกส่งไปยัง Admin เพื่อตรวจสอบแล้ว</p>
+                <p class="modal-note">สถานะ: <strong>รอการอนุมัติ</strong></p>
+                <button onclick="closeModal()" class="btn-primary">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
+        let currentStudent = null;
+
+        // ============================================
+        // LOGIN FUNCTION
+        // ============================================
+        async function loginStudent() {
+            const email = document.getElementById('student-email').value.trim().toLowerCase();
+            const errorEl = document.getElementById('login-error');
+            
+            if (!email) {
+                errorEl.textContent = '⚠️ กรุณากรอก Email';
+                return;
+            }
+            
+            showLoading(true, 'กำลังตรวจสอบข้อมูล...');
+            
+            try {
+                const query = await db.collection('students').where('email', '==', email).limit(1).get();
+                
+                if (query.empty) {
+                    errorEl.textContent = '❌ ไม่พบข้อมูลนักศึกษา กรุณาติดต่อ Admin';
+                    showLoading(false);
+                    return;
+                }
+                
+                const doc = query.docs[0];
+                currentStudent = { id: doc.id, ...doc.data() };
+                
+                // Update UI
+                document.getElementById('student-avatar').textContent = currentStudent.name?.charAt(0) || 'S';
+                document.getElementById('display-name').textContent = currentStudent.name || 'นักศึกษา';
+                document.getElementById('display-email').textContent = currentStudent.email;
+                
+                // Show form
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('form-section').style.display = 'block';
+                
+                // Load submissions
+                await loadMySubmissions();
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                errorEl.textContent = '❌ เกิดข้อผิดพลาด กรุณาลองใหม่';
+            }
+            
+            showLoading(false);
+        }
+
+        // ============================================
+        // LOGOUT FUNCTION
+        // ============================================
+        function logoutStudent() {
+            currentStudent = null;
+            document.getElementById('activity-form').reset();
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'flex';
+            document.getElementById('student-email').value = '';
+            document.getElementById('login-error').textContent = '';
+        }
+
+        // ============================================
+        // SUBMIT ACTIVITY
+        // ============================================
+        async function submitActivity(event) {
+            event.preventDefault();
+            
+            if (!currentStudent) {
+                alert('กรุณาเข้าสู่ระบบก่อน');
+                return;
+            }
+            
+            showLoading(true, 'กำลังส่งข้อมูล...');
+            
+            try {
+                const formData = {
+                    // Student info
+                    studentId: currentStudent.studentId,
+                    studentName: currentStudent.name,
+                    studentEmail: currentStudent.email,
+                    
+                    // Activity info
+                    activityName: document.getElementById('activity-name').value.trim(),
+                    activityOrganizer: document.getElementById('activity-organizer').value.trim(),
+                    startDate: document.getElementById('start-date').value,
+                    endDate: document.getElementById('end-date').value,
+                    duration: parseInt(document.getElementById('duration').value),
+                    durationUnit: document.getElementById('duration-unit').value,
+                    activityLevel: parseInt(document.querySelector('input[name="activity-level"]:checked').value),
+                    description: document.getElementById('description').value.trim(),
+                    evidenceLink: document.getElementById('evidence-link').value.trim(),
+                    evidenceDescription: document.getElementById('evidence-desc').value.trim(),
+                    
+                    // Status
+                    status: 'Pending Review',
+                    submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    reviewedBy: null,
+                    reviewedAt: null,
+                    rejectReason: null
+                };
+                
+                // Check for duplicate
+                const existingQuery = await db.collection('submissions')
+                    .where('studentEmail', '==', currentStudent.email)
+                    .where('activityName', '==', formData.activityName)
+                    .get();
+                
+                if (!existingQuery.empty) {
+                    const existing = existingQuery.docs[0].data();
+                    if (existing.status === 'Pending Review') {
+                        alert('⚠️ คุณได้แจ้งกิจกรรมนี้ไปแล้วและกำลังรอการอนุมัติ');
+                        showLoading(false);
+                        return;
+                    }
+                }
+                
+                // Save to Firestore
+                await db.collection('submissions').add(formData);
+                
+                // Reset form
+                document.getElementById('activity-form').reset();
+                
+                // Show success
+                document.getElementById('success-modal').classList.add('show');
+                
+                // Reload submissions
+                await loadMySubmissions();
+                
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        // ============================================
+        // LOAD MY SUBMISSIONS
+        // ============================================
+        async function loadMySubmissions() {
+            const container = document.getElementById('my-submissions');
+            
+            try {
+                const query = await db.collection('submissions')
+                    .where('studentEmail', '==', currentStudent.email)
+                    .orderBy('submittedAt', 'desc')
+                    .get();
+                
+                if (query.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">📭</span>
+                            <p>ยังไม่มีการแจ้งกิจกรรม</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = query.docs.map(doc => {
+                    const data = doc.data();
+                    const statusClass = getStatusClass(data.status);
+                    const statusText = getStatusText(data.status);
+                    const date = data.submittedAt?.toDate?.() || new Date();
+                    
+                    return `
+                        <div class="submission-item status-${statusClass}">
+                            <div class="submission-header">
+                                <h4>${data.activityName}</h4>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="submission-meta">
+                                <span>📅 ${data.startDate || '-'}</span>
+                                <span>⏱️ ${data.duration} ${data.durationUnit}</span>
+                                <span>📊 Level ${data.activityLevel}</span>
+                            </div>
+                            <div class="submission-date">
+                                ส่งเมื่อ: ${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}
+                            </div>
+                            ${data.status.includes('Rejected') ? `
+                                <div class="reject-reason">
+                                    ❌ เหตุผล: ${data.rejectReason || '-'}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Load submissions error:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">⚠️</span>
+                        <p>ไม่สามารถโหลดข้อมูลได้</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // HELPERS
+        // ============================================
+        function getStatusClass(status) {
+            if (!status) return 'pending';
+            const s = status.toLowerCase();
+            if (s.includes('approved')) return 'approved';
+            if (s.includes('rejected')) return 'rejected';
+            return 'pending';
+        }
+
+        function getStatusText(status) {
+            if (!status) return '⏳ รอการอนุมัติ';
+            const s = status.toLowerCase();
+            if (s.includes('approved')) return '✅ อนุมัติแล้ว';
+            if (s.includes('rejected')) return '❌ ไม่อนุมัติ';
+            return '⏳ รอการอนุมัติ';
+        }
+
+        function showLoading(show, text = 'กำลังโหลด...') {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').textContent = text;
+            if (show) {
+                overlay.classList.add('show');
+            } else {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('success-modal').classList.remove('show');
+        }
+
+        // Enter key handler
+        document.getElementById('student-email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginStudent();
+        });
+    </script>
+</body>
+</html>
