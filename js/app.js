@@ -64,8 +64,8 @@ async function searchStudent() {
         return;
     }
     
-    if (password.length !== 5) {
-        errorEl.textContent = '⚠️ รหัสผ่านต้องเป็นตัวเลข 5 หลัก';
+    if (password.length < 4) {
+        errorEl.textContent = '⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
         return;
     }
     
@@ -86,14 +86,20 @@ async function searchStudent() {
         const studentDoc = studentQuery.docs[0];
         const studentData = studentDoc.data();
         
-        // Validate password (last 5 digits of studentId)
-        const studentId = studentData.studentId || '';
-        const expectedPassword = studentId.slice(-5);
-        
-        if (password !== expectedPassword) {
-            errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
-            showLoading(false);
-            return;
+        // Check if password exists
+        if (!studentData.password) {
+            // First time login - save new password
+            await studentsCollection.doc(studentDoc.id).update({
+                password: password
+            });
+            studentData.password = password;
+        } else {
+            // Validate password
+            if (password !== studentData.password) {
+                errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                showLoading(false);
+                return;
+            }
         }
         
         currentStudent = {
@@ -287,9 +293,14 @@ function showDashboard() {
     const scores = calculateCompetencyScores();
     const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
     
+    // Calculate skills achieved (domains with score > 0)
+    const domainScores = calculateDomainScores(scores);
+    const skillsAchieved = DOMAINS.filter(d => domainScores[d.name].total > 0).length;
+    
     document.getElementById('total-activities').textContent = studentActivities.length;
     document.getElementById('approved-activities').textContent = approvedCount;
     document.getElementById('pending-activities').textContent = pendingCount;
+    document.getElementById('skill-achieved').textContent = skillsAchieved;
     document.getElementById('competency-score').textContent = totalScore;
     
     // Render components

@@ -20,7 +20,6 @@
             </div>
             <nav class="nav-links">
                 <a href="index.html">🔍 ดูผลของฉัน</a>
-                <a href="organizer-form.html">👨‍💼 สำหรับผู้จัด</a>
             </nav>
         </header>
 
@@ -31,11 +30,11 @@
                 <p>กรุณากรอก Email และรหัสผ่านเพื่อแจ้งกิจกรรม</p>
                 <div class="login-form">
                     <input type="email" id="student-email" placeholder="email@cmu.ac.th">
-                    <input type="password" id="student-password" placeholder="รหัสผ่าน (5 ตัวท้ายของรหัส นศ.)" maxlength="5">
+                    <input type="password" id="student-password" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัวอักษร)" minlength="4">
                     <button onclick="loginStudent()">เข้าสู่ระบบ</button>
                 </div>
                 <p id="login-error" class="error-message"></p>
-                <p class="login-note">💡 รหัสผ่าน = เลข 5 ตัวท้ายของรหัสนักศึกษา</p>
+                <p class="login-note">💡 เข้าสู่ระบบครั้งแรก? กรอกรหัสผ่านที่ต้องการใช้</p>
             </div>
         </section>
 
@@ -224,8 +223,8 @@
                 return;
             }
             
-            if (password.length !== 5) {
-                errorEl.textContent = '⚠️ รหัสผ่านต้องเป็นตัวเลข 5 หลัก';
+            if (password.length < 4) {
+                errorEl.textContent = '⚠️ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
                 return;
             }
             
@@ -243,14 +242,20 @@
                 const doc = query.docs[0];
                 const studentData = doc.data();
                 
-                // Validate password (last 5 digits of studentId)
-                const studentId = studentData.studentId || '';
-                const expectedPassword = studentId.slice(-5);
-                
-                if (password !== expectedPassword) {
-                    errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
-                    showLoading(false);
-                    return;
+                // Check if password exists
+                if (!studentData.password) {
+                    // First time login - save new password
+                    await db.collection('students').doc(doc.id).update({
+                        password: password
+                    });
+                    studentData.password = password;
+                } else {
+                    // Validate password
+                    if (password !== studentData.password) {
+                        errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                        showLoading(false);
+                        return;
+                    }
                 }
                 
                 currentStudent = { id: doc.id, ...studentData };

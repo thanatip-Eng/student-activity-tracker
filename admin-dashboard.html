@@ -63,6 +63,7 @@
             <button class="tab active" data-tab="student-submissions">📝 นศ.แจ้งกิจกรรม</button>
             <button class="tab" data-tab="organizer-activities">👨‍💼 กิจกรรมผู้จัด</button>
             <button class="tab" data-tab="transfer">📤 โอนข้อมูล</button>
+            <button class="tab" data-tab="organizers">🔐 จัดการสิทธิ์ผู้จัด</button>
         </div>
 
         <!-- Tab: Student Submissions -->
@@ -123,6 +124,66 @@
                 </button>
                 
                 <div id="transfer-log" class="transfer-log"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Organizers Management -->
+        <div id="tab-organizers" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>🔐 จัดการสิทธิ์ผู้จัดกิจกรรม</h2>
+                    <button class="btn-add-organizer" onclick="openAddOrganizerModal()">
+                        ➕ เพิ่มผู้จัดใหม่
+                    </button>
+                </div>
+                
+                <div class="organizers-stats">
+                    <div class="org-stat">
+                        <span class="org-stat-number" id="total-organizers">0</span>
+                        <span class="org-stat-label">ผู้จัดทั้งหมด</span>
+                    </div>
+                    <div class="org-stat">
+                        <span class="org-stat-number" id="active-organizers">0</span>
+                        <span class="org-stat-label">ใช้งานแล้ว</span>
+                    </div>
+                </div>
+
+                <div id="organizers-list" class="organizers-list">
+                    <div class="loading-inline">กำลังโหลด...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Organizer Modal -->
+        <div id="add-organizer-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>➕ เพิ่มผู้จัดกิจกรรมใหม่</h3>
+                    <button class="modal-close" onclick="closeAddOrganizerModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Email <span class="required">*</span></label>
+                        <input type="email" id="new-org-email" placeholder="organizer@cmu.ac.th">
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อ-นามสกุล <span class="required">*</span></label>
+                        <input type="text" id="new-org-name" placeholder="ดร.สมชาย ใจดี">
+                    </div>
+                    <div class="form-group">
+                        <label>หน่วยงาน/สังกัด</label>
+                        <input type="text" id="new-org-department" placeholder="คณะวิศวกรรมศาสตร์">
+                    </div>
+                    <div class="form-group">
+                        <label>เบอร์โทร</label>
+                        <input type="tel" id="new-org-phone" placeholder="08x-xxx-xxxx">
+                    </div>
+                    <p class="form-note">💡 ผู้จัดจะสร้างรหัสผ่านเองเมื่อเข้าสู่ระบบครั้งแรก</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeAddOrganizerModal()">ยกเลิก</button>
+                    <button class="btn-primary" onclick="addNewOrganizer()">เพิ่มผู้จัด</button>
+                </div>
             </div>
         </div>
 
@@ -225,6 +286,11 @@
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     tab.classList.add('active');
                     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                    
+                    // Load organizers when tab is clicked
+                    if (tab.dataset.tab === 'organizers') {
+                        loadOrganizers();
+                    }
                 });
             });
         }
@@ -899,6 +965,181 @@
             } else {
                 overlay.classList.remove('show');
             }
+        }
+
+        // ============================================
+        // ORGANIZERS MANAGEMENT
+        // ============================================
+        let allOrganizers = [];
+
+        async function loadOrganizers() {
+            const container = document.getElementById('organizers-list');
+            
+            try {
+                const query = await db.collection('organizers').orderBy('email').get();
+                
+                allOrganizers = query.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Update stats
+                document.getElementById('total-organizers').textContent = allOrganizers.length;
+                document.getElementById('active-organizers').textContent = 
+                    allOrganizers.filter(o => o.password).length;
+                
+                if (allOrganizers.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">👥</span>
+                            <p>ยังไม่มีผู้จัดกิจกรรมในระบบ</p>
+                            <button class="btn-add-organizer" onclick="openAddOrganizerModal()">
+                                ➕ เพิ่มผู้จัดคนแรก
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = allOrganizers.map(org => `
+                    <div class="organizer-card">
+                        <div class="org-avatar">${(org.name || org.email).charAt(0).toUpperCase()}</div>
+                        <div class="org-info">
+                            <div class="org-name">${org.name || '-'}</div>
+                            <div class="org-email">${org.email}</div>
+                            ${org.department ? `<div class="org-dept">🏢 ${org.department}</div>` : ''}
+                            ${org.phone ? `<div class="org-phone">📞 ${org.phone}</div>` : ''}
+                        </div>
+                        <div class="org-status">
+                            ${org.password 
+                                ? '<span class="status-badge active">✅ ใช้งานแล้ว</span>' 
+                                : '<span class="status-badge pending">⏳ รอเปิดใช้งาน</span>'}
+                        </div>
+                        <div class="org-actions">
+                            ${org.password ? `
+                                <button class="btn-small btn-reset" onclick="resetOrganizerPassword('${org.id}', '${org.email}')">
+                                    🔄 Reset Password
+                                </button>
+                            ` : ''}
+                            <button class="btn-small btn-delete" onclick="deleteOrganizer('${org.id}', '${org.email}')">
+                                🗑️ ลบ
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Load organizers error:', error);
+                container.innerHTML = `<div class="error-state">❌ เกิดข้อผิดพลาด: ${error.message}</div>`;
+            }
+        }
+
+        function openAddOrganizerModal() {
+            document.getElementById('new-org-email').value = '';
+            document.getElementById('new-org-name').value = '';
+            document.getElementById('new-org-department').value = '';
+            document.getElementById('new-org-phone').value = '';
+            document.getElementById('add-organizer-modal').classList.add('show');
+        }
+
+        function closeAddOrganizerModal() {
+            document.getElementById('add-organizer-modal').classList.remove('show');
+        }
+
+        async function addNewOrganizer() {
+            const email = document.getElementById('new-org-email').value.trim().toLowerCase();
+            const name = document.getElementById('new-org-name').value.trim();
+            const department = document.getElementById('new-org-department').value.trim();
+            const phone = document.getElementById('new-org-phone').value.trim();
+            
+            if (!email || !email.includes('@')) {
+                alert('⚠️ กรุณากรอก Email ที่ถูกต้อง');
+                return;
+            }
+            
+            if (!name) {
+                alert('⚠️ กรุณากรอกชื่อ-นามสกุล');
+                return;
+            }
+            
+            showLoading(true, 'กำลังเพิ่มผู้จัด...');
+            
+            try {
+                // Check if email already exists
+                const existing = await db.collection('organizers')
+                    .where('email', '==', email)
+                    .get();
+                
+                if (!existing.empty) {
+                    alert('⚠️ Email นี้มีอยู่ในระบบแล้ว');
+                    showLoading(false);
+                    return;
+                }
+                
+                // Add new organizer
+                await db.collection('organizers').add({
+                    email: email,
+                    name: name,
+                    department: department,
+                    phone: phone,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: 'admin'
+                });
+                
+                alert('✅ เพิ่มผู้จัดกิจกรรมเรียบร้อยแล้ว');
+                closeAddOrganizerModal();
+                await loadOrganizers();
+                
+            } catch (error) {
+                console.error('Add organizer error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function resetOrganizerPassword(id, email) {
+            if (!confirm(`ยืนยันการ Reset Password ของ ${email}?\n\nผู้จัดจะต้องตั้งรหัสผ่านใหม่เมื่อเข้าสู่ระบบครั้งถัดไป`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลัง Reset Password...');
+            
+            try {
+                await db.collection('organizers').doc(id).update({
+                    password: firebase.firestore.FieldValue.delete()
+                });
+                
+                alert('✅ Reset Password เรียบร้อยแล้ว');
+                await loadOrganizers();
+                
+            } catch (error) {
+                console.error('Reset password error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function deleteOrganizer(id, email) {
+            if (!confirm(`⚠️ ยืนยันการลบผู้จัด ${email}?\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลังลบผู้จัด...');
+            
+            try {
+                await db.collection('organizers').doc(id).delete();
+                
+                alert('✅ ลบผู้จัดเรียบร้อยแล้ว');
+                await loadOrganizers();
+                
+            } catch (error) {
+                console.error('Delete organizer error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
         }
 
         // Enable skill level select when checkbox is checked

@@ -671,6 +671,179 @@ body {
     margin-bottom: 15px;
 }
 
+/* Organizers Management */
+.btn-add-organizer {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-add-organizer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
+}
+
+.organizers-stats {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.org-stat {
+    text-align: center;
+    padding: 15px 30px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.org-stat-number {
+    display: block;
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #27ae60;
+}
+
+.org-stat-label {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.organizers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.organizer-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s;
+    flex-wrap: wrap;
+}
+
+.organizer-card:hover {
+    background: #e8f5e9;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.org-avatar {
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5em;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.org-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.org-name {
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #1a1a2e;
+    margin-bottom: 5px;
+}
+
+.org-email {
+    color: #667eea;
+    font-size: 0.95em;
+    margin-bottom: 5px;
+}
+
+.org-dept, .org-phone {
+    color: #666;
+    font-size: 0.85em;
+}
+
+.org-status {
+    min-width: 120px;
+}
+
+.org-status .status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.org-status .status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.org-status .status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.org-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.org-actions .btn-small {
+    padding: 8px 16px;
+    font-size: 0.85em;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.org-actions .btn-reset {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.org-actions .btn-reset:hover {
+    background: #bbdefb;
+}
+
+.org-actions .btn-delete {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.org-actions .btn-delete:hover {
+    background: #ffcdd2;
+}
+
+.form-note {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    margin-top: 15px;
+}
+
+.error-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #c62828;
+    background: #ffebee;
+    border-radius: 12px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
@@ -693,6 +866,24 @@ body {
 
     .detail-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .organizer-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .org-info {
+        text-align: center;
+    }
+    
+    .org-actions {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .organizers-stats {
+        justify-content: center;
     }
 }
 
