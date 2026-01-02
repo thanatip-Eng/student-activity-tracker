@@ -394,10 +394,74 @@
             </div>
         </section>
 
-        <!-- Section 2: Import Participation -->
+        <!-- Section 2: Import Activities -->
         <section class="upload-section">
-            <h2>📝 2. นำเข้ารายชื่อผู้เข้าร่วมกิจกรรม</h2>
-            <p class="description">อัพโหลดไฟล์ CSV เพื่อเพิ่มรายชื่อนักศึกษาที่เข้าร่วมกิจกรรม</p>
+            <h2>📚 2. นำเข้าข้อมูลกิจกรรม | Import Activities</h2>
+            <p class="description">อัพโหลดไฟล์ CSV เพื่อเพิ่มกิจกรรมเข้าระบบ | Upload CSV to add activities</p>
+
+            <!-- Template Download -->
+            <div class="template-section">
+                <h4>📥 ดาวน์โหลด Template | Download Template</h4>
+                <div class="template-buttons">
+                    <a href="#" class="btn-template" onclick="downloadActivityTemplate(); return false;">
+                        📄 activities_template.csv
+                    </a>
+                    <a href="#" class="btn-template" onclick="downloadActivitySample(); return false;">
+                        📋 activities_sample.csv (ตัวอย่าง | Sample)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Format Guide -->
+            <div class="format-guide">
+                <h5>📝 รูปแบบไฟล์ CSV | CSV Format</h5>
+                <p>คอลัมน์ที่ต้องมี | Required: <code>name</code>, <code>organizer</code>, <code>date</code></p>
+                <p>คอลัมน์เพิ่มเติม | Optional: <code>level</code>, <code>description</code>, <code>skills</code></p>
+                <ul>
+                    <li><strong>name</strong> = ชื่อกิจกรรม | Activity name</li>
+                    <li><strong>organizer</strong> = หน่วยงาน/ผู้จัด | Organizer name</li>
+                    <li><strong>date</strong> = วันที่จัด (YYYY-MM-DD) | Activity date</li>
+                    <li><strong>level</strong> = ระดับ 1-4 | Level (default: 2)</li>
+                    <li><strong>description</strong> = รายละเอียด | Description</li>
+                    <li><strong>skills</strong> = ทักษะ เช่น "1.1:2,2.1:3,4.2:2" | Skills format: code:level</li>
+                </ul>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="activity-upload-area" onclick="document.getElementById('activity-file-input').click()">
+                <div class="icon">📁</div>
+                <p><strong>คลิกเพื่อเลือกไฟล์ | Click to select file</strong></p>
+                <p class="hint">รองรับไฟล์ .csv เท่านั้น | .csv files only</p>
+                <input type="file" id="activity-file-input" accept=".csv" onchange="handleActivityFile(this.files[0])">
+            </div>
+
+            <!-- Preview -->
+            <div id="activity-preview" class="preview-section" style="display: none;">
+                <h4>👁️ ตัวอย่างข้อมูล | Preview</h4>
+                <div class="preview-stats" id="activity-preview-stats"></div>
+                <div class="preview-table-wrapper">
+                    <table class="preview-table" id="activity-preview-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="activity-errors" class="error-list" style="display: none;"></div>
+                <div class="import-actions">
+                    <button class="btn-import" id="btn-import-activities" onclick="importActivities()">
+                        ✅ นำเข้าข้อมูล | Import
+                    </button>
+                    <button class="btn-clear" onclick="clearActivityPreview()">
+                        🗑️ ล้าง | Clear
+                    </button>
+                </div>
+                <div class="import-log" id="activity-import-log"></div>
+            </div>
+        </section>
+
+        <!-- Section 3: Import Participation -->
+        <section class="upload-section">
+            <h2>📝 3. นำเข้ารายชื่อผู้เข้าร่วมกิจกรรม | Import Participation</h2>
+            <p class="description">อัพโหลดไฟล์ CSV เพื่อเพิ่มรายชื่อนักศึกษาที่เข้าร่วมกิจกรรม | Upload CSV to add student participation</p>
 
             <!-- Template Download -->
             <div class="template-section">
@@ -503,6 +567,7 @@
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
             setupDragDrop('student-upload-area', handleStudentFile);
+            setupDragDrop('activity-upload-area', handleActivityFile);
             setupDragDrop('participation-upload-area', handleParticipationFile);
             loadDataSummary();
         });
@@ -612,6 +677,21 @@
 640610002,Workshop AI for Beginners,2024-03-20,Pending
 640610003,English Communication Camp,2024-02-20,Approved`;
             downloadCSV(csv, 'participation_sample.csv');
+        }
+
+        function downloadActivityTemplate() {
+            const csv = 'name,organizer,date,level,description,skills\n';
+            downloadCSV(csv, 'activities_template.csv');
+        }
+
+        function downloadActivitySample() {
+            const csv = `name,organizer,date,level,description,skills
+Workshop AI for Beginners,Student Development Unit,2024-01-15,2,เรียนรู้พื้นฐาน AI และ Machine Learning,"1.1:2,4.1:2,4.2:2"
+English Communication Camp,Language Center,2024-02-20,2,ค่ายภาษาอังกฤษเพื่อการสื่อสาร,"2.1:2,2.2:2,2.3:3"
+Leadership Development Program,Engineering Student Union,2024-01-25,3,โครงการพัฒนาภาวะผู้นำ,"3.1:3,3.2:2,6.1:2"
+Hackathon 2024,Computer Engineering Dept,2024-03-10,3,การแข่งขันพัฒนาซอฟต์แวร์,"1.1:3,1.2:3,4.2:3,5.2:2"
+Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิดเชิงออกแบบ,"5.1:2,1.3:2,3.3:2"`;
+            downloadCSV(csv, 'activities_sample.csv');
         }
 
         function downloadCSV(content, filename) {
@@ -726,6 +806,173 @@
             document.getElementById('student-preview').style.display = 'none';
             document.getElementById('student-file-input').value = '';
             document.getElementById('student-import-log').classList.remove('show');
+        }
+
+        // ============================================
+        // ACTIVITY FILE HANDLING
+        // ============================================
+        let activityData = [];
+
+        function handleActivityFile(file) {
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const { headers, data } = parseCSV(text);
+
+                // Validate required columns
+                const required = ['name', 'organizer', 'date'];
+                const missing = required.filter(col => !headers.includes(col));
+
+                if (missing.length > 0) {
+                    alert(`⚠️ ไฟล์ขาดคอลัมน์ที่จำเป็น | Missing columns: ${missing.join(', ')}`);
+                    return;
+                }
+
+                // Validate data
+                const errors = [];
+                const validData = [];
+
+                data.forEach((row, index) => {
+                    const rowErrors = [];
+                    
+                    if (!row.name) rowErrors.push('ไม่มีชื่อกิจกรรม | Missing name');
+                    if (!row.organizer) rowErrors.push('ไม่มีผู้จัด | Missing organizer');
+                    if (!row.date) rowErrors.push('ไม่มีวันที่ | Missing date');
+
+                    if (rowErrors.length > 0) {
+                        errors.push({ row: index + 2, errors: rowErrors });
+                    } else {
+                        // Parse skills if present
+                        let skills = [];
+                        if (row.skills) {
+                            // Format: "1.1:2,2.1:3,4.2:2"
+                            const skillParts = row.skills.split(',');
+                            skillParts.forEach(part => {
+                                const [code, level] = part.trim().split(':');
+                                if (code && level) {
+                                    skills.push({ code: code.trim(), level: parseInt(level) || 2 });
+                                }
+                            });
+                        }
+
+                        validData.push({
+                            name: row.name.trim(),
+                            organizer: row.organizer.trim(),
+                            date: row.date.trim(),
+                            level: parseInt(row.level) || 2,
+                            description: row.description?.trim() || '',
+                            skills: skills,
+                            status: 'Active'
+                        });
+                    }
+                });
+
+                activityData = validData;
+                showActivityPreview(validData, errors);
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function showActivityPreview(data, errors) {
+            const preview = document.getElementById('activity-preview');
+            const statsEl = document.getElementById('activity-preview-stats');
+            const tableEl = document.getElementById('activity-preview-table');
+            const errorsEl = document.getElementById('activity-errors');
+
+            // Stats
+            statsEl.innerHTML = `
+                <span class="stat-good">✅ ข้อมูลถูกต้อง | Valid: ${data.length} แถว</span>
+                <span class="stat-bad">${errors.length > 0 ? `❌ ข้อผิดพลาด | Errors: ${errors.length} แถว` : ''}</span>
+            `;
+
+            // Table preview
+            const headers = ['name', 'organizer', 'date', 'level', 'skills'];
+            tableEl.querySelector('thead').innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+            tableEl.querySelector('tbody').innerHTML = data.slice(0, 10).map(row => `
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.organizer}</td>
+                    <td>${row.date}</td>
+                    <td>${row.level}</td>
+                    <td>${row.skills.map(s => `${s.code}:${s.level}`).join(', ') || '-'}</td>
+                </tr>
+            `).join('');
+
+            // Errors
+            if (errors.length > 0) {
+                errorsEl.innerHTML = errors.slice(0, 5).map(e => 
+                    `<div class="error-item">แถว ${e.row}: ${e.errors.join(', ')}</div>`
+                ).join('');
+                errorsEl.style.display = 'block';
+            } else {
+                errorsEl.style.display = 'none';
+            }
+
+            preview.style.display = 'block';
+        }
+
+        function clearActivityPreview() {
+            activityData = [];
+            document.getElementById('activity-preview').style.display = 'none';
+            document.getElementById('activity-file-input').value = '';
+            document.getElementById('activity-import-log').classList.remove('show');
+        }
+
+        async function importActivities() {
+            if (activityData.length === 0) {
+                alert('⚠️ ไม่มีข้อมูลที่จะนำเข้า | No data to import');
+                return;
+            }
+
+            const logEl = document.getElementById('activity-import-log');
+            logEl.innerHTML = '';
+            logEl.classList.add('show');
+
+            let success = 0;
+            let skipped = 0;
+            let failed = 0;
+
+            for (const activity of activityData) {
+                try {
+                    // Check if activity already exists
+                    const existing = await db.collection('activities')
+                        .where('name', '==', activity.name)
+                        .limit(1)
+                        .get();
+
+                    if (!existing.empty) {
+                        logEl.innerHTML += `<div class="log-skip">⏭️ ข้าม | Skip: ${activity.name} (มีอยู่แล้ว | exists)</div>`;
+                        skipped++;
+                        continue;
+                    }
+
+                    // Add activity
+                    const docRef = await db.collection('activities').add({
+                        ...activity,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    logEl.innerHTML += `<div class="log-success">✅ เพิ่ม | Added: ${activity.name}</div>`;
+                    success++;
+
+                } catch (error) {
+                    logEl.innerHTML += `<div class="log-error">❌ ผิดพลาด | Error: ${activity.name} - ${error.message}</div>`;
+                    failed++;
+                }
+            }
+
+            // Summary
+            logEl.innerHTML += `
+                <div class="log-summary">
+                    📊 สรุป | Summary: เพิ่ม ${success} | ข้าม ${skipped} | ผิดพลาด ${failed}
+                </div>
+            `;
+
+            if (success > 0) {
+                alert(`✅ นำเข้าสำเร็จ ${success} รายการ | Successfully imported ${success} activities`);
+            }
         }
 
         // ============================================
