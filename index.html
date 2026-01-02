@@ -21,22 +21,23 @@
             </div>
             <nav class="nav-links">
                 <a href="student-form.html">📝 แจ้งกิจกรรม</a>
-                <a href="admin-dashboard.html">⚙️ Admin</a>
             </nav>
         </header>
 
         <!-- Search Section -->
         <section id="search-section" class="search-section">
             <div class="search-card">
-                <h2>🔍 ค้นหาข้อมูลนักศึกษา</h2>
-                <p>กรุณากรอก Email ที่ลงทะเบียนในระบบ</p>
+                <h2>🔐 เข้าสู่ระบบนักศึกษา</h2>
+                <p>กรุณากรอก Email และรหัสผ่านเพื่อดูข้อมูลของคุณ</p>
                 <div class="search-form">
                     <input type="email" id="email-input" placeholder="example@cmu.ac.th" autocomplete="email">
+                    <input type="password" id="password-input" placeholder="รหัสผ่าน (5 ตัวท้ายของรหัส นศ.)" maxlength="5">
                     <button id="search-btn" onclick="searchStudent()">
-                        <span>ค้นหา</span>
+                        <span>เข้าสู่ระบบ</span>
                     </button>
                 </div>
                 <p id="search-error" class="error-message"></p>
+                <p class="login-hint">💡 รหัสผ่าน = เลข 5 ตัวท้ายของรหัสนักศึกษา</p>
             </div>
         </section>
 

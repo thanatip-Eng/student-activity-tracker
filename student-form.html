@@ -28,12 +28,14 @@
         <section id="login-section" class="login-section">
             <div class="login-card">
                 <h2>🔐 เข้าสู่ระบบ</h2>
-                <p>กรุณากรอก Email นักศึกษาเพื่อแจ้งกิจกรรม</p>
+                <p>กรุณากรอก Email และรหัสผ่านเพื่อแจ้งกิจกรรม</p>
                 <div class="login-form">
                     <input type="email" id="student-email" placeholder="email@cmu.ac.th">
+                    <input type="password" id="student-password" placeholder="รหัสผ่าน (5 ตัวท้ายของรหัส นศ.)" maxlength="5">
                     <button onclick="loginStudent()">เข้าสู่ระบบ</button>
                 </div>
                 <p id="login-error" class="error-message"></p>
+                <p class="login-note">💡 รหัสผ่าน = เลข 5 ตัวท้ายของรหัสนักศึกษา</p>
             </div>
         </section>
 
@@ -209,10 +211,21 @@
         // ============================================
         async function loginStudent() {
             const email = document.getElementById('student-email').value.trim().toLowerCase();
+            const password = document.getElementById('student-password').value.trim();
             const errorEl = document.getElementById('login-error');
             
             if (!email) {
                 errorEl.textContent = '⚠️ กรุณากรอก Email';
+                return;
+            }
+            
+            if (!password) {
+                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน';
+                return;
+            }
+            
+            if (password.length !== 5) {
+                errorEl.textContent = '⚠️ รหัสผ่านต้องเป็นตัวเลข 5 หลัก';
                 return;
             }
             
@@ -228,7 +241,19 @@
                 }
                 
                 const doc = query.docs[0];
-                currentStudent = { id: doc.id, ...doc.data() };
+                const studentData = doc.data();
+                
+                // Validate password (last 5 digits of studentId)
+                const studentId = studentData.studentId || '';
+                const expectedPassword = studentId.slice(-5);
+                
+                if (password !== expectedPassword) {
+                    errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+                    showLoading(false);
+                    return;
+                }
+                
+                currentStudent = { id: doc.id, ...studentData };
                 
                 // Update UI
                 document.getElementById('student-avatar').textContent = currentStudent.name?.charAt(0) || 'S';
@@ -259,6 +284,7 @@
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('student-email').value = '';
+            document.getElementById('student-password').value = '';
             document.getElementById('login-error').textContent = '';
         }
 
@@ -434,6 +460,12 @@
 
         // Enter key handler
         document.getElementById('student-email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('student-password').focus();
+            }
+        });
+        
+        document.getElementById('student-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') loginStudent();
         });
     </script>

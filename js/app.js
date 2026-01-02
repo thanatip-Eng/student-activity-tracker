@@ -44,6 +44,7 @@ let currentFilter = 'all';
 // ============================================
 async function searchStudent() {
     const email = document.getElementById('email-input').value.trim().toLowerCase();
+    const password = document.getElementById('password-input').value.trim();
     const errorEl = document.getElementById('search-error');
     
     // Validate email
@@ -54,6 +55,17 @@ async function searchStudent() {
     
     if (!email.includes('@')) {
         errorEl.textContent = '⚠️ รูปแบบ Email ไม่ถูกต้อง';
+        return;
+    }
+    
+    // Validate password
+    if (!password) {
+        errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน';
+        return;
+    }
+    
+    if (password.length !== 5) {
+        errorEl.textContent = '⚠️ รหัสผ่านต้องเป็นตัวเลข 5 หลัก';
         return;
     }
     
@@ -72,9 +84,21 @@ async function searchStudent() {
         
         // Get student data
         const studentDoc = studentQuery.docs[0];
+        const studentData = studentDoc.data();
+        
+        // Validate password (last 5 digits of studentId)
+        const studentId = studentData.studentId || '';
+        const expectedPassword = studentId.slice(-5);
+        
+        if (password !== expectedPassword) {
+            errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+            showLoading(false);
+            return;
+        }
+        
         currentStudent = {
             id: studentDoc.id,
-            ...studentDoc.data()
+            ...studentData
         };
         
         // Load student activities
@@ -446,6 +470,7 @@ function logout() {
     currentFilter = 'all';
     
     document.getElementById('email-input').value = '';
+    document.getElementById('password-input').value = '';
     document.getElementById('search-error').textContent = '';
     document.getElementById('dashboard-section').style.display = 'none';
     document.getElementById('search-section').style.display = 'flex';
@@ -468,7 +493,15 @@ function showLoading(show) {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email-input');
+    const passwordInput = document.getElementById('password-input');
+    
     emailInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            passwordInput.focus();
+        }
+    });
+    
+    passwordInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             searchStudent();
         }
