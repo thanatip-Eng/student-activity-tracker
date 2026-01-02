@@ -23,12 +23,12 @@ const CRITERIA_LIST = [
 ];
 
 const DOMAINS = [
-    { id: 1, name: "Critical Thinking", color: "#667eea" },
-    { id: 2, name: "Communication", color: "#27ae60" },
-    { id: 3, name: "Teamwork", color: "#f39c12" },
-    { id: 4, name: "Digital & Learning", color: "#e74c3c" },
-    { id: 5, name: "Innovation", color: "#9b59b6" },
-    { id: 6, name: "Self Development", color: "#1abc9c" }
+    { id: 1, name: "Critical Thinking", nameTh: "การคิดวิเคราะห์", color: "#667eea" },
+    { id: 2, name: "Communication", nameTh: "การสื่อสาร", color: "#27ae60" },
+    { id: 3, name: "Teamwork", nameTh: "การทำงานเป็นทีม", color: "#f39c12" },
+    { id: 4, name: "Digital & Learning", nameTh: "ดิจิทัลและการเรียนรู้", color: "#e74c3c" },
+    { id: 5, name: "Innovation", nameTh: "นวัตกรรม", color: "#9b59b6" },
+    { id: 6, name: "Self Development", nameTh: "พัฒนาตนเอง", color: "#1abc9c" }
 ];
 
 // ============================================
@@ -47,7 +47,6 @@ async function searchStudent() {
     const password = document.getElementById('password-input').value.trim();
     const errorEl = document.getElementById('search-error');
     
-    // Validate email
     if (!email) {
         errorEl.textContent = '⚠️ กรุณากรอก Email';
         return;
@@ -58,7 +57,6 @@ async function searchStudent() {
         return;
     }
     
-    // Validate password
     if (!password) {
         errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน';
         return;
@@ -73,7 +71,6 @@ async function searchStudent() {
     showLoading(true);
     
     try {
-        // Search student by email
         const studentQuery = await studentsCollection.where('email', '==', email).limit(1).get();
         
         if (studentQuery.empty) {
@@ -82,19 +79,14 @@ async function searchStudent() {
             return;
         }
         
-        // Get student data
         const studentDoc = studentQuery.docs[0];
         const studentData = studentDoc.data();
         
         // Check if password exists
         if (!studentData.password) {
-            // First time login - save new password
-            await studentsCollection.doc(studentDoc.id).update({
-                password: password
-            });
+            await studentsCollection.doc(studentDoc.id).update({ password: password });
             studentData.password = password;
         } else {
-            // Validate password
             if (password !== studentData.password) {
                 errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
                 showLoading(false);
@@ -107,10 +99,15 @@ async function searchStudent() {
             ...studentData
         };
         
-        // Load student activities
-        await loadStudentActivities();
+        // Save to sessionStorage for sharing between pages
+        sessionStorage.setItem('studentSession', JSON.stringify({
+            id: currentStudent.id,
+            email: currentStudent.email,
+            name: currentStudent.name,
+            studentId: currentStudent.studentId
+        }));
         
-        // Show dashboard
+        await loadStudentActivities();
         showDashboard();
         
     } catch (error) {
@@ -128,7 +125,6 @@ async function loadStudentActivities() {
     studentActivities = [];
     
     try {
-        // Get participation records for this student
         const participationQuery = await participationCollection
             .where('studentId', '==', currentStudent.studentId)
             .get();
@@ -136,7 +132,6 @@ async function loadStudentActivities() {
         for (const doc of participationQuery.docs) {
             const participation = doc.data();
             
-            // Get activity details
             const activityQuery = await activitiesCollection
                 .where('name', '==', participation.activityName)
                 .limit(1)
@@ -147,7 +142,8 @@ async function loadStudentActivities() {
                 name: participation.activityName,
                 status: participation.status || 'Approved',
                 date: participation.date || '',
-                skills: []
+                skills: [],
+                level: 1
             };
             
             if (!activityQuery.empty) {
@@ -160,7 +156,7 @@ async function loadStudentActivities() {
             studentActivities.push(activityData);
         }
         
-        // Also check Activity Submissions if exists
+        // Also check submissions
         const submissionsQuery = await db.collection('submissions')
             .where('studentEmail', '==', currentStudent.email)
             .get();
@@ -168,7 +164,6 @@ async function loadStudentActivities() {
         for (const doc of submissionsQuery.docs) {
             const submission = doc.data();
             
-            // Check if not already in activities
             const exists = studentActivities.find(a => 
                 a.name.toLowerCase() === submission.activityName?.toLowerCase()
             );
@@ -176,10 +171,10 @@ async function loadStudentActivities() {
             if (!exists) {
                 studentActivities.push({
                     id: doc.id,
-                    name: submission.activityName || 'Unnamed Activity',
+                    name: submission.activityName || 'ไม่ระบุชื่อ',
                     status: submission.status || 'Pending',
-                    date: submission.startDate || '',
-                    skills: extractSkillsFromSubmission(submission),
+                    date: submission.activityDate || '',
+                    skills: submission.skills || [],
                     level: submission.activityLevel || 1,
                     description: submission.description || ''
                 });
@@ -192,36 +187,24 @@ async function loadStudentActivities() {
 }
 
 // ============================================
-// EXTRACT SKILLS FROM DATA
+// EXTRACT SKILLS FROM ACTIVITY
 // ============================================
 function extractSkills(activity) {
     const skills = [];
-    const codes = ['1.1', '1.2', '1.3', '2.1', '2.2', '2.3', '3.1', '3.2', '3.3', 
-                   '4.1', '4.2', '4.3', '5.1', '5.2', '5.3', '6.1', '6.2', '6.3'];
     
-    codes.forEach(code => {
-        const fieldName = `criteria_${code.replace('.', '_')}`;
-        const altFieldName = code;
-        
-        const level = activity[fieldName] || activity[altFieldName] || 0;
-        if (level > 0) {
-            skills.push({ code, level: parseInt(level) });
-        }
-    });
+    // Check for skills array
+    if (activity.skills && Array.isArray(activity.skills)) {
+        return activity.skills;
+    }
     
-    return skills;
-}
-
-function extractSkillsFromSubmission(submission) {
-    const skills = [];
-    const codes = ['1.1', '1.2', '1.3', '2.1', '2.2', '2.3', '3.1', '3.2', '3.3', 
-                   '4.1', '4.2', '4.3', '5.1', '5.2', '5.3', '6.1', '6.2', '6.3'];
-    
-    codes.forEach(code => {
-        const fieldName = `criteria_${code.replace('.', '_')}`;
-        const level = submission[fieldName] || submission[code] || 0;
-        if (level > 0) {
-            skills.push({ code, level: parseInt(level) });
+    // Check for individual criteria fields
+    CRITERIA_LIST.forEach(criteria => {
+        const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
+        if (activity[fieldName] && activity[fieldName] > 0) {
+            skills.push({
+                code: criteria.code,
+                level: activity[fieldName]
+            });
         }
     });
     
@@ -234,17 +217,20 @@ function extractSkillsFromSubmission(submission) {
 function calculateCompetencyScores() {
     const scores = {};
     
-    // Initialize all criteria with 0
-    CRITERIA_LIST.forEach(c => {
-        scores[c.code] = 0;
+    CRITERIA_LIST.forEach(criteria => {
+        scores[criteria.code] = 0;
     });
     
-    // Get max score per criteria from approved activities
-    studentActivities.forEach(activity => {
-        if (activity.status?.toLowerCase().includes('approved')) {
-            activity.skills?.forEach(skill => {
-                if (skill.level > scores[skill.code]) {
-                    scores[skill.code] = skill.level;
+    // Only count approved activities
+    const approvedActivities = studentActivities.filter(a => 
+        a.status?.toLowerCase().includes('approved')
+    );
+    
+    approvedActivities.forEach(activity => {
+        if (activity.skills && Array.isArray(activity.skills)) {
+            activity.skills.forEach(skill => {
+                if (skill.code && skill.level) {
+                    scores[skill.code] = Math.max(scores[skill.code], skill.level);
                 }
             });
         }
@@ -253,17 +239,32 @@ function calculateCompetencyScores() {
     return scores;
 }
 
+// ============================================
+// CALCULATE DOMAIN SCORES
+// ============================================
 function calculateDomainScores(scores) {
     const domainScores = {};
     
     DOMAINS.forEach(domain => {
         const domainCriteria = CRITERIA_LIST.filter(c => c.domain === domain.name);
-        const totalScore = domainCriteria.reduce((sum, c) => sum + (scores[c.code] || 0), 0);
-        const maxScore = domainCriteria.length * 4; // Max level is 4
+        const domainLevels = domainCriteria.map(c => scores[c.code] || 0);
+        
+        const total = domainLevels.reduce((a, b) => a + b, 0);
+        const max = domainCriteria.length * 4;
+        const avg = domainLevels.length > 0 ? total / domainLevels.length : 0;
+        const percentage = max > 0 ? (total / max) * 100 : 0;
+        
+        // Count how many sub-skills have level 2+
+        const passCount = domainLevels.filter(l => l >= 2).length;
+        
         domainScores[domain.name] = {
-            score: totalScore,
-            max: maxScore,
-            percentage: Math.round((totalScore / maxScore) * 100)
+            total,
+            max,
+            avg: Math.round(avg * 10) / 10,
+            percentage: Math.round(percentage),
+            levels: domainLevels,
+            passCount,
+            subCount: domainCriteria.length
         };
     });
     
@@ -277,72 +278,87 @@ function showDashboard() {
     document.getElementById('search-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
     
-    // Update student info
     document.getElementById('avatar-initial').textContent = 
         currentStudent.name ? currentStudent.name.charAt(0).toUpperCase() : 'S';
     document.getElementById('student-name').textContent = currentStudent.name || 'นักศึกษา';
     document.getElementById('student-email').textContent = currentStudent.email || '-';
     document.getElementById('student-id').textContent = `รหัสนักศึกษา: ${currentStudent.studentId || '-'}`;
     
-    // Calculate stats
     const approvedCount = studentActivities.filter(a => 
         a.status?.toLowerCase().includes('approved')).length;
-    const pendingCount = studentActivities.filter(a => 
-        a.status?.toLowerCase().includes('pending')).length;
     
     const scores = calculateCompetencyScores();
     const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
-    
-    // Calculate skills achieved (domains with score > 0)
     const domainScores = calculateDomainScores(scores);
-    const skillsAchieved = DOMAINS.filter(d => domainScores[d.name].total > 0).length;
+    
+    // Count domains that have avg level >= 2
+    const skillsPassedCount = DOMAINS.filter(d => domainScores[d.name].avg >= 2).length;
     
     document.getElementById('total-activities').textContent = studentActivities.length;
     document.getElementById('approved-activities').textContent = approvedCount;
-    document.getElementById('pending-activities').textContent = pendingCount;
-    document.getElementById('skill-achieved').textContent = skillsAchieved;
+    document.getElementById('skill-achieved').textContent = skillsPassedCount;
     document.getElementById('competency-score').textContent = totalScore;
     
-    // Render components
     renderCompetencyChart(scores);
-    renderCompetencyTable(scores);
+    renderCompetencySummary(scores, domainScores);
     renderActivitiesList();
-    
-    // Setup filter buttons
     setupFilterButtons();
 }
 
 // ============================================
-// RENDER RADAR CHART
+// RENDER RADAR CHART WITH TARGETS
 // ============================================
 function renderCompetencyChart(scores) {
     const ctx = document.getElementById('competencyChart').getContext('2d');
     
-    // Destroy existing chart
     if (competencyChart) {
         competencyChart.destroy();
     }
     
-    // Calculate domain averages for radar chart
     const domainScores = calculateDomainScores(scores);
     const labels = DOMAINS.map(d => d.name);
-    const data = DOMAINS.map(d => domainScores[d.name].percentage);
+    const data = DOMAINS.map(d => domainScores[d.name].avg);
+    
+    // Min target (Level 2) and Ideal target (Level 3)
+    const minTarget = [2, 2, 2, 2, 2, 2];
+    const idealTarget = [3, 3, 3, 3, 3, 3];
     
     competencyChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Competency Level',
-                data: data,
-                backgroundColor: 'rgba(102, 126, 234, 0.2)',
-                borderColor: '#667eea',
-                borderWidth: 2,
-                pointBackgroundColor: '#667eea',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#667eea'
-            }]
+            datasets: [
+                {
+                    label: 'ระดับปัจจุบัน',
+                    data: data,
+                    backgroundColor: 'rgba(102, 126, 234, 0.3)',
+                    borderColor: '#667eea',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: 'ขั้นต่ำ (Lv.2)',
+                    data: minTarget,
+                    backgroundColor: 'rgba(241, 196, 15, 0.1)',
+                    borderColor: '#f1c40f',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0
+                },
+                {
+                    label: 'เป้าหมาย (Lv.3)',
+                    data: idealTarget,
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    borderColor: '#27ae60',
+                    borderWidth: 2,
+                    borderDash: [10, 5],
+                    pointRadius: 0
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -350,21 +366,43 @@ function renderCompetencyChart(scores) {
             scales: {
                 r: {
                     beginAtZero: true,
-                    max: 100,
+                    min: 0,
+                    max: 4,
                     ticks: {
-                        stepSize: 25,
-                        display: false
+                        stepSize: 1,
+                        display: true,
+                        backdropColor: 'transparent',
+                        font: { size: 10 },
+                        callback: function(value) {
+                            return 'Lv.' + value;
+                        }
                     },
                     pointLabels: {
-                        font: {
-                            size: 11
-                        }
+                        font: { size: 11, weight: '600' },
+                        color: '#333'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    angleLines: {
+                        color: 'rgba(0, 0, 0, 0.1)'
                     }
                 }
             },
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const domain = DOMAINS[context.dataIndex];
+                            if (context.datasetIndex === 0) {
+                                return `${domain.nameTh}: Lv.${context.raw.toFixed(1)}`;
+                            }
+                            return context.dataset.label;
+                        }
+                    }
                 }
             }
         }
@@ -372,27 +410,56 @@ function renderCompetencyChart(scores) {
 }
 
 // ============================================
-// RENDER COMPETENCY TABLE
+// RENDER COMPETENCY SUMMARY
 // ============================================
-function renderCompetencyTable(scores) {
-    const tbody = document.getElementById('competency-tbody');
-    tbody.innerHTML = '';
+function renderCompetencySummary(scores, domainScores) {
+    const container = document.getElementById('competency-summary');
     
-    CRITERIA_LIST.forEach(criteria => {
-        const level = scores[criteria.code] || 0;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${criteria.domain}</strong></td>
-            <td>
-                <span class="criteria-code">${criteria.code}</span>
-                ${criteria.nameTh}
-            </td>
-            <td>
-                <span class="level-badge level-${level}">Level ${level}</span>
-            </td>
+    container.innerHTML = DOMAINS.map((domain, idx) => {
+        const ds = domainScores[domain.name];
+        const domainCriteria = CRITERIA_LIST.filter(c => c.domain === domain.name);
+        
+        // Determine status
+        let statusClass = 'low';
+        let statusText = '⚠️ ต้องพัฒนา';
+        if (ds.avg >= 3) {
+            statusClass = 'excellent';
+            statusText = '⭐ ยอดเยี่ยม';
+        } else if (ds.avg >= 2) {
+            statusClass = 'good';
+            statusText = '✅ ผ่านเกณฑ์';
+        }
+        
+        const subSkillsHtml = domainCriteria.map(c => {
+            const level = scores[c.code] || 0;
+            const levelClass = level >= 3 ? 'excellent' : level >= 2 ? 'good' : level >= 1 ? 'developing' : 'none';
+            return `
+                <div class="sub-skill-row">
+                    <span class="sub-skill-code">${c.code}</span>
+                    <span class="sub-skill-name">${c.nameTh}</span>
+                    <span class="sub-skill-level level-${levelClass}">Lv.${level}</span>
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="domain-summary">
+                <div class="domain-summary-header" style="border-left-color: ${domain.color}">
+                    <div class="domain-summary-title">
+                        <span class="domain-num">${idx + 1}</span>
+                        <span>${domain.name}</span>
+                    </div>
+                    <div class="domain-summary-level">
+                        <span class="avg-level">Lv.${ds.avg}</span>
+                        <span class="status-text ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+                <div class="domain-summary-body">
+                    ${subSkillsHtml}
+                </div>
+            </div>
         `;
-        tbody.appendChild(row);
-    });
+    }).join('');
 }
 
 // ============================================
@@ -401,7 +468,6 @@ function renderCompetencyTable(scores) {
 function renderActivitiesList() {
     const container = document.getElementById('activities-list');
     
-    // Filter activities
     let filtered = studentActivities;
     if (currentFilter !== 'all') {
         filtered = studentActivities.filter(a => 
@@ -423,19 +489,52 @@ function renderActivitiesList() {
         const statusClass = getStatusClass(activity.status);
         const statusText = getStatusText(activity.status);
         
-        const skillTags = activity.skills?.map(s => {
+        // Calculate total score from skills
+        const totalScore = activity.skills?.reduce((sum, s) => sum + (s.level || 0), 0) || 0;
+        
+        // Group skills by domain
+        const skillsByDomain = {};
+        activity.skills?.forEach(s => {
             const criteria = CRITERIA_LIST.find(c => c.code === s.code);
-            return `<span class="skill-tag">${s.code} Lv.${s.level}</span>`;
-        }).join('') || '';
+            if (criteria) {
+                if (!skillsByDomain[criteria.domain]) {
+                    skillsByDomain[criteria.domain] = [];
+                }
+                skillsByDomain[criteria.domain].push(s);
+            }
+        });
+        
+        const skillsHtml = Object.entries(skillsByDomain).map(([domain, skills]) => {
+            const domainInfo = DOMAINS.find(d => d.name === domain);
+            return `
+                <div class="activity-skill-group" style="border-left-color: ${domainInfo?.color || '#666'}">
+                    <span class="skill-domain-name">${domain}</span>
+                    <div class="skill-tags">
+                        ${skills.map(s => `<span class="skill-tag-new">${s.code} <strong>+${s.level}</strong></span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
         
         return `
-            <div class="activity-item status-${statusClass}">
-                <div class="activity-title">${activity.name}</div>
-                <div class="activity-meta">
-                    <span>📅 ${activity.date || 'ไม่ระบุวันที่'}</span>
-                    <span class="status-badge ${statusClass}">${statusText}</span>
+            <div class="activity-item-new status-${statusClass}">
+                <div class="activity-main">
+                    <div class="activity-info">
+                        <div class="activity-title-row">
+                            <span class="activity-title">${activity.name}</span>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="activity-meta">
+                            <span>📅 ${activity.date || 'ไม่ระบุวันที่'}</span>
+                            <span>📊 ระดับกิจกรรม: ${activity.level || 1}</span>
+                        </div>
+                    </div>
+                    <div class="activity-score">
+                        <span class="score-number">+${totalScore}</span>
+                        <span class="score-label">คะแนน</span>
+                    </div>
                 </div>
-                ${skillTags ? `<div class="activity-skills">${skillTags}</div>` : ''}
+                ${skillsHtml ? `<div class="activity-skills-detail">${skillsHtml}</div>` : ''}
             </div>
         `;
     }).join('');
@@ -450,9 +549,9 @@ function getStatusClass(status) {
 }
 
 function getStatusText(status) {
-    if (!status) return 'รอดำเนินการ';
+    if (!status) return '⏳ รอดำเนินการ';
     const s = status.toLowerCase();
-    if (s.includes('approved')) return '✅ อนุมัติแล้ว';
+    if (s.includes('approved')) return '✅ อนุมัติ';
     if (s.includes('rejected')) return '❌ ไม่อนุมัติ';
     return '⏳ รอดำเนินการ';
 }
@@ -473,18 +572,40 @@ function setupFilterButtons() {
 }
 
 // ============================================
+// NAVIGATE TO ACTIVITY FORM (WITH SESSION)
+// ============================================
+function goToActivityForm() {
+    if (currentStudent) {
+        // Already logged in, save session and go
+        sessionStorage.setItem('studentSession', JSON.stringify({
+            id: currentStudent.id,
+            email: currentStudent.email,
+            name: currentStudent.name,
+            studentId: currentStudent.studentId
+        }));
+    }
+    window.location.href = 'student-form.html';
+}
+
+// ============================================
 // LOGOUT
 // ============================================
 function logout() {
     currentStudent = null;
     studentActivities = [];
-    currentFilter = 'all';
+    sessionStorage.removeItem('studentSession');
     
     document.getElementById('email-input').value = '';
     document.getElementById('password-input').value = '';
     document.getElementById('search-error').textContent = '';
+    
     document.getElementById('dashboard-section').style.display = 'none';
     document.getElementById('search-section').style.display = 'flex';
+    
+    if (competencyChart) {
+        competencyChart.destroy();
+        competencyChart = null;
+    }
 }
 
 // ============================================
@@ -492,29 +613,40 @@ function logout() {
 // ============================================
 function showLoading(show) {
     const overlay = document.getElementById('loading-overlay');
-    if (show) {
-        overlay.classList.add('show');
-    } else {
-        overlay.classList.remove('show');
-    }
+    overlay.style.display = show ? 'flex' : 'none';
 }
 
 // ============================================
-// ENTER KEY HANDLER
+// ENTER KEY HANDLERS
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email-input');
     const passwordInput = document.getElementById('password-input');
     
-    emailInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            passwordInput.focus();
-        }
-    });
+    if (emailInput) {
+        emailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+    }
     
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            searchStudent();
-        }
-    });
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchStudent();
+            }
+        });
+    }
+    
+    // Check for existing session
+    const session = sessionStorage.getItem('studentSession');
+    if (session) {
+        try {
+            const data = JSON.parse(session);
+            if (data.email) {
+                document.getElementById('email-input').value = data.email;
+            }
+        } catch (e) {}
+    }
 });

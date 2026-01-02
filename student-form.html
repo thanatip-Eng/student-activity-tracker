@@ -260,6 +260,14 @@
                 
                 currentStudent = { id: doc.id, ...studentData };
                 
+                // Save to sessionStorage for sharing between pages
+                sessionStorage.setItem('studentSession', JSON.stringify({
+                    id: currentStudent.id,
+                    email: currentStudent.email,
+                    name: currentStudent.name,
+                    studentId: currentStudent.studentId
+                }));
+                
                 // Update UI
                 document.getElementById('student-avatar').textContent = currentStudent.name?.charAt(0) || 'S';
                 document.getElementById('display-name').textContent = currentStudent.name || 'นักศึกษา';
@@ -285,6 +293,7 @@
         // ============================================
         function logoutStudent() {
             currentStudent = null;
+            sessionStorage.removeItem('studentSession');
             document.getElementById('activity-form').reset();
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('login-section').style.display = 'flex';
@@ -472,6 +481,41 @@
         
         document.getElementById('student-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') loginStudent();
+        });
+
+        // Check for existing session on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = sessionStorage.getItem('studentSession');
+            if (session) {
+                try {
+                    const data = JSON.parse(session);
+                    if (data.email && data.id) {
+                        showLoading(true, 'กำลังโหลดข้อมูล...');
+                        
+                        // Fetch fresh student data
+                        const doc = await db.collection('students').doc(data.id).get();
+                        if (doc.exists) {
+                            currentStudent = { id: doc.id, ...doc.data() };
+                            
+                            // Update UI
+                            document.getElementById('student-avatar').textContent = currentStudent.name?.charAt(0) || 'S';
+                            document.getElementById('display-name').textContent = currentStudent.name || 'นักศึกษา';
+                            document.getElementById('display-email').textContent = currentStudent.email;
+                            
+                            // Show form
+                            document.getElementById('login-section').style.display = 'none';
+                            document.getElementById('form-section').style.display = 'block';
+                            
+                            // Load submissions
+                            await loadMySubmissions();
+                        }
+                        showLoading(false);
+                    }
+                } catch (e) {
+                    console.log('Session error:', e);
+                    sessionStorage.removeItem('studentSession');
+                }
+            }
         });
     </script>
 </body>
