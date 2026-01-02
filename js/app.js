@@ -311,7 +311,7 @@ function showDashboard() {
     
     document.getElementById('total-activities').textContent = studentActivities.length;
     document.getElementById('approved-activities').textContent = approvedCount;
-    document.getElementById('skill-achieved').textContent = `${domainsPassedCount}/${totalDomains}`;
+    document.getElementById('skill-achieved').textContent = domainsPassedCount;
     document.getElementById('competency-score').textContent = totalScore;
     
     renderCompetencyChart(scores);
