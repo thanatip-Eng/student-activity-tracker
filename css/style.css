@@ -1112,10 +1112,17 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
+.footer-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 15px;
+}
+
 .footer-logo {
     height: 80px;
     width: auto;
-    margin-bottom: 15px;
     border-radius: 10px;
 }
 
@@ -1208,4 +1215,29 @@ body {
         max-width: 280px;
         justify-content: center;
     }
+}
+
+/* Reject Reason Box */
+.reject-reason-box {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border: 1px solid #ef9a9a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.reject-reason-label {
+    font-weight: 600;
+    color: #c62828;
+    font-size: 0.9em;
+}
+
+.reject-reason-text {
+    color: #b71c1c;
+    font-size: 0.9em;
+    line-height: 1.4;
 }

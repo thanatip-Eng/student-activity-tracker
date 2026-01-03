@@ -747,6 +747,14 @@
                     const date = data.submittedAt?.toDate?.() || new Date();
                     const skills = data.aiSuggestedSkills || [];
                     
+                    // Show reject reason if rejected
+                    const rejectReasonHtml = (statusClass === 'rejected' && data.rejectReason) ? `
+                        <div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:6px;padding:8px 10px;margin-top:8px;">
+                            <span style="color:#c62828;font-weight:600;">💬 เหตุผล:</span>
+                            <span style="color:#b71c1c;">${data.rejectReason}</span>
+                        </div>
+                    ` : '';
+                    
                     return `<div class="submission-item status-${statusClass}">
                         <div class="submission-header">
                             <h4>${data.activityName}</h4>
@@ -760,6 +768,7 @@
                         ${skills.length > 0 ? `<div style="margin-top:8px;">
                             ${skills.map(s => `<span style="background:#e3f2fd;padding:2px 8px;border-radius:4px;font-size:0.8em;margin-right:4px;">${s.code} Lv.${s.level}</span>`).join('')}
                         </div>` : ''}
+                        ${rejectReasonHtml}
                         <div class="submission-date">ส่งเมื่อ: ${date.toLocaleDateString('th-TH')}</div>
                     </div>`;
                 }).join('');

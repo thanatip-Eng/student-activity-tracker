@@ -6,6 +6,183 @@
     <title>Admin Dashboard - Student Talent Development</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin-style.css">
+    <style>
+        /* Login Section Styles */
+        .login-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 40px 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .login-card h2 { color: #1a1a2e; margin-bottom: 10px; font-size: 1.6em; }
+        .login-card > p { color: #666; margin-bottom: 25px; }
+        .login-form { display: flex; flex-direction: column; gap: 15px; }
+        .login-form input {
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .login-form input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        .login-form input[type="password"] { letter-spacing: 3px; }
+        .login-form button {
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .login-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+        .first-login-info {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: left;
+            border: 1px solid #a5d6a7;
+        }
+        .first-login-info h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .first-login-info ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+        .admin-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Activity action buttons */
+        .act-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-act-edit, .btn-act-delete {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        .btn-act-edit {
+            background: #3498db;
+            color: white;
+        }
+        .btn-act-edit:hover { background: #2980b9; }
+        .btn-act-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-act-delete:hover { background: #c0392b; }
+        
+        /* Edit Activity Modal */
+        .edit-modal-content {
+            text-align: left;
+        }
+        .edit-modal-content .form-group {
+            margin-bottom: 15px;
+        }
+        .edit-modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .edit-modal-content input,
+        .edit-modal-content select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+        .edit-skills-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .edit-skill-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .edit-skill-item:last-child { border-bottom: none; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,7 +203,44 @@
             </nav>
         </header>
 
-        <!-- Stats Row -->
+        <!-- Login Section -->
+        <section id="login-section" class="login-section">
+            <div class="login-card">
+                <h2>🔐 Admin Login</h2>
+                <p>เข้าสู่ระบบเพื่อจัดการข้อมูล | Login to manage data</p>
+                <div class="login-form">
+                    <input type="email" id="admin-email" placeholder="Admin Email">
+                    <input type="password" id="admin-password" placeholder="รหัสผ่าน | Password (min 4 chars)" minlength="4">
+                    <button onclick="loginAdmin()">🚀 เข้าสู่ระบบ | Login</button>
+                </div>
+                <p id="login-error" class="error-message"></p>
+                
+                <div class="first-login-info">
+                    <h4><span class="icon">💡</span> First Time Login</h4>
+                    <ul>
+                        <li>กรอก Email และ <strong>สร้างรหัสผ่านใหม่</strong></li>
+                        <li>Enter Email and <strong>create your password</strong></li>
+                        <li>ใช้รหัสผ่านนี้ในการเข้าสู่ระบบครั้งต่อไป</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content (hidden until login) -->
+        <section id="main-section" style="display: none;">
+            <!-- Admin Bar -->
+            <div class="admin-bar">
+                <div class="admin-info">
+                    <div class="admin-avatar" id="admin-avatar">A</div>
+                    <div>
+                        <strong id="admin-display-name">Admin</strong>
+                        <br><small id="admin-display-email">admin@cmu.ac.th</small>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="logoutAdmin()">🚪 ออกจากระบบ | Logout</button>
+            </div>
+
+            <!-- Stats Row -->
         <div class="stats-row">
             <div class="stat-card pending">
                 <div class="stat-icon">⏳</div>
@@ -463,6 +677,65 @@
             </div>
         </div>
 
+        </section><!-- End main-section -->
+
+        <!-- Edit Student Activity Modal -->
+        <div id="edit-student-activity-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>✏️ แก้ไขกิจกรรม | Edit Activity</h3>
+                </div>
+                <div class="modal-body edit-modal-content">
+                    <input type="hidden" id="edit-activity-id">
+                    <input type="hidden" id="edit-activity-source">
+                    <input type="hidden" id="edit-student-id">
+                    
+                    <div class="form-group">
+                        <label>ชื่อกิจกรรม | Activity Name</label>
+                        <input type="text" id="edit-activity-name" readonly style="background:#f5f5f5;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>สถานะ | Status</label>
+                        <select id="edit-activity-status">
+                            <option value="Approved">✅ Approved (อนุมัติ)</option>
+                            <option value="Pending Review">⏳ Pending (รอตรวจสอบ)</option>
+                            <option value="Rejected">❌ Rejected (ไม่อนุมัติ)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🎯 ทักษะ | Skills (เลือกได้สูงสุด 3)</label>
+                        <div class="edit-skills-list" id="edit-skills-list">
+                            <!-- Skills checkboxes will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeEditActivityModal()">ยกเลิก | Cancel</button>
+                    <button class="btn-primary" onclick="saveEditedActivity()">💾 บันทึก | Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-confirm-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 400px; text-align: center;">
+                <div class="modal-icon" style="font-size: 3em;">⚠️</div>
+                <h3>ยืนยันการลบ | Confirm Delete</h3>
+                <p id="delete-confirm-text" style="margin: 20px 0; color: #666;">
+                    คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรมนี้?
+                </p>
+                <input type="hidden" id="delete-activity-id">
+                <input type="hidden" id="delete-activity-source">
+                <input type="hidden" id="delete-student-id-for-refresh">
+                <div class="modal-footer" style="justify-content: center;">
+                    <button class="btn-secondary" onclick="closeDeleteModal()">ยกเลิก | Cancel</button>
+                    <button class="btn-danger" onclick="confirmDeleteActivity()">🗑️ ลบ | Delete</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading Overlay -->
         <div id="loading-overlay" class="loading-overlay">
             <div class="loading-box">
@@ -525,9 +798,14 @@
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
-            loadAllData();
+            checkAdminSession();
             setupTabs();
             setupFilters();
+            
+            // Enter key for login
+            document.getElementById('admin-password')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginAdmin();
+            });
         });
 
         function setupTabs() {
@@ -758,7 +1036,13 @@
             return domainScores;
         }
 
+        // Store current searched student for refresh
+        let currentSearchedStudent = null;
+
         function displayStudentResult(student, activities, scores, domainScores) {
+            // Store for refresh after edit/delete
+            currentSearchedStudent = student;
+            
             // Update profile info
             document.getElementById('result-avatar').textContent = student.name?.charAt(0) || 'S';
             document.getElementById('result-name').textContent = student.name || 'ไม่ระบุชื่อ';
@@ -794,7 +1078,7 @@
                 `;
             }).join('');
             
-            // Render activities list
+            // Render activities list with edit/delete buttons
             const actContainer = document.getElementById('result-activities');
             if (activities.length === 0) {
                 actContainer.innerHTML = '<div class="empty-msg">ไม่มีกิจกรรม | No activities</div>';
@@ -809,6 +1093,9 @@
                         `<span class="skill-mini">${s.code}: Lv.${s.level}</span>`
                     ).join('') || '';
                     
+                    // Create JSON string for skills (escape quotes)
+                    const skillsJson = JSON.stringify(act.skills || []).replace(/"/g, '&quot;');
+                    
                     return `
                         <div class="result-activity ${statusClass}">
                             <div class="act-main">
@@ -820,6 +1107,14 @@
                                 <span>📁 ${act.source === 'submission' ? 'นศ.แจ้ง' : 'ระบบ'}</span>
                             </div>
                             ${skillsHtml ? `<div class="act-skills">${skillsHtml}</div>` : ''}
+                            <div class="act-actions">
+                                <button class="btn-act-edit" onclick="openEditActivityModal('${act.id}', '${act.source}', '${act.name}', '${act.status || ''}', '${skillsJson}', '${student.studentId}')">
+                                    ✏️ แก้ไข
+                                </button>
+                                <button class="btn-act-delete" onclick="openDeleteModal('${act.id}', '${act.source}', '${act.name}', '${student.studentId}')">
+                                    🗑️ ลบ
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -2409,6 +2704,280 @@
             
             showLoading(false);
         }
+
+        // ============================================
+        // ADMIN LOGIN / LOGOUT
+        // ============================================
+        let currentAdmin = null;
+
+        async function loginAdmin() {
+            const email = document.getElementById('admin-email').value.trim().toLowerCase();
+            const password = document.getElementById('admin-password').value.trim();
+            const errorEl = document.getElementById('login-error');
+            errorEl.textContent = '';
+            
+            if (!email || !email.includes('@')) { 
+                errorEl.textContent = '⚠️ กรุณากรอก Email ที่ถูกต้อง | Please enter valid Email'; 
+                return; 
+            }
+            if (!password || password.length < 4) { 
+                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)'; 
+                return; 
+            }
+            
+            showLoading(true, 'กำลังเข้าสู่ระบบ... | Logging in...');
+            
+            try {
+                const q = await db.collection('admins').where('email', '==', email).limit(1).get();
+                
+                if (q.empty) {
+                    // First time - create new admin
+                    const newAdmin = {
+                        email: email,
+                        name: email.split('@')[0],
+                        password: password,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    const docRef = await db.collection('admins').add(newAdmin);
+                    currentAdmin = { id: docRef.id, ...newAdmin };
+                } else {
+                    const doc = q.docs[0];
+                    const data = doc.data();
+                    
+                    if (!data.password) {
+                        // Set password for first time
+                        await db.collection('admins').doc(doc.id).update({ password });
+                        data.password = password;
+                    } else if (password !== data.password) {
+                        errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง | Incorrect password';
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    currentAdmin = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
+                }
+                
+                // Store session
+                sessionStorage.setItem('adminSession', JSON.stringify(currentAdmin));
+                
+                // Update UI
+                document.getElementById('admin-avatar').textContent = currentAdmin.name.charAt(0).toUpperCase();
+                document.getElementById('admin-display-name').textContent = currentAdmin.name;
+                document.getElementById('admin-display-email').textContent = email;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('main-section').style.display = 'block';
+                
+                // Load data
+                await loadAllData();
+                
+            } catch (e) { 
+                errorEl.textContent = '❌ เกิดข้อผิดพลาด | Error: ' + e.message; 
+            }
+            showLoading(false);
+        }
+
+        function logoutAdmin() {
+            currentAdmin = null;
+            sessionStorage.removeItem('adminSession');
+            document.getElementById('login-section').style.display = 'flex';
+            document.getElementById('main-section').style.display = 'none';
+            document.getElementById('admin-email').value = '';
+            document.getElementById('admin-password').value = '';
+        }
+
+        // Check session on load
+        async function checkAdminSession() {
+            const session = sessionStorage.getItem('adminSession');
+            if (session) {
+                try {
+                    currentAdmin = JSON.parse(session);
+                    document.getElementById('admin-avatar').textContent = currentAdmin.name?.charAt(0).toUpperCase() || 'A';
+                    document.getElementById('admin-display-name').textContent = currentAdmin.name || 'Admin';
+                    document.getElementById('admin-display-email').textContent = currentAdmin.email;
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('main-section').style.display = 'block';
+                    await loadAllData();
+                } catch (e) {
+                    sessionStorage.removeItem('adminSession');
+                }
+            }
+        }
+
+        // ============================================
+        // EDIT / DELETE STUDENT ACTIVITIES
+        // ============================================
+        
+        function openEditActivityModal(actId, source, actName, status, skillsJson, studentId) {
+            document.getElementById('edit-activity-id').value = actId;
+            document.getElementById('edit-activity-source').value = source;
+            document.getElementById('edit-student-id').value = studentId;
+            document.getElementById('edit-activity-name').value = actName;
+            document.getElementById('edit-activity-status').value = status || 'Approved';
+            
+            // Parse skills
+            let skills = [];
+            try {
+                skills = JSON.parse(skillsJson.replace(/&quot;/g, '"'));
+            } catch (e) { skills = []; }
+            
+            // Render skills checkboxes
+            const skillsList = document.getElementById('edit-skills-list');
+            skillsList.innerHTML = CRITERIA_LIST.map(c => {
+                const existingSkill = skills.find(s => s.code === c.code);
+                const isChecked = !!existingSkill;
+                const level = existingSkill?.level || 2;
+                
+                return `
+                    <div class="edit-skill-item">
+                        <input type="checkbox" class="edit-skill-cb" data-code="${c.code}" 
+                            ${isChecked ? 'checked' : ''} onchange="updateEditSkillCounter()">
+                        <span style="flex:1;">${c.code} ${c.nameTh}</span>
+                        <select class="edit-skill-level" data-code="${c.code}" ${isChecked ? '' : 'disabled'}>
+                            <option value="1" ${level===1?'selected':''}>Lv.1</option>
+                            <option value="2" ${level===2?'selected':''}>Lv.2</option>
+                            <option value="3" ${level===3?'selected':''}>Lv.3</option>
+                            <option value="4" ${level===4?'selected':''}>Lv.4</option>
+                        </select>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add checkbox change listeners
+            document.querySelectorAll('.edit-skill-cb').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const levelSelect = document.querySelector(`.edit-skill-level[data-code="${this.dataset.code}"]`);
+                    levelSelect.disabled = !this.checked;
+                });
+            });
+            
+            document.getElementById('edit-student-activity-modal').classList.add('show');
+        }
+        
+        function closeEditActivityModal() {
+            document.getElementById('edit-student-activity-modal').classList.remove('show');
+        }
+        
+        function updateEditSkillCounter() {
+            const checked = document.querySelectorAll('.edit-skill-cb:checked').length;
+            if (checked > 3) {
+                alert('⚠️ เลือกได้สูงสุด 3 ทักษะ | Maximum 3 skills');
+                event.target.checked = false;
+            }
+        }
+        
+        async function saveEditedActivity() {
+            const actId = document.getElementById('edit-activity-id').value;
+            const source = document.getElementById('edit-activity-source').value;
+            const studentId = document.getElementById('edit-student-id').value;
+            const newStatus = document.getElementById('edit-activity-status').value;
+            
+            // Get selected skills
+            const skills = [];
+            document.querySelectorAll('.edit-skill-cb:checked').forEach(cb => {
+                const code = cb.dataset.code;
+                const level = parseInt(document.querySelector(`.edit-skill-level[data-code="${code}"]`).value);
+                skills.push({ code, level });
+            });
+            
+            if (skills.length > 3) {
+                alert('⚠️ เลือกได้สูงสุด 3 ทักษะ | Maximum 3 skills');
+                return;
+            }
+            
+            showLoading(true, 'กำลังบันทึก... | Saving...');
+            
+            try {
+                if (source === 'participation') {
+                    await db.collection('participation').doc(actId).update({
+                        status: newStatus,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Also update activity skills if approved
+                    const actName = document.getElementById('edit-activity-name').value;
+                    const actQuery = await db.collection('activities').where('name', '==', actName).limit(1).get();
+                    if (!actQuery.empty) {
+                        await db.collection('activities').doc(actQuery.docs[0].id).update({
+                            skills: skills
+                        });
+                    }
+                } else {
+                    // submission
+                    await db.collection('submissions').doc(actId).update({
+                        status: newStatus,
+                        approvedSkills: skills,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                closeEditActivityModal();
+                alert('✅ บันทึกเรียบร้อย | Saved successfully');
+                
+                // Refresh student search
+                await refreshStudentSearch();
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        function openDeleteModal(actId, source, actName, studentId) {
+            document.getElementById('delete-activity-id').value = actId;
+            document.getElementById('delete-activity-source').value = source;
+            document.getElementById('delete-student-id-for-refresh').value = studentId;
+            document.getElementById('delete-confirm-text').innerHTML = 
+                `คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม<br><strong>"${actName}"</strong>?`;
+            document.getElementById('delete-confirm-modal').classList.add('show');
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('delete-confirm-modal').classList.remove('show');
+        }
+        
+        async function confirmDeleteActivity() {
+            const actId = document.getElementById('delete-activity-id').value;
+            const source = document.getElementById('delete-activity-source').value;
+            
+            showLoading(true, 'กำลังลบ... | Deleting...');
+            closeDeleteModal();
+            
+            try {
+                if (source === 'participation') {
+                    await db.collection('participation').doc(actId).delete();
+                } else {
+                    await db.collection('submissions').doc(actId).delete();
+                }
+                
+                alert('✅ ลบกิจกรรมเรียบร้อย | Activity deleted');
+                
+                // Refresh student search
+                await refreshStudentSearch();
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        async function refreshStudentSearch() {
+            if (currentSearchedStudent) {
+                const activities = await loadStudentActivitiesAdmin(
+                    currentSearchedStudent.studentId, 
+                    currentSearchedStudent.email
+                );
+                const scores = calculateScoresAdmin(activities);
+                const domainScores = calculateDomainScoresAdmin(scores);
+                displayStudentResult(currentSearchedStudent, activities, scores, domainScores);
+            }
+        }
+
+        // Initialize - check session
+        // (moved to main DOMContentLoaded handler above)
     </script>
 </body>
 </html>

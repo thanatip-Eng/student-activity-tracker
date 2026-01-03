@@ -206,9 +206,10 @@ async function loadStudentActivities() {
                     name: submission.activityName || 'ไม่ระบุชื่อ',
                     status: submission.status || 'Pending',
                     date: submission.activityDate || '',
-                    skills: submission.skills || [],
+                    skills: submission.skills || submission.approvedSkills || [],
                     level: submission.activityLevel || 1,
-                    description: submission.description || ''
+                    description: submission.description || '',
+                    rejectReason: submission.rejectReason || ''
                 });
             }
         }
@@ -581,6 +582,14 @@ function renderActivitiesList() {
             `;
         }).join('');
         
+        // Show reject reason if rejected
+        const rejectReasonHtml = (statusClass === 'rejected' && activity.rejectReason) ? `
+            <div class="reject-reason-box">
+                <span class="reject-reason-label">💬 เหตุผล:</span>
+                <span class="reject-reason-text">${activity.rejectReason}</span>
+            </div>
+        ` : '';
+        
         return `
             <div class="activity-item-new status-${statusClass}">
                 <div class="activity-main">
@@ -593,6 +602,7 @@ function renderActivitiesList() {
                             <span>📅 ${activity.date || 'ไม่ระบุวันที่'}</span>
                             <span>📊 ระดับกิจกรรม: ${activity.level || 1}</span>
                         </div>
+                        ${rejectReasonHtml}
                     </div>
                     <div class="activity-score">
                         <span class="score-number">+${totalScore}</span>
