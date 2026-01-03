@@ -39,6 +39,18 @@
             font-size: 0.8em;
             font-weight: 600;
         }
+        .home-link {
+            color: #1a472a;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            background: #e8f5e9;
+        }
+        .home-link:hover {
+            background: #c8e6c9;
+        }
         .login-section {
             display: flex;
             justify-content: center;
@@ -535,7 +547,10 @@
                     <p>สำหรับผู้จัดกิจกรรม | For Activity Organizers</p>
                 </div>
             </div>
-            <span class="badge-organizer">👨‍💼 ORGANIZER PORTAL</span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="index.html" class="home-link">🏠 หน้าหลัก</a>
+                <span class="badge-organizer">👨‍💼 ORGANIZER PORTAL</span>
+            </div>
         </header>
 
         <section id="login-section" class="login-section">

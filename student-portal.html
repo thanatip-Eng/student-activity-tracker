@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Talent Development - CMU Engineering</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="images/MainLogo.png" alt="Student Talent Development" class="logo-img">
+                <div>
+                    <h1>Student Talent Development</h1>
+                    <p>ระบบติดตามการพัฒนาทักษะนักศึกษา | Student Competency Tracking System</p>
+                </div>
+            </div>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">🏠 หน้าหลัก | Home</a>
+                <a href="#" onclick="goToActivityForm()">📝 แจ้งกิจกรรม | Submit Activity</a>
+            </nav>
+        </header>
+
+        <!-- Search Section -->
+        <section id="search-section" class="search-section">
+            <div class="search-card">
+                <h2>🔍 ค้นหาข้อมูลนักศึกษา | Student Search</h2>
+                <p>กรอก Email เพื่อดูข้อมูลของคุณ | Enter your Email to view your data</p>
+                <div class="search-form">
+                    <input type="email" id="email-input" placeholder="Email (example@cmu.ac.th)" autocomplete="email">
+                    <button id="search-btn" onclick="searchStudent()">
+                        <span>🔍 ค้นหา | Search</span>
+                    </button>
+                </div>
+                <p id="search-error" class="error-message"></p>
+                <p class="login-hint">💡 ใช้ Email ที่ลงทะเบียนไว้ในระบบ | Use the Email registered in the system</p>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="dashboard-section" style="display: none;">
+            <!-- Student Info Card -->
+            <div class="student-info-card">
+                <div class="student-avatar">
+                    <span id="avatar-initial">S</span>
+                </div>
+                <div class="student-details">
+                    <h2 id="student-name">-</h2>
+                    <p id="student-email">-</p>
+                    <p id="student-id">รหัสนักศึกษา | Student ID: -</p>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    🚪 ออกจากระบบ | Logout
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-activities">0</span>
+                        <span class="stat-label">กิจกรรมทั้งหมด<br>Total Activities</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="approved-activities">0</span>
+                        <span class="stat-label">อนุมัติแล้ว<br>Approved</span>
+                    </div>
+                </div>
+                <div class="stat-card skill-stat">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <span class="stat-number"><span id="skill-achieved">0</span>/6</span>
+                        <span class="stat-label">ทักษะผ่านเกณฑ์<br>(Lv.2+ อย่างน้อย 3 ทักษะ)</span>
+                    </div>
+                </div>
+                <div class="stat-card score-stat">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="competency-score">0</span>
+                        <span class="stat-label">คะแนนรวม<br>Total Score</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Radar Chart -->
+                <div class="chart-card">
+                    <h3>📊 Competency Radar Chart</h3>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-color current"></span> ระดับปัจจุบัน | Current</span>
+                        <span class="legend-item"><span class="legend-color min"></span> ขั้นต่ำ | Min (Lv.2)</span>
+                        <span class="legend-item"><span class="legend-color ideal"></span> เป้าหมาย | Target (Lv.3)</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="competencyChart"></canvas>
+                    </div>
+                    <div class="chart-note">
+                        💡 เป้าหมาย: ทุกทักษะควรอยู่ที่ระดับ 2+ | Goal: All skills should reach Level 2+
+                    </div>
+                </div>
+
+                <!-- Competency Summary -->
+                <div class="competency-card">
+                    <h3>📋 สรุป Competency | Competency Summary</h3>
+                    <div id="competency-summary" class="competency-summary">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activities List -->
+            <div class="activities-card">
+                <h3>📝 รายการกิจกรรม | Activity List</h3>
+                <div class="activities-filter">
+                    <button class="filter-btn active" data-filter="all">ทั้งหมด | All</button>
+                    <button class="filter-btn" data-filter="Approved">อนุมัติ | Approved</button>
+                    <button class="filter-btn" data-filter="Pending">รอ | Pending</button>
+                </div>
+                <div id="activities-list" class="activities-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Competency Info Section -->
+            <div class="info-section">
+                <h3>📖 รายละเอียด 6 ทักษะหลัก | 6 Core Competencies</h3>
+                
+                <div class="info-grid">
+                    <!-- Domain 1 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <span class="domain-number">1</span>
+                            <span class="domain-name">Critical Thinking<br><small>การคิดวิเคราะห์</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>1.1</strong> Analytical Reasoning | การใช้เหตุผลเชิงวิเคราะห์</li>
+                                <li><strong>1.2</strong> Systematic Problem Solving | การแก้ปัญหาอย่างเป็นระบบ</li>
+                                <li><strong>1.3</strong> Systems Thinking | การคิดเชิงระบบ</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Domain 2 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                            <span class="domain-number">2</span>
+                            <span class="domain-name">Communication<br><small>การสื่อสาร</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>2.1</strong> Presentation Skills | ทักษะการนำเสนอ</li>
+                                <li><strong>2.2</strong> Listening & Comprehension | การฟังและความเข้าใจ</li>
+                                <li><strong>2.3</strong> English Communication | การสื่อสารภาษาอังกฤษ</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Domain 3 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                            <span class="domain-number">3</span>
+                            <span class="domain-name">Teamwork<br><small>การทำงานเป็นทีม</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>3.1</strong> Role Understanding | ความเข้าใจในบทบาท</li>
+                                <li><strong>3.2</strong> Task Management | การจัดการงาน</li>
+                                <li><strong>3.3</strong> Collaborative Work | การทำงานร่วมกัน</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Domain 4 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                            <span class="domain-number">4</span>
+                            <span class="domain-name">Digital & Learning<br><small>ดิจิทัลและการเรียนรู้</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>4.1</strong> Learning Agility | ความคล่องตัวในการเรียนรู้</li>
+                                <li><strong>4.2</strong> Digital Literacy | ความรู้ด้านดิจิทัล</li>
+                                <li><strong>4.3</strong> Tool Proficiency | ความเชี่ยวชาญเครื่องมือ</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Domain 5 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                            <span class="domain-number">5</span>
+                            <span class="domain-name">Innovation<br><small>นวัตกรรม</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>5.1</strong> Human-Centered Design | การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง</li>
+                                <li><strong>5.2</strong> Project Management | การบริหารโครงการ</li>
+                                <li><strong>5.3</strong> Business Awareness | ความตระหนักทางธุรกิจ</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Domain 6 -->
+                    <div class="info-domain">
+                        <div class="domain-header" style="background: linear-gradient(135deg, #1abc9c, #16a085);">
+                            <span class="domain-number">6</span>
+                            <span class="domain-name">Self Development<br><small>พัฒนาตนเอง</small></span>
+                        </div>
+                        <div class="domain-body">
+                            <ul class="sub-skills">
+                                <li><strong>6.1</strong> Personal Growth | การเติบโตส่วนบุคคล</li>
+                                <li><strong>6.2</strong> Resilience | ความยืดหยุ่นและการปรับตัว</li>
+                                <li><strong>6.3</strong> Empathy | ความเห็นอกเห็นใจ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level Descriptions -->
+                <div class="level-info">
+                    <h4>📊 ระดับทักษะ | Skill Levels (1-4)</h4>
+                    <div class="level-grid">
+                        <div class="level-item level-1-bg">
+                            <span class="level-badge-big">1</span>
+                            <div class="level-detail">
+                                <strong>Beginner | เริ่มต้น</strong>
+                                <p>Learn from lectures | เรียนรู้จากการฟังบรรยาย</p>
+                            </div>
+                        </div>
+                        <div class="level-item level-2-bg">
+                            <span class="level-badge-big">2</span>
+                            <div class="level-detail">
+                                <strong>Developing | กำลังพัฒนา</strong>
+                                <p>Hands-on / Workshop | ลงมือปฏิบัติจริง</p>
+                            </div>
+                        </div>
+                        <div class="level-item level-3-bg">
+                            <span class="level-badge-big">3</span>
+                            <div class="level-detail">
+                                <strong>Proficient | เชี่ยวชาญ</strong>
+                                <p>Projects / Competition | ทำโครงงาน / แข่งขัน</p>
+                            </div>
+                        </div>
+                        <div class="level-item level-4-bg">
+                            <span class="level-badge-big">4</span>
+                            <div class="level-detail">
+                                <strong>Expert | ผู้เชี่ยวชาญ</strong>
+                                <p>Leader / Mentor | เป็นผู้นำ / สอนผู้อื่น</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level-note">
+                        ⭐ <strong>Goal | เป้าหมาย:</strong> All skills should reach Level 2+ and aim for Level 3+ | ทุกทักษะควรอยู่ระดับ 2+ และพยายามพัฒนาสู่ระดับ 3+
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="social-links-section">
+                    <h4>📢 ติดตามกิจกรรมเพื่อเสริมทักษะได้ทาง | Follow us for skill-building activities:</h4>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/TalentDevENGCMU" target="_blank" class="social-link facebook">
+                            <span class="social-icon">📘</span>
+                            <span class="social-text">TalentDevENGCMU</span>
+                        </a>
+                        <a href="https://www.facebook.com/StudentDevelopmentENG" target="_blank" class="social-link facebook">
+                            <span class="social-icon">📘</span>
+                            <span class="social-text">StudentDevelopmentENG</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-logos">
+                <img src="images/sd.jpg" alt="Student Development" class="footer-logo">
+                <img src="images/aw_eng_logo-01.png" alt="Engineering CMU" class="footer-logo">
+            </div>
+            <p>Student Talent Development | งานพัฒนาคุณภาพนักศึกษา</p>
+            <p>Faculty of Engineering, Chiang Mai University | คณะวิศวกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่</p>
+        </footer>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-box">
+                <div class="spinner"></div>
+                <p>กำลังโหลดข้อมูล... | Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

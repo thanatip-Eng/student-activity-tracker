@@ -5,306 +5,466 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Talent Development - CMU Engineering</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo img {
+            height: 50px;
+            border-radius: 10px;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+        
+        .logo-text p {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        
+        .admin-link {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        
+        .admin-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+        
+        .hero h2 {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+        
+        .hero h2 span {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.2em;
+            opacity: 0.85;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+        
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            font-size: 0.9em;
+            opacity: 0.75;
+            line-height: 1.5;
+        }
+        
+        /* Portal Cards */
+        .portals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+        
+        .portal-card {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            color: #333;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .portal-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        
+        .portal-card.student {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+        
+        .portal-card.organizer {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+        
+        .portal-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            margin: 0 auto 20px;
+        }
+        
+        .portal-card.student .portal-icon {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .portal-card.organizer .portal-icon {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .portal-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+        }
+        
+        .portal-card p {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .portal-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .portal-card.student .portal-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+        
+        .portal-card.organizer .portal-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        
+        .portal-card:hover .portal-btn {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .portal-features {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 12px;
+        }
+        
+        .portal-features li {
+            padding: 8px 0;
+            font-size: 0.9em;
+            color: #555;
+            list-style: none;
+        }
+        
+        .portal-features li::before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        /* Competency Section */
+        .competency-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+        }
+        
+        .competency-section h3 {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+        
+        .domains {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .domain-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            border-left: 4px solid;
+        }
+        
+        .domain-card:nth-child(1) { border-left-color: #e74c3c; }
+        .domain-card:nth-child(2) { border-left-color: #3498db; }
+        .domain-card:nth-child(3) { border-left-color: #2ecc71; }
+        .domain-card:nth-child(4) { border-left-color: #9b59b6; }
+        .domain-card:nth-child(5) { border-left-color: #f39c12; }
+        .domain-card:nth-child(6) { border-left-color: #1abc9c; }
+        
+        .domain-card h4 {
+            font-size: 0.95em;
+            margin-bottom: 5px;
+        }
+        
+        .domain-card p {
+            font-size: 0.75em;
+            opacity: 0.7;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .footer-logos img {
+            height: 60px;
+            border-radius: 10px;
+            background: white;
+            padding: 5px;
+        }
+        
+        .footer p {
+            opacity: 0.7;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .hero h2 {
+                font-size: 2em;
+            }
+            
+            .hero p {
+                font-size: 1em;
+            }
+            
+            .portals {
+                grid-template-columns: 1fr;
+            }
+            
+            .competency-section {
+                padding: 25px 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="logo">
-                <img src="images/MainLogo.png" alt="Student Talent Development" class="logo-img">
-                <div>
+                <img src="images/MainLogo.png" alt="Logo">
+                <div class="logo-text">
                     <h1>Student Talent Development</h1>
-                    <p>ระบบติดตามการพัฒนาทักษะนักศึกษา | Student Competency Tracking System</p>
+                    <p>Faculty of Engineering, CMU</p>
                 </div>
             </div>
-            <nav class="nav-links" id="nav-links">
-                <a href="#" onclick="goToActivityForm()">📝 แจ้งกิจกรรม | Submit Activity</a>
-            </nav>
+            <a href="admin-dashboard.html" class="admin-link">🔐 Admin</a>
         </header>
-
-        <!-- Search Section -->
-        <section id="search-section" class="search-section">
-            <div class="search-card">
-                <h2>🔍 ค้นหาข้อมูลนักศึกษา | Student Search</h2>
-                <p>กรอก Email เพื่อดูข้อมูลของคุณ | Enter your Email to view your data</p>
-                <div class="search-form">
-                    <input type="email" id="email-input" placeholder="Email (example@cmu.ac.th)" autocomplete="email">
-                    <button id="search-btn" onclick="searchStudent()">
-                        <span>🔍 ค้นหา | Search</span>
-                    </button>
-                </div>
-                <p id="search-error" class="error-message"></p>
-                <p class="login-hint">💡 ใช้ Email ที่ลงทะเบียนไว้ในระบบ | Use the Email registered in the system</p>
-            </div>
+        
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-badge">🎓 CMU Engineer Competency</div>
+            <h2>ระบบติดตาม<span>ทักษะนักศึกษา</span></h2>
+            <p>พัฒนาและติดตามความสามารถของนักศึกษาวิศวกรรมศาสตร์ ผ่านกิจกรรมที่หลากหลาย สู่การเป็นวิศวกรที่มีคุณภาพ</p>
         </section>
-
-        <!-- Dashboard Section -->
-        <section id="dashboard-section" class="dashboard-section" style="display: none;">
-            <!-- Student Info Card -->
-            <div class="student-info-card">
-                <div class="student-avatar">
-                    <span id="avatar-initial">S</span>
-                </div>
-                <div class="student-details">
-                    <h2 id="student-name">-</h2>
-                    <p id="student-email">-</p>
-                    <p id="student-id">รหัสนักศึกษา | Student ID: -</p>
-                </div>
-                <button class="logout-btn" onclick="logout()">
-                    🚪 ออกจากระบบ | Logout
-                </button>
+        
+        <!-- Features -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>ติดตามความก้าวหน้า</h3>
+                <p>ดูคะแนนและระดับทักษะแบบ Real-time ผ่าน Radar Chart</p>
             </div>
-
-            <!-- Stats Row -->
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-icon">📚</div>
-                    <div class="stat-content">
-                        <span class="stat-number" id="total-activities">0</span>
-                        <span class="stat-label">กิจกรรมทั้งหมด<br>Total Activities</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-content">
-                        <span class="stat-number" id="approved-activities">0</span>
-                        <span class="stat-label">อนุมัติแล้ว<br>Approved</span>
-                    </div>
-                </div>
-                <div class="stat-card skill-stat">
-                    <div class="stat-icon">🎯</div>
-                    <div class="stat-content">
-                        <span class="stat-number"><span id="skill-achieved">0</span>/6</span>
-                        <span class="stat-label">ทักษะผ่านเกณฑ์<br>(Lv.2+ อย่างน้อย 3 ทักษะ)</span>
-                    </div>
-                </div>
-                <div class="stat-card score-stat">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-content">
-                        <span class="stat-number" id="competency-score">0</span>
-                        <span class="stat-label">คะแนนรวม<br>Total Score</span>
-                    </div>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>6 ด้านสมรรถนะ</h3>
+                <p>ครอบคลุมทักษะที่จำเป็นสำหรับวิศวกรยุคใหม่</p>
             </div>
-
-            <!-- Main Content -->
-            <div class="main-content">
-                <!-- Radar Chart -->
-                <div class="chart-card">
-                    <h3>📊 Competency Radar Chart</h3>
-                    <div class="chart-legend">
-                        <span class="legend-item"><span class="legend-color current"></span> ระดับปัจจุบัน | Current</span>
-                        <span class="legend-item"><span class="legend-color min"></span> ขั้นต่ำ | Min (Lv.2)</span>
-                        <span class="legend-item"><span class="legend-color ideal"></span> เป้าหมาย | Target (Lv.3)</span>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="competencyChart"></canvas>
-                    </div>
-                    <div class="chart-note">
-                        💡 เป้าหมาย: ทุกทักษะควรอยู่ที่ระดับ 2+ | Goal: All skills should reach Level 2+
-                    </div>
-                </div>
-
-                <!-- Competency Summary -->
-                <div class="competency-card">
-                    <h3>📋 สรุป Competency | Competency Summary</h3>
-                    <div id="competency-summary" class="competency-summary">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI วิเคราะห์ทักษะ</h3>
+                <p>ระบบ AI ช่วยวิเคราะห์และแนะนำทักษะจากกิจกรรม</p>
             </div>
-
-            <!-- Activities List -->
-            <div class="activities-card">
-                <h3>📝 รายการกิจกรรม | Activity List</h3>
-                <div class="activities-filter">
-                    <button class="filter-btn active" data-filter="all">ทั้งหมด | All</button>
-                    <button class="filter-btn" data-filter="Approved">อนุมัติ | Approved</button>
-                    <button class="filter-btn" data-filter="Pending">รอ | Pending</button>
-                </div>
-                <div id="activities-list" class="activities-list">
-                    <!-- Populated by JS -->
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Badge & Certificate</h3>
+                <p>รับ Badge เมื่อผ่านเกณฑ์แต่ละด้าน</p>
             </div>
-
-            <!-- Competency Info Section -->
-            <div class="info-section">
-                <h3>📖 รายละเอียด 6 ทักษะหลัก | 6 Core Competencies</h3>
-                
-                <div class="info-grid">
-                    <!-- Domain 1 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            <span class="domain-number">1</span>
-                            <span class="domain-name">Critical Thinking<br><small>การคิดวิเคราะห์</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>1.1</strong> Analytical Reasoning | การใช้เหตุผลเชิงวิเคราะห์</li>
-                                <li><strong>1.2</strong> Systematic Problem Solving | การแก้ปัญหาอย่างเป็นระบบ</li>
-                                <li><strong>1.3</strong> Systems Thinking | การคิดเชิงระบบ</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Domain 2 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-                            <span class="domain-number">2</span>
-                            <span class="domain-name">Communication<br><small>การสื่อสาร</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>2.1</strong> Presentation Skills | ทักษะการนำเสนอ</li>
-                                <li><strong>2.2</strong> Listening & Comprehension | การฟังและความเข้าใจ</li>
-                                <li><strong>2.3</strong> English Communication | การสื่อสารภาษาอังกฤษ</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Domain 3 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
-                            <span class="domain-number">3</span>
-                            <span class="domain-name">Teamwork<br><small>การทำงานเป็นทีม</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>3.1</strong> Role Understanding | ความเข้าใจในบทบาท</li>
-                                <li><strong>3.2</strong> Task Management | การจัดการงาน</li>
-                                <li><strong>3.3</strong> Collaborative Work | การทำงานร่วมกัน</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Domain 4 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
-                            <span class="domain-number">4</span>
-                            <span class="domain-name">Digital & Learning<br><small>ดิจิทัลและการเรียนรู้</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>4.1</strong> Learning Agility | ความคล่องตัวในการเรียนรู้</li>
-                                <li><strong>4.2</strong> Digital Literacy | ความรู้ด้านดิจิทัล</li>
-                                <li><strong>4.3</strong> Tool Proficiency | ความเชี่ยวชาญเครื่องมือ</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Domain 5 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                            <span class="domain-number">5</span>
-                            <span class="domain-name">Innovation<br><small>นวัตกรรม</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>5.1</strong> Human-Centered Design | การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง</li>
-                                <li><strong>5.2</strong> Project Management | การบริหารโครงการ</li>
-                                <li><strong>5.3</strong> Business Awareness | ความตระหนักทางธุรกิจ</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Domain 6 -->
-                    <div class="info-domain">
-                        <div class="domain-header" style="background: linear-gradient(135deg, #1abc9c, #16a085);">
-                            <span class="domain-number">6</span>
-                            <span class="domain-name">Self Development<br><small>พัฒนาตนเอง</small></span>
-                        </div>
-                        <div class="domain-body">
-                            <ul class="sub-skills">
-                                <li><strong>6.1</strong> Personal Growth | การเติบโตส่วนบุคคล</li>
-                                <li><strong>6.2</strong> Resilience | ความยืดหยุ่นและการปรับตัว</li>
-                                <li><strong>6.3</strong> Empathy | ความเห็นอกเห็นใจ</li>
-                            </ul>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Portal Cards -->
+        <div class="portals">
+            <a href="student-portal.html" class="portal-card student">
+                <div class="portal-icon">👨‍🎓</div>
+                <h3>สำหรับนักศึกษา</h3>
+                <p>ดูคะแนน ติดตามความก้าวหน้า และแจ้งกิจกรรมที่เข้าร่วม</p>
+                <ul class="portal-features">
+                    <li>ดูคะแนนและ Radar Chart</li>
+                    <li>ตรวจสอบกิจกรรมที่ผ่านมา</li>
+                    <li>แจ้งกิจกรรมใหม่เพื่อรับคะแนน</li>
+                    <li>ดู Badge ที่ได้รับ</li>
+                </ul>
+                <span class="portal-btn">เข้าสู่ระบบนักศึกษา →</span>
+            </a>
+            
+            <a href="organizer-form.html" class="portal-card organizer">
+                <div class="portal-icon">👨‍💼</div>
+                <h3>สำหรับผู้จัดกิจกรรม</h3>
+                <p>สร้างกิจกรรมและเพิ่มรายชื่อนักศึกษาที่เข้าร่วม</p>
+                <ul class="portal-features">
+                    <li>สร้างกิจกรรมใหม่</li>
+                    <li>กำหนดทักษะและระดับ</li>
+                    <li>เพิ่มรายชื่อผู้เข้าร่วม</li>
+                    <li>ติดตามสถานะการอนุมัติ</li>
+                </ul>
+                <span class="portal-btn">เข้าสู่ระบบผู้จัด →</span>
+            </a>
+        </div>
+        
+        <!-- Competency Section -->
+        <section class="competency-section">
+            <h3>🎯 6 ด้านสมรรถนะ CMU Engineer</h3>
+            <div class="domains">
+                <div class="domain-card">
+                    <h4>Critical Thinking</h4>
+                    <p>การคิดวิเคราะห์</p>
                 </div>
-
-                <!-- Level Descriptions -->
-                <div class="level-info">
-                    <h4>📊 ระดับทักษะ | Skill Levels (1-4)</h4>
-                    <div class="level-grid">
-                        <div class="level-item level-1-bg">
-                            <span class="level-badge-big">1</span>
-                            <div class="level-detail">
-                                <strong>Beginner | เริ่มต้น</strong>
-                                <p>Learn from lectures | เรียนรู้จากการฟังบรรยาย</p>
-                            </div>
-                        </div>
-                        <div class="level-item level-2-bg">
-                            <span class="level-badge-big">2</span>
-                            <div class="level-detail">
-                                <strong>Developing | กำลังพัฒนา</strong>
-                                <p>Hands-on / Workshop | ลงมือปฏิบัติจริง</p>
-                            </div>
-                        </div>
-                        <div class="level-item level-3-bg">
-                            <span class="level-badge-big">3</span>
-                            <div class="level-detail">
-                                <strong>Proficient | เชี่ยวชาญ</strong>
-                                <p>Projects / Competition | ทำโครงงาน / แข่งขัน</p>
-                            </div>
-                        </div>
-                        <div class="level-item level-4-bg">
-                            <span class="level-badge-big">4</span>
-                            <div class="level-detail">
-                                <strong>Expert | ผู้เชี่ยวชาญ</strong>
-                                <p>Leader / Mentor | เป็นผู้นำ / สอนผู้อื่น</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="level-note">
-                        ⭐ <strong>Goal | เป้าหมาย:</strong> All skills should reach Level 2+ and aim for Level 3+ | ทุกทักษะควรอยู่ระดับ 2+ และพยายามพัฒนาสู่ระดับ 3+
-                    </div>
+                <div class="domain-card">
+                    <h4>Communication</h4>
+                    <p>การสื่อสาร</p>
                 </div>
-
-                <!-- Social Links -->
-                <div class="social-links-section">
-                    <h4>📢 ติดตามกิจกรรมเพื่อเสริมทักษะได้ทาง | Follow us for skill-building activities:</h4>
-                    <div class="social-links">
-                        <a href="https://www.facebook.com/TalentDevENGCMU" target="_blank" class="social-link facebook">
-                            <span class="social-icon">📘</span>
-                            <span class="social-text">TalentDevENGCMU</span>
-                        </a>
-                        <a href="https://www.facebook.com/StudentDevelopmentENG" target="_blank" class="social-link facebook">
-                            <span class="social-icon">📘</span>
-                            <span class="social-text">StudentDevelopmentENG</span>
-                        </a>
-                    </div>
+                <div class="domain-card">
+                    <h4>Teamwork</h4>
+                    <p>การทำงานเป็นทีม</p>
+                </div>
+                <div class="domain-card">
+                    <h4>Digital & Learning</h4>
+                    <p>ดิจิทัลและการเรียนรู้</p>
+                </div>
+                <div class="domain-card">
+                    <h4>Innovation</h4>
+                    <p>นวัตกรรม</p>
+                </div>
+                <div class="domain-card">
+                    <h4>Professional Ethics</h4>
+                    <p>จรรยาบรรณวิชาชีพ</p>
                 </div>
             </div>
         </section>
-
+        
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-logos">
-                <img src="images/sd.jpg" alt="Student Development" class="footer-logo">
-                <img src="images/aw_eng_logo-01.png" alt="Engineering CMU" class="footer-logo">
+                <img src="images/sd.jpg" alt="Student Development">
+                <img src="images/aw_eng_logo-01.png" alt="Engineering CMU">
             </div>
-            <p>Student Talent Development | งานพัฒนาคุณภาพนักศึกษา</p>
-            <p>Faculty of Engineering, Chiang Mai University | คณะวิศวกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่</p>
+            <p>งานพัฒนาคุณภาพนักศึกษา คณะวิศวกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่<br>
+            Student Development Unit, Faculty of Engineering, Chiang Mai University</p>
         </footer>
-
-        <!-- Loading Overlay -->
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-box">
-                <div class="spinner"></div>
-                <p>กำลังโหลดข้อมูล... | Loading...</p>
-            </div>
-        </div>
     </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- App Scripts -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>
