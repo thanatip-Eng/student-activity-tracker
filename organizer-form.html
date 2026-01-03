@@ -801,7 +801,7 @@
         ];
         const DOMAINS = ["Critical Thinking", "Communication", "Teamwork", "Digital & Learning", "Innovation", "Self Development"];
         
-        // Role presets
+        // Role presets (max 3 skills each)
         const ROLE_PRESETS = {
             organizer: {
                 name: "ทีมผู้จัด | Organizer",
@@ -809,12 +809,9 @@
                 suffixEn: "(Organizer)",
                 defaultLevel: 4,
                 skills: [
-                    { code: "2.1", level: 4 }, // Presentation
-                    { code: "3.1", level: 4 }, // Role Understanding
                     { code: "3.2", level: 4 }, // Task Management
-                    { code: "5.1", level: 3 }, // Human-Centered Design
                     { code: "5.2", level: 4 }, // Project Management
-                    { code: "6.1", level: 3 }  // Personal Growth
+                    { code: "2.1", level: 4 }  // Presentation
                 ]
             },
             staff: {
@@ -824,7 +821,6 @@
                 defaultLevel: 2,
                 skills: [
                     { code: "3.1", level: 2 }, // Role Understanding
-                    { code: "3.2", level: 2 }, // Task Management
                     { code: "3.3", level: 2 }, // Collaboration
                     { code: "6.2", level: 2 }  // Resilience
                 ]
@@ -845,6 +841,7 @@
         let selectedSkills = [];
         let currentRole = null;
         let savedActivityBase = null; // Store base activity info for creating multiple roles
+        const MAX_SKILLS = 3; // จำกัดทักษะไม่เกิน 3 ทักษะ
 
         // Student count update
         document.getElementById('student-ids').addEventListener('input', function() {
@@ -997,10 +994,40 @@
                 cb.addEventListener('change', e => {
                     const item = e.target.closest('.skill-item');
                     const sel = item.querySelector('.skill-level');
+                    
+                    // Count currently checked items
+                    const checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
+                    
+                    if (e.target.checked && checkedCount > MAX_SKILLS) {
+                        e.target.checked = false;
+                        alert(`⚠️ เลือกได้ไม่เกิน ${MAX_SKILLS} ทักษะ | Maximum ${MAX_SKILLS} skills allowed`);
+                        return;
+                    }
+                    
                     sel.disabled = !e.target.checked;
                     item.classList.toggle('selected', e.target.checked);
+                    
+                    // Update counter display
+                    updateSkillCounter(container.querySelectorAll('input[type="checkbox"]:checked').length);
                 });
             });
+        }
+        
+        function updateSkillCounter(count) {
+            let counter = document.getElementById('skill-counter');
+            if (!counter) {
+                const modalHeader = document.querySelector('#skill-modal .modal h3');
+                if (modalHeader) {
+                    counter = document.createElement('span');
+                    counter.id = 'skill-counter';
+                    counter.style.cssText = 'background:#27ae60;color:white;padding:4px 12px;border-radius:20px;font-size:0.7em;margin-left:10px;';
+                    modalHeader.appendChild(counter);
+                }
+            }
+            if (counter) {
+                counter.textContent = `${count}/${MAX_SKILLS}`;
+                counter.style.background = count >= MAX_SKILLS ? '#f39c12' : '#27ae60';
+            }
         }
 
         function openSkillModal() {
@@ -1021,6 +1048,11 @@
                     item.classList.remove('selected'); 
                 }
             });
+            
+            // Update counter
+            const checkedCount = document.querySelectorAll('.skill-item input[type="checkbox"]:checked').length;
+            updateSkillCounter(checkedCount);
+            
             document.getElementById('skill-modal').classList.add('show');
         }
 
@@ -1038,6 +1070,13 @@
                     selectedSkills.push({ code, level, nameTh: c.nameTh, nameEn: c.nameEn });
                 }
             });
+            
+            // Validate max skills
+            if (selectedSkills.length > MAX_SKILLS) {
+                alert(`⚠️ เลือกได้ไม่เกิน ${MAX_SKILLS} ทักษะ กรุณาลดจำนวนทักษะ`);
+                selectedSkills = selectedSkills.slice(0, MAX_SKILLS);
+            }
+            
             renderSelectedSkills(); 
             closeSkillModal();
         }
@@ -1068,6 +1107,10 @@
             }
             if (selectedSkills.length === 0) { 
                 alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ | Please select at least 1 skill'); 
+                return false; 
+            }
+            if (selectedSkills.length > MAX_SKILLS) { 
+                alert(`⚠️ เลือกทักษะได้ไม่เกิน ${MAX_SKILLS} ทักษะ | Maximum ${MAX_SKILLS} skills allowed`); 
                 return false; 
             }
             const studentIdsRaw = document.getElementById('student-ids').value.trim();

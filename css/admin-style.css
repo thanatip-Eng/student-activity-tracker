@@ -1442,3 +1442,100 @@ body {
     gap: 15px;
     margin-top: 20px;
 }
+
+/* Skills Comparison Styles */
+.skills-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 15px 0;
+}
+
+.skills-column {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.skills-column h5 {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 0.95em;
+}
+
+.skills-column.student-skills {
+    background: #fff8e1;
+    border: 2px solid #ffc107;
+}
+
+.skills-column.student-skills h5 {
+    color: #f57c00;
+    border-color: #ffc107;
+}
+
+.skills-column.ai-skills {
+    background: #e8f5e9;
+    border: 2px solid #4caf50;
+}
+
+.skills-column.ai-skills h5 {
+    color: #2e7d32;
+    border-color: #4caf50;
+}
+
+.skill-badge {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.skill-badge.student {
+    background: white;
+    border-left: 4px solid #f39c12;
+}
+
+.skill-badge.ai {
+    background: white;
+    border-left: 4px solid #27ae60;
+}
+
+.skill-badge .level {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    margin-left: 8px;
+}
+
+.skill-badge .ai-reason {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed #ddd;
+}
+
+.no-skills {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
+.activity-level-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .skills-comparison {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1003,6 +1003,31 @@
             
             document.getElementById('modal-title').textContent = '📝 ' + (item.activityName || 'กิจกรรม');
             
+            // Prepare skills comparison HTML
+            const studentSkills = item.studentSelectedSkills || [];
+            const aiSkills = item.aiSuggestedSkills || [];
+            
+            const skillsComparisonHtml = `
+                <div class="skills-comparison">
+                    <div class="skills-column student-skills">
+                        <h5>🎯 นักศึกษาเลือก</h5>
+                        ${studentSkills.length > 0 ? studentSkills.map(s => {
+                            const criteria = CRITERIA_LIST.find(c => c.code === s.code);
+                            return `<div class="skill-badge student">${s.code} ${criteria?.nameTh || ''} <span class="level">Lv.${s.level}</span></div>`;
+                        }).join('') : '<p class="no-skills">ไม่ได้เลือก</p>'}
+                    </div>
+                    <div class="skills-column ai-skills">
+                        <h5>🤖 AI แนะนำ</h5>
+                        ${aiSkills.length > 0 ? aiSkills.map(s => {
+                            const criteria = CRITERIA_LIST.find(c => c.code === s.code);
+                            return `<div class="skill-badge ai">${s.code} ${criteria?.nameTh || ''} <span class="level">Lv.${s.level}</span>
+                                ${s.reason ? `<div class="ai-reason">💡 ${s.reason}</div>` : ''}
+                            </div>`;
+                        }).join('') : '<p class="no-skills">ไม่มีข้อมูล</p>'}
+                    </div>
+                </div>
+            `;
+            
             document.getElementById('modal-body').innerHTML = `
                 <div class="detail-section">
                     <h4>👤 ข้อมูลนักศึกษา</h4>
@@ -1042,8 +1067,8 @@
                             <span>${item.duration || '-'} ${item.durationUnit || ''}</span>
                         </div>
                         <div class="detail-item">
-                            <label>ระดับ</label>
-                            <span>Level ${item.activityLevel || '-'}</span>
+                            <label>ระดับกิจกรรม</label>
+                            <span class="activity-level-badge">Level ${item.activityLevel || '-'}</span>
                         </div>
                     </div>
                     <div class="detail-item full">
@@ -1062,7 +1087,12 @@
                 ` : ''}
                 
                 <div class="detail-section">
-                    <h4>🎯 ทักษะที่ได้รับ (กำหนดโดย Admin)</h4>
+                    <h4>📊 เปรียบเทียบทักษะ</h4>
+                    ${skillsComparisonHtml}
+                </div>
+                
+                <div class="detail-section">
+                    <h4>🎯 ทักษะที่อนุมัติ (Admin กำหนด) <span style="font-size:0.8em;color:#666;">สูงสุด 3 ทักษะ</span></h4>
                     <div class="skills-editor" id="skills-editor">
                         ${renderSkillsEditor(item)}
                     </div>
@@ -1188,24 +1218,72 @@
 
         function renderSkillsEditor(item) {
             const maxLevel = item.activityLevel || 4;
+            const aiSkills = item.aiSuggestedSkills || [];
+            
+            // Create a map of AI suggested skills for easy lookup
+            const aiSkillMap = {};
+            aiSkills.forEach(s => { aiSkillMap[s.code] = s.level; });
             
             return `
+                <div class="skill-limit-note" style="background:#fff3cd;padding:10px;border-radius:8px;margin-bottom:15px;font-size:0.9em;">
+                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับไม่เกิน Level ${maxLevel}
+                    <span id="admin-skill-counter" style="float:right;background:#667eea;color:white;padding:2px 10px;border-radius:15px;">0/3</span>
+                </div>
                 <div class="skill-editor-list">
-                    ${CRITERIA_LIST.map(c => `
-                        <div class="skill-editor-item">
+                    ${CRITERIA_LIST.map(c => {
+                        const isAISuggested = aiSkillMap.hasOwnProperty(c.code);
+                        const aiLevel = aiSkillMap[c.code] || 2;
+                        return `
+                        <div class="skill-editor-item ${isAISuggested ? 'ai-suggested' : ''}" style="${isAISuggested ? 'background:#e8f5e9;border-left:3px solid #27ae60;' : ''}">
                             <label>
-                                <input type="checkbox" class="skill-checkbox" data-code="${c.code}">
+                                <input type="checkbox" class="skill-checkbox" data-code="${c.code}" 
+                                    ${isAISuggested ? 'checked' : ''} onchange="updateAdminSkillCounter()">
                                 <span>${c.code} ${c.nameTh}</span>
+                                ${isAISuggested ? '<span style="background:#27ae60;color:white;padding:1px 6px;border-radius:10px;font-size:0.7em;margin-left:5px;">AI</span>' : ''}
                             </label>
-                            <select class="skill-level-select" data-code="${c.code}" disabled>
+                            <select class="skill-level-select" data-code="${c.code}" ${isAISuggested ? '' : 'disabled'}>
                                 ${[1,2,3,4].map(l => `
-                                    <option value="${l}" ${l > maxLevel ? 'disabled' : ''}>Lv.${l}</option>
+                                    <option value="${l}" ${l > maxLevel ? 'disabled' : ''} ${l === aiLevel && isAISuggested ? 'selected' : ''}>Lv.${l}</option>
                                 `).join('')}
                             </select>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
+                <script>
+                    // Initialize counter
+                    setTimeout(() => updateAdminSkillCounter(), 100);
+                    
+                    // Add event listeners for checkboxes
+                    document.querySelectorAll('.skill-checkbox').forEach(cb => {
+                        cb.addEventListener('change', function() {
+                            const levelSelect = document.querySelector('.skill-level-select[data-code="' + this.dataset.code + '"]');
+                            levelSelect.disabled = !this.checked;
+                        });
+                    });
+                </script>
             `;
+        }
+        
+        function updateAdminSkillCounter() {
+            const checkedCount = document.querySelectorAll('.skill-checkbox:checked').length;
+            const counter = document.getElementById('admin-skill-counter');
+            if (counter) {
+                counter.textContent = checkedCount + '/3';
+                counter.style.background = checkedCount > 3 ? '#e74c3c' : (checkedCount === 3 ? '#f39c12' : '#667eea');
+            }
+            
+            // Disable unchecked checkboxes if limit reached
+            if (checkedCount >= 3) {
+                document.querySelectorAll('.skill-checkbox:not(:checked)').forEach(cb => {
+                    cb.disabled = true;
+                    cb.closest('.skill-editor-item').style.opacity = '0.5';
+                });
+            } else {
+                document.querySelectorAll('.skill-checkbox').forEach(cb => {
+                    cb.disabled = false;
+                    cb.closest('.skill-editor-item').style.opacity = '1';
+                });
+            }
         }
 
         function closeDetailModal() {
@@ -1233,6 +1311,11 @@
             
             if (skills.length === 0) {
                 alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ');
+                return;
+            }
+            
+            if (skills.length > 3) {
+                alert('⚠️ เลือกทักษะได้ไม่เกิน 3 ทักษะ | Maximum 3 skills allowed');
                 return;
             }
             
