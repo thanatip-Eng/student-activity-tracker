@@ -1003,28 +1003,54 @@
             
             document.getElementById('modal-title').textContent = '📝 ' + (item.activityName || 'กิจกรรม');
             
-            // Prepare skills comparison HTML
-            const studentSkills = item.studentSelectedSkills || [];
+            // AI suggested skills
             const aiSkills = item.aiSuggestedSkills || [];
             
-            const skillsComparisonHtml = `
-                <div class="skills-comparison">
-                    <div class="skills-column student-skills">
-                        <h5>🎯 นักศึกษาเลือก</h5>
-                        ${studentSkills.length > 0 ? studentSkills.map(s => {
-                            const criteria = CRITERIA_LIST.find(c => c.code === s.code);
-                            return `<div class="skill-badge student">${s.code} ${criteria?.nameTh || ''} <span class="level">Lv.${s.level}</span></div>`;
-                        }).join('') : '<p class="no-skills">ไม่ได้เลือก</p>'}
+            // Reflection section HTML
+            const reflectionHtml = (item.role || item.activities || item.learnings) ? `
+                <div class="detail-section">
+                    <h4>📝 สะท้อนคิดจากนักศึกษา</h4>
+                    <div class="reflection-display">
+                        <div class="reflection-item">
+                            <label>👤 บทบาทในกิจกรรม:</label>
+                            <p>${item.role || '-'}</p>
+                        </div>
+                        <div class="reflection-item">
+                            <label>⚡ สิ่งที่ได้ทำ:</label>
+                            <p>${item.activities || '-'}</p>
+                        </div>
+                        <div class="reflection-item">
+                            <label>💡 สิ่งที่ได้เรียนรู้:</label>
+                            <p>${item.learnings || '-'}</p>
+                        </div>
                     </div>
-                    <div class="skills-column ai-skills">
-                        <h5>🤖 AI แนะนำ</h5>
-                        ${aiSkills.length > 0 ? aiSkills.map(s => {
-                            const criteria = CRITERIA_LIST.find(c => c.code === s.code);
-                            return `<div class="skill-badge ai">${s.code} ${criteria?.nameTh || ''} <span class="level">Lv.${s.level}</span>
-                                ${s.reason ? `<div class="ai-reason">💡 ${s.reason}</div>` : ''}
-                            </div>`;
-                        }).join('') : '<p class="no-skills">ไม่มีข้อมูล</p>'}
-                    </div>
+                </div>
+            ` : (item.description ? `
+                <div class="detail-section">
+                    <h4>📝 รายละเอียดกิจกรรม</h4>
+                    <p class="description-text">${item.description}</p>
+                </div>
+            ` : '');
+            
+            // AI Analysis section
+            const aiAnalysisHtml = `
+                <div class="detail-section">
+                    <h4>🤖 AI วิเคราะห์ทักษะ</h4>
+                    ${aiSkills.length > 0 ? `
+                        <div class="ai-skills-display">
+                            ${aiSkills.map(s => {
+                                const criteria = CRITERIA_LIST.find(c => c.code === s.code);
+                                return `<div class="ai-skill-badge">
+                                    <div class="skill-main">
+                                        <span class="skill-code">${s.code}</span>
+                                        <span class="skill-name">${criteria?.nameTh || ''}</span>
+                                        <span class="skill-level">Lv.${s.level}</span>
+                                    </div>
+                                    ${s.reason ? `<div class="skill-reason">💡 ${s.reason}</div>` : ''}
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    ` : '<p style="color:#999;">ไม่มีข้อมูลจาก AI</p>'}
                 </div>
             `;
             
@@ -1071,11 +1097,9 @@
                             <span class="activity-level-badge">Level ${item.activityLevel || '-'}</span>
                         </div>
                     </div>
-                    <div class="detail-item full">
-                        <label>รายละเอียด</label>
-                        <p class="description-text">${item.description || '-'}</p>
-                    </div>
                 </div>
+                
+                ${reflectionHtml}
                 
                 ${item.evidenceLink ? `
                 <div class="detail-section">
@@ -1086,10 +1110,7 @@
                 </div>
                 ` : ''}
                 
-                <div class="detail-section">
-                    <h4>📊 เปรียบเทียบทักษะ</h4>
-                    ${skillsComparisonHtml}
-                </div>
+                ${aiAnalysisHtml}
                 
                 <div class="detail-section">
                     <h4>🎯 ทักษะที่อนุมัติ (Admin กำหนด) <span style="font-size:0.8em;color:#666;">สูงสุด 3 ทักษะ</span></h4>

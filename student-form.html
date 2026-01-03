@@ -7,123 +7,142 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/form-style.css">
     <style>
-        .skills-section {
-            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+        /* Reflection Section Styles */
+        .reflection-section {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
+            border: 2px solid #81c784;
         }
-        .skills-section h3 {
-            color: #1a1a2e;
+        .reflection-section h3 {
+            color: #2e7d32;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .skills-counter {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-        }
-        .skills-counter.warning { background: #f39c12; }
-        .skills-counter.error { background: #e74c3c; }
-        .domain-group {
+        .reflection-intro {
             background: white;
             border-radius: 10px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            border: 2px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
         }
-        .domain-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .reflection-intro p {
+            color: #555;
+            font-size: 0.95em;
+            margin: 0;
         }
-        .domain-header:hover { opacity: 0.9; }
-        .domain-header .toggle-icon { transition: transform 0.3s; }
-        .domain-group.collapsed .domain-header .toggle-icon { transform: rotate(-90deg); }
-        .domain-group.collapsed .sub-skills { display: none; }
-        .sub-skills { padding: 10px; }
-        .skill-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: #f8f9ff;
-            transition: all 0.3s;
-        }
-        .skill-item:hover { background: #e8f0ff; }
-        .skill-item.selected {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border: 2px solid #28a745;
-        }
-        .skill-item.disabled { opacity: 0.5; pointer-events: none; }
-        .skill-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-        .skill-info { flex: 1; }
-        .skill-code { font-weight: 700; color: #667eea; }
-        .skill-name { font-size: 0.9em; color: #333; }
-        .skill-name-en { font-size: 0.8em; color: #666; }
-        .skill-level-select {
-            padding: 6px 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            min-width: 80px;
-        }
-        .skill-level-select:disabled { background: #f0f0f0; }
-        .skills-note {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 8px;
-            padding: 12px;
+        .reflection-question {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
             margin-bottom: 15px;
-            font-size: 0.9em;
+            border: 1px solid #a5d6a7;
         }
-        .skills-note strong { color: #856404; }
-        .ai-analysis-modal { max-width: 600px; }
-        .ai-analysis-content { text-align: left; margin: 20px 0; }
-        .ai-skill-item {
+        .reflection-question label {
+            display: block;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        .reflection-question .question-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .reflection-question .question-hint strong {
+            color: #1976d2;
+        }
+        .reflection-question textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95em;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        .reflection-question textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
+        .reflection-question textarea::placeholder {
+            color: #999;
+        }
+        
+        /* AI Result Styles */
+        .ai-result-section {
+            margin-top: 20px;
+        }
+        .ai-skill-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .ai-skill-card .skill-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 15px;
-            background: #f0f8ff;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+            margin-bottom: 8px;
         }
-        .ai-skill-item .skill-detail { flex: 1; }
-        .ai-skill-item .skill-code { font-weight: 700; color: #667eea; }
-        .ai-skill-item .skill-level {
-            background: #667eea;
+        .ai-skill-card .skill-code {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        .ai-skill-card .skill-name {
+            color: #333;
+            font-size: 0.95em;
+        }
+        .ai-skill-card .skill-level {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 4px 12px;
             border-radius: 20px;
             font-weight: 600;
+            font-size: 0.9em;
         }
-        .ai-skill-item .ai-reason { font-size: 0.85em; color: #666; margin-top: 5px; }
+        .ai-skill-card .skill-reason {
+            background: #f0f4ff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 8px;
+        }
+        .ai-skill-card .skill-reason::before {
+            content: "💡 ";
+        }
+        
         .ai-note {
-            background: #e8f5e9;
-            border-radius: 8px;
-            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
             margin-top: 15px;
             font-size: 0.9em;
-            color: #2e7d32;
+            color: #1565c0;
+            border: 1px solid #90caf9;
         }
-        .comparison-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .comparison-col h5 { font-size: 0.9em; color: #888; margin-bottom: 10px; }
-        .your-skills .ai-skill-item { border-left-color: #f39c12; background: #fff8e1; }
-        .ai-skills .ai-skill-item { border-left-color: #27ae60; background: #e8f5e9; }
-        @media (max-width: 600px) { .comparison-row { grid-template-columns: 1fr; } }
+        
+        /* Character counter */
+        .char-counter {
+            text-align: right;
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
+        .char-counter.warning { color: #f39c12; }
+        .char-counter.good { color: #27ae60; }
     </style>
 </head>
 <body>
@@ -210,7 +229,7 @@
                         <label>ระดับกิจกรรม | Activity Level <span class="required">*</span></label>
                         <div class="level-options">
                             <label class="level-option">
-                                <input type="radio" name="activity-level" value="1" required onchange="updateSkillLevelLimits()">
+                                <input type="radio" name="activity-level" value="1" required>
                                 <div class="level-card">
                                     <span class="level-number">1</span>
                                     <span class="level-title">รู้จัก | Know</span>
@@ -218,7 +237,7 @@
                                 </div>
                             </label>
                             <label class="level-option">
-                                <input type="radio" name="activity-level" value="2" onchange="updateSkillLevelLimits()">
+                                <input type="radio" name="activity-level" value="2">
                                 <div class="level-card">
                                     <span class="level-number">2</span>
                                     <span class="level-title">เข้าใจ | Understand</span>
@@ -226,7 +245,7 @@
                                 </div>
                             </label>
                             <label class="level-option">
-                                <input type="radio" name="activity-level" value="3" onchange="updateSkillLevelLimits()">
+                                <input type="radio" name="activity-level" value="3">
                                 <div class="level-card">
                                     <span class="level-number">3</span>
                                     <span class="level-title">ใช้เป็น | Apply</span>
@@ -234,7 +253,7 @@
                                 </div>
                             </label>
                             <label class="level-option">
-                                <input type="radio" name="activity-level" value="4" onchange="updateSkillLevelLimits()">
+                                <input type="radio" name="activity-level" value="4">
                                 <div class="level-card">
                                     <span class="level-number">4</span>
                                     <span class="level-title">ผู้นำ | Lead</span>
@@ -244,23 +263,49 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>รายละเอียดกิจกรรม | Activity Description <span class="required">*</span></label>
-                        <textarea id="description" required rows="4" placeholder="อธิบายสิ่งที่ทำในกิจกรรม บทบาทของคุณ และสิ่งที่ได้เรียนรู้..."></textarea>
-                    </div>
-
-                    <div class="skills-section">
-                        <h3>
-                            🎯 ทักษะที่ได้รับ | Skills Gained 
-                            <span class="skills-counter" id="skills-counter">0/3</span>
-                        </h3>
+                    <!-- Reflection Section -->
+                    <div class="reflection-section">
+                        <h3>📝 สะท้อนคิดจากกิจกรรม | Activity Reflection</h3>
                         
-                        <div class="skills-note">
-                            <strong>📌 หมายเหตุ:</strong> เลือกทักษะที่คิดว่าได้รับจากกิจกรรมนี้ <strong>ไม่เกิน 3 ทักษะ</strong><br>
-                            ระดับทักษะจะไม่เกินระดับกิจกรรมที่เลือก | AI จะช่วยวิเคราะห์และเสนอแนะ
+                        <div class="reflection-intro">
+                            <p>กรุณาตอบคำถามต่อไปนี้เพื่อทบทวนสิ่งที่ได้จากกิจกรรม ระบบ AI จะวิเคราะห์ทักษะที่คุณได้รับจากคำตอบเหล่านี้</p>
                         </div>
                         
-                        <div id="skills-list"></div>
+                        <!-- Question 1: Role -->
+                        <div class="reflection-question">
+                            <label>1️⃣ บทบาทของฉันในกิจกรรม | My Role <span class="required">*</span></label>
+                            <div class="question-hint">
+                                <strong>ตัวอย่าง:</strong> ผู้เข้าร่วมอบรม, Staff ช่วยงาน, หัวหน้าทีม, วิทยากร, ผู้จัดกิจกรรม
+                            </div>
+                            <textarea id="reflection-role" required rows="2" 
+                                placeholder="เช่น เป็นผู้เข้าร่วมอบรม / เป็น Staff ดูแลลงทะเบียน / เป็นหัวหน้าทีมจัดกิจกรรม"
+                                oninput="updateCharCount(this, 'role-counter')"></textarea>
+                            <div class="char-counter" id="role-counter">0 ตัวอักษร</div>
+                        </div>
+                        
+                        <!-- Question 2: What I Did -->
+                        <div class="reflection-question">
+                            <label>2️⃣ สิ่งที่ได้ทำในกิจกรรม | What I Did <span class="required">*</span></label>
+                            <div class="question-hint">
+                                <strong>ตัวอย่าง:</strong> ฟังบรรยาย, ลงมือใช้เครื่องมือ, ฝึกเขียนโปรแกรม, ทำงานกลุ่ม, นำเสนอผลงาน, ประสานงานทีม
+                            </div>
+                            <textarea id="reflection-activities" required rows="3" 
+                                placeholder="เช่น ฟังบรรยายเรื่อง AI / ลงมือฝึกใช้ ChatGPT / ทำโปรเจคกับเพื่อนเป็นกลุ่ม 4 คน / นำเสนอผลงานหน้าชั้น"
+                                oninput="updateCharCount(this, 'activities-counter')"></textarea>
+                            <div class="char-counter" id="activities-counter">0 ตัวอักษร</div>
+                        </div>
+                        
+                        <!-- Question 3: What I Learned -->
+                        <div class="reflection-question">
+                            <label>3️⃣ สิ่งที่ฉันได้เรียนรู้ | What I Learned <span class="required">*</span></label>
+                            <div class="question-hint">
+                                <strong>ตัวอย่าง:</strong> ได้ฝึกทำงานร่วมกับเพื่อนต่างสาขา, ฝึกการคิดวิเคราะห์, เรียนรู้การใช้เครื่องมือใหม่, ฝึกการนำเสนอ
+                            </div>
+                            <textarea id="reflection-learnings" required rows="3" 
+                                placeholder="เช่น ได้เรียนรู้วิธีใช้ AI ช่วยงาน / ฝึกการทำงานเป็นทีม แบ่งหน้าที่กัน / เข้าใจขั้นตอนการวางแผนโครงการ"
+                                oninput="updateCharCount(this, 'learnings-counter')"></textarea>
+                            <div class="char-counter" id="learnings-counter">0 ตัวอักษร</div>
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 20px;">
@@ -274,7 +319,7 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn-submit">🤖 วิเคราะห์ด้วย AI และส่ง</button>
+                        <button type="submit" class="btn-submit">🤖 วิเคราะห์ทักษะด้วย AI และส่ง</button>
                     </div>
                 </form>
             </div>
@@ -297,18 +342,25 @@
             </div>
         </div>
 
+        <!-- AI Analysis Result Modal -->
         <div id="ai-modal" class="modal-overlay">
-            <div class="modal ai-analysis-modal">
+            <div class="modal" style="max-width: 550px;">
                 <div class="modal-icon">🤖</div>
-                <h3>ผลการวิเคราะห์จาก AI</h3>
-                <div class="ai-analysis-content" id="ai-analysis-content"></div>
+                <h3>ผลการวิเคราะห์ทักษะจาก AI</h3>
+                <p style="color:#666; font-size:0.9em;">AI วิเคราะห์จากข้อมูลที่คุณกรอก</p>
+                
+                <div class="ai-result-section" id="ai-result-content">
+                    <!-- AI results will be inserted here -->
+                </div>
+                
                 <div class="ai-note">
-                    💡 ข้อมูลนี้จะถูกส่งไปให้ Admin พิจารณา<br>
+                    💡 ทักษะเหล่านี้จะถูกส่งไปให้ Admin พิจารณา<br>
                     Admin สามารถปรับแก้ทักษะตามความเหมาะสม
                 </div>
+                
                 <div class="modal-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
                     <button onclick="confirmSubmission()" class="btn-primary" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">✅ ยืนยันส่ง</button>
-                    <button onclick="closeAIModal()" class="btn-secondary">✏️ แก้ไข</button>
+                    <button onclick="closeAIModal()" class="btn-secondary">✏️ แก้ไขข้อมูล</button>
                 </div>
             </div>
         </div>
@@ -330,155 +382,42 @@
     
     <script>
         const CRITERIA_LIST = [
-            { code: "1.1", nameTh: "การให้เหตุผลเชิงวิเคราะห์", nameEn: "Analytical Reasoning", domain: "Critical Thinking" },
-            { code: "1.2", nameTh: "การแก้ปัญหาอย่างเป็นระบบ", nameEn: "Systematic Problem Solving", domain: "Critical Thinking" },
-            { code: "1.3", nameTh: "การคิดเชิงระบบและบริบททางสังคม", nameEn: "Systems Thinking", domain: "Critical Thinking" },
-            { code: "2.1", nameTh: "ทักษะการนำเสนอ", nameEn: "Presentation Skills", domain: "Communication" },
-            { code: "2.2", nameTh: "การฟังและความเข้าใจ", nameEn: "Listening & Comprehension", domain: "Communication" },
-            { code: "2.3", nameTh: "การสื่อสารภาษาอังกฤษ", nameEn: "English Communication", domain: "Communication" },
-            { code: "3.1", nameTh: "ความเข้าใจในบทบาท", nameEn: "Role Understanding", domain: "Teamwork" },
-            { code: "3.2", nameTh: "การจัดการงาน", nameEn: "Task Management", domain: "Teamwork" },
-            { code: "3.3", nameTh: "การทำงานร่วมกัน", nameEn: "Collaborative Work", domain: "Teamwork" },
-            { code: "4.1", nameTh: "ความคล่องตัวในการเรียนรู้", nameEn: "Learning Agility", domain: "Professional Growth" },
-            { code: "4.2", nameTh: "ความรู้ด้านดิจิทัล", nameEn: "Digital Literacy", domain: "Professional Growth" },
-            { code: "4.3", nameTh: "ความเชี่ยวชาญเครื่องมือ", nameEn: "Tool Proficiency", domain: "Professional Growth" },
-            { code: "5.1", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง", nameEn: "Human-Centered Design", domain: "Innovation" },
-            { code: "5.2", nameTh: "การบริหารโครงการ", nameEn: "Project Management", domain: "Innovation" },
-            { code: "5.3", nameTh: "ความตระหนักทางธุรกิจ", nameEn: "Business Awareness", domain: "Innovation" },
-            { code: "6.1", nameTh: "การเติบโตส่วนบุคคล", nameEn: "Personal Growth", domain: "Self Development" },
-            { code: "6.2", nameTh: "ความยืดหยุ่นและการปรับตัว", nameEn: "Resilience", domain: "Self Development" },
-            { code: "6.3", nameTh: "ความเห็นอกเห็นใจ", nameEn: "Empathy", domain: "Self Development" }
+            { code: "1.1", nameTh: "การให้เหตุผลเชิงวิเคราะห์", nameEn: "Analytical Reasoning" },
+            { code: "1.2", nameTh: "การแก้ปัญหาอย่างเป็นระบบ", nameEn: "Systematic Problem Solving" },
+            { code: "1.3", nameTh: "การคิดเชิงระบบและบริบททางสังคม", nameEn: "Systems Thinking" },
+            { code: "2.1", nameTh: "ทักษะการนำเสนอ", nameEn: "Presentation Skills" },
+            { code: "2.2", nameTh: "การฟังและความเข้าใจ", nameEn: "Listening & Comprehension" },
+            { code: "2.3", nameTh: "การสื่อสารภาษาอังกฤษ", nameEn: "English Communication" },
+            { code: "3.1", nameTh: "ความเข้าใจในบทบาท", nameEn: "Role Understanding" },
+            { code: "3.2", nameTh: "การจัดการงาน", nameEn: "Task Management" },
+            { code: "3.3", nameTh: "การทำงานร่วมกัน", nameEn: "Collaborative Work" },
+            { code: "4.1", nameTh: "ความคล่องตัวในการเรียนรู้", nameEn: "Learning Agility" },
+            { code: "4.2", nameTh: "ความรู้ด้านดิจิทัล", nameEn: "Digital Literacy" },
+            { code: "4.3", nameTh: "ความเชี่ยวชาญเครื่องมือ", nameEn: "Tool Proficiency" },
+            { code: "5.1", nameTh: "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง", nameEn: "Human-Centered Design" },
+            { code: "5.2", nameTh: "การบริหารโครงการ", nameEn: "Project Management" },
+            { code: "5.3", nameTh: "ความตระหนักทางธุรกิจ", nameEn: "Business Awareness" },
+            { code: "6.1", nameTh: "การเติบโตส่วนบุคคล", nameEn: "Personal Growth" },
+            { code: "6.2", nameTh: "ความยืดหยุ่นและการปรับตัว", nameEn: "Resilience" },
+            { code: "6.3", nameTh: "ความเห็นอกเห็นใจ", nameEn: "Empathy" }
         ];
-
-        const DOMAINS = [
-            { id: 1, name: "Critical Thinking", nameTh: "การคิดเชิงวิพากษ์", icon: "🧠" },
-            { id: 2, name: "Communication", nameTh: "การสื่อสาร", icon: "💬" },
-            { id: 3, name: "Teamwork", nameTh: "การทำงานเป็นทีม", icon: "🤝" },
-            { id: 4, name: "Professional Growth", nameTh: "การเติบโตทางวิชาชีพ", icon: "📈" },
-            { id: 5, name: "Innovation", nameTh: "นวัตกรรมและธุรกิจ", icon: "💡" },
-            { id: 6, name: "Self Development", nameTh: "พัฒนาตนเอง", icon: "🌱" }
-        ];
-
-        const LEVEL_DESCRIPTIONS = {
-            1: "รู้จัก - ยังไม่เคยใช้",
-            2: "เข้าใจ - ฝึกในสถานการณ์จำลอง",
-            3: "ใช้เป็น - ประยุกต์ใช้ในสถานการณ์จริง",
-            4: "ผู้นำ - สอน/สร้างให้ผู้อื่น"
-        };
 
         let currentStudent = null;
-        let selectedSkills = [];
         let pendingFormData = null;
         let aiAnalysisResult = null;
-        const MAX_SKILLS = 3;
 
-        function initializeSkillsList() {
-            const container = document.getElementById('skills-list');
-            let html = '';
+        // Character counter
+        function updateCharCount(textarea, counterId) {
+            const counter = document.getElementById(counterId);
+            const length = textarea.value.length;
+            counter.textContent = `${length} ตัวอักษร`;
             
-            DOMAINS.forEach((domain, index) => {
-                const domainCriteria = CRITERIA_LIST.filter(c => c.domain === domain.name);
-                html += `
-                    <div class="domain-group ${index > 0 ? 'collapsed' : ''}" id="domain-${domain.id}">
-                        <div class="domain-header" onclick="toggleDomain(${domain.id})">
-                            <span>${domain.icon} ${domain.id}. ${domain.nameTh}</span>
-                            <span class="toggle-icon">▼</span>
-                        </div>
-                        <div class="sub-skills">
-                            ${domainCriteria.map(criteria => `
-                                <div class="skill-item" id="skill-item-${criteria.code.replace('.', '-')}">
-                                    <input type="checkbox" id="skill-${criteria.code.replace('.', '-')}" value="${criteria.code}" onchange="toggleSkill('${criteria.code}')">
-                                    <div class="skill-info">
-                                        <span class="skill-code">${criteria.code}</span>
-                                        <span class="skill-name">${criteria.nameTh}</span>
-                                        <span class="skill-name-en">${criteria.nameEn}</span>
-                                    </div>
-                                    <select class="skill-level-select" id="skill-level-${criteria.code.replace('.', '-')}" disabled onchange="updateSkillLevel('${criteria.code}')">
-                                        <option value="1">Lv.1</option>
-                                        <option value="2">Lv.2</option>
-                                        <option value="3">Lv.3</option>
-                                        <option value="4">Lv.4</option>
-                                    </select>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function toggleDomain(domainId) {
-            document.getElementById(`domain-${domainId}`).classList.toggle('collapsed');
-        }
-
-        function toggleSkill(code) {
-            const checkbox = document.getElementById(`skill-${code.replace('.', '-')}`);
-            const levelSelect = document.getElementById(`skill-level-${code.replace('.', '-')}`);
-            const skillItem = document.getElementById(`skill-item-${code.replace('.', '-')}`);
-            
-            if (checkbox.checked) {
-                if (selectedSkills.length >= MAX_SKILLS) {
-                    checkbox.checked = false;
-                    alert(`⚠️ เลือกได้ไม่เกิน ${MAX_SKILLS} ทักษะ`);
-                    return;
-                }
-                const activityLevelEl = document.querySelector('input[name="activity-level"]:checked');
-                const maxLevel = activityLevelEl ? parseInt(activityLevelEl.value) : 1;
-                levelSelect.disabled = false;
-                levelSelect.value = Math.min(2, maxLevel);
-                skillItem.classList.add('selected');
-                selectedSkills.push({ code: code, level: parseInt(levelSelect.value) });
-            } else {
-                levelSelect.disabled = true;
-                skillItem.classList.remove('selected');
-                selectedSkills = selectedSkills.filter(s => s.code !== code);
+            counter.classList.remove('warning', 'good');
+            if (length >= 20) {
+                counter.classList.add('good');
+            } else if (length > 0) {
+                counter.classList.add('warning');
             }
-            updateSkillsCounter();
-            updateDisabledState();
-        }
-
-        function updateSkillLevel(code) {
-            const levelSelect = document.getElementById(`skill-level-${code.replace('.', '-')}`);
-            const skill = selectedSkills.find(s => s.code === code);
-            if (skill) skill.level = parseInt(levelSelect.value);
-        }
-
-        function updateSkillsCounter() {
-            const counter = document.getElementById('skills-counter');
-            counter.textContent = `${selectedSkills.length}/${MAX_SKILLS}`;
-            counter.classList.remove('warning', 'error');
-            if (selectedSkills.length === MAX_SKILLS) counter.classList.add('warning');
-        }
-
-        function updateDisabledState() {
-            CRITERIA_LIST.forEach(criteria => {
-                const checkbox = document.getElementById(`skill-${criteria.code.replace('.', '-')}`);
-                const skillItem = document.getElementById(`skill-item-${criteria.code.replace('.', '-')}`);
-                if (selectedSkills.length >= MAX_SKILLS && !checkbox.checked) {
-                    skillItem.classList.add('disabled');
-                } else {
-                    skillItem.classList.remove('disabled');
-                }
-            });
-        }
-
-        function updateSkillLevelLimits() {
-            const activityLevelEl = document.querySelector('input[name="activity-level"]:checked');
-            if (!activityLevelEl) return;
-            const maxLevel = parseInt(activityLevelEl.value);
-            
-            CRITERIA_LIST.forEach(criteria => {
-                const levelSelect = document.getElementById(`skill-level-${criteria.code.replace('.', '-')}`);
-                for (let i = 1; i <= 4; i++) {
-                    levelSelect.options[i-1].disabled = i > maxLevel;
-                }
-                if (parseInt(levelSelect.value) > maxLevel) {
-                    levelSelect.value = maxLevel;
-                    const skill = selectedSkills.find(s => s.code === criteria.code);
-                    if (skill) skill.level = maxLevel;
-                }
-            });
         }
 
         async function loginStudent() {
@@ -510,7 +449,6 @@
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('form-section').style.display = 'block';
                 
-                initializeSkillsList();
                 await loadMySubmissions();
             } catch (error) {
                 errorEl.textContent = '❌ เกิดข้อผิดพลาด';
@@ -520,7 +458,6 @@
 
         function logoutStudent() {
             currentStudent = null;
-            selectedSkills = [];
             sessionStorage.removeItem('studentSession');
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('form-section').style.display = 'none';
@@ -529,50 +466,53 @@
         async function analyzeWithAI(formData) {
             const GEMINI_API_KEY = 'AIzaSyBBeBz8PZ_Jn2eGPCeKhrdFMFRjlGBxgzE';
             
-            const prompt = `คุณเป็นผู้เชี่ยวชาญวิเคราะห์ทักษะจากกิจกรรม ตาม CMU Engineer Competency V4
-วิเคราะห์กิจกรรมนี้และเลือกทักษะที่เหมาะสมที่สุด (1-3 ทักษะ)
+            const prompt = `คุณเป็นผู้เชี่ยวชาญวิเคราะห์ทักษะจากกิจกรรมนักศึกษาวิศวกรรม ตาม CMU Engineer Competency V4 Rubric
 
 📋 ข้อมูลกิจกรรม:
-- ชื่อ: ${formData.activityName}
+- ชื่อกิจกรรม: ${formData.activityName}
 - ผู้จัด: ${formData.activityOrganizer}  
 - ระดับกิจกรรม: ${formData.activityLevel}
 - ระยะเวลา: ${formData.duration} ${formData.durationUnit}
-- รายละเอียด: ${formData.description}
 
-📊 ความหมายระดับกิจกรรม:
-- Level 1: ฟังบรรยาย/เรียนรู้ทฤษฎี (รู้จัก)
-- Level 2: Workshop/ฝึกปฏิบัติ (เข้าใจ)
-- Level 3: โครงงานจริง/แข่งขัน (ใช้เป็น)
-- Level 4: เป็นผู้จัด/สอนผู้อื่น (ผู้นำ)
+👤 ข้อมูลจากนักศึกษา:
+- บทบาท: ${formData.role}
+- สิ่งที่ทำ: ${formData.activities}
+- สิ่งที่เรียนรู้: ${formData.learnings}
 
-🎯 ทักษะ 18 รายการ (เลือกที่เหมาะสมที่สุด):
-1.1 การให้เหตุผลเชิงวิเคราะห์ - วิเคราะห์ข้อมูล ใช้เหตุผล
+📊 ความหมายระดับกิจกรรม (ทักษะที่ได้ต้องไม่เกินระดับนี้):
+- Level 1 (รู้จัก): ฟังบรรยาย รับความรู้ ยังไม่ได้ลงมือทำ
+- Level 2 (เข้าใจ): ฝึกปฏิบัติ ลงมือทำตามคำแนะนำ มีพี่เลี้ยง
+- Level 3 (ใช้เป็น): ทำงานจริง ประยุกต์ใช้ได้เอง ไม่ต้องมีคนสอน
+- Level 4 (ผู้นำ): สอนคนอื่น ออกแบบกระบวนการ เป็นผู้จัด
+
+🎯 ทักษะ 18 รายการ (เลือกที่เหมาะสมที่สุดจากข้อมูลนักศึกษา):
+1.1 การให้เหตุผลเชิงวิเคราะห์ - วิเคราะห์ข้อมูล ใช้เหตุผล หาข้อสรุป
 1.2 การแก้ปัญหาอย่างเป็นระบบ - หาทางแก้ปัญหาอย่างมีขั้นตอน
-1.3 การคิดเชิงระบบ - มองภาพรวม เข้าใจผลกระทบ
+1.3 การคิดเชิงระบบ - มองภาพรวม เข้าใจผลกระทบต่อสังคม
 2.1 ทักษะการนำเสนอ - พูด นำเสนอ สื่อสารหน้าคน
-2.2 การฟังและเข้าใจ - รับฟัง จับประเด็น
-2.3 การสื่อสารภาษาอังกฤษ - ใช้ภาษาอังกฤษในกิจกรรม
-3.1 ความเข้าใจในบทบาท - รู้หน้าที่ ทำตามบทบาท
-3.2 การจัดการงาน - วางแผน ติดตามงาน
-3.3 การทำงานร่วมกัน - ทำงานเป็นทีม ประสานงาน
-4.1 ความคล่องตัวในการเรียนรู้ - เรียนรู้สิ่งใหม่ ปรับตัว
-4.2 ความรู้ด้านดิจิทัล - ใช้เทคโนโลยี ดิจิทัล
-4.3 ความเชี่ยวชาญเครื่องมือ - ใช้เครื่องมือเฉพาะทาง
+2.2 การฟังและเข้าใจ - รับฟัง จับประเด็น ทำความเข้าใจ
+2.3 การสื่อสารภาษาอังกฤษ - ใช้ภาษาอังกฤษสื่อสาร
+3.1 ความเข้าใจในบทบาท - รู้หน้าที่ ปฏิบัติตามบทบาท
+3.2 การจัดการงาน - วางแผน ติดตามงาน ส่งงานตามกำหนด
+3.3 การทำงานร่วมกัน - ทำงานเป็นทีม ประสานงาน ช่วยเหลือกัน
+4.1 ความคล่องตัวในการเรียนรู้ - เรียนรู้สิ่งใหม่ ปรับตัวเร็ว
+4.2 ความรู้ด้านดิจิทัล - ใช้เทคโนโลยี ดิจิทัล แอพ ซอฟต์แวร์
+4.3 ความเชี่ยวชาญเครื่องมือ - ใช้เครื่องมือเฉพาะทางวิศวกรรม
 5.1 Human-Centered Design - ออกแบบโดยคำนึงถึงผู้ใช้
-5.2 การบริหารโครงการ - วางแผน บริหารโครงการ
-5.3 ความตระหนักทางธุรกิจ - เข้าใจธุรกิจ ต้นทุน
-6.1 การเติบโตส่วนบุคคล - พัฒนาตนเอง ตั้งเป้าหมาย
-6.2 ความยืดหยุ่น - ปรับตัว รับมือความเปลี่ยนแปลง
-6.3 ความเห็นอกเห็นใจ - เข้าใจความรู้สึกผู้อื่น
+5.2 การบริหารโครงการ - วางแผน บริหารโครงการ จัดการทรัพยากร
+5.3 ความตระหนักทางธุรกิจ - เข้าใจธุรกิจ ต้นทุน ผลตอบแทน
+6.1 การเติบโตส่วนบุคคล - พัฒนาตนเอง ตั้งเป้าหมาย สะท้อนคิด
+6.2 ความยืดหยุ่น - ปรับตัว รับมือความเปลี่ยนแปลง ไม่ท้อ
+6.3 ความเห็นอกเห็นใจ - เข้าใจความรู้สึกผู้อื่น ทำงานกับคนต่างกัน
 
 ⚠️ กฎสำคัญ:
-1. เลือก 1-3 ทักษะที่เหมาะสมที่สุดจากรายละเอียดกิจกรรม
+1. เลือก 1-3 ทักษะที่เหมาะสมที่สุด (ดูจากสิ่งที่ทำและสิ่งที่เรียนรู้)
 2. ระดับทักษะ (level) ต้องไม่เกินระดับกิจกรรม (${formData.activityLevel})
-3. ให้เหตุผลสั้นๆ ว่าทำไมเลือกทักษะนั้น (อ้างอิงจากรายละเอียดกิจกรรม)
-4. วิเคราะห์จากเนื้อหากิจกรรมจริงๆ ไม่ใช่แค่ชื่อกิจกรรม
+3. ให้เหตุผลสั้นๆ อ้างอิงจากข้อมูลที่นักศึกษากรอก
+4. พิจารณาบทบาท: Staff/ผู้จัด มักได้ทักษะต่างจากผู้เข้าร่วม
 
-ตอบเป็น JSON เท่านั้น ไม่ต้องมีข้อความอื่น:
-{"skills":[{"code":"X.X","level":N,"reason":"เหตุผลสั้นๆ"}]}`;
+ตอบเป็น JSON เท่านั้น:
+{"skills":[{"code":"X.X","level":N,"reason":"เหตุผลสั้นๆ อ้างอิงจากข้อมูลนักศึกษา"}]}`;
 
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -604,44 +544,78 @@
                 console.error('AI error:', error);
             }
             
-            // Fallback: วิเคราะห์อัตโนมัติจากชื่อกิจกรรม
-            const actName = formData.activityName.toLowerCase();
-            const desc = formData.description.toLowerCase();
-            const fallbackSkills = [];
+            // Fallback analysis based on keywords
+            return fallbackAnalysis(formData);
+        }
+        
+        function fallbackAnalysis(formData) {
+            const combined = `${formData.role} ${formData.activities} ${formData.learnings}`.toLowerCase();
+            const skills = [];
+            const maxLevel = formData.activityLevel;
             
-            // Simple keyword matching as fallback
-            if (actName.includes('workshop') || desc.includes('ฝึก') || desc.includes('ปฏิบัติ')) {
-                fallbackSkills.push({ code: '4.1', level: Math.min(2, formData.activityLevel), reason: 'กิจกรรมเชิงปฏิบัติ/เรียนรู้' });
+            // Keyword matching
+            if (combined.includes('นำเสนอ') || combined.includes('พูด') || combined.includes('present')) {
+                skills.push({ code: '2.1', level: Math.min(2, maxLevel), reason: 'มีการนำเสนอผลงาน' });
             }
-            if (actName.includes('present') || desc.includes('นำเสนอ') || desc.includes('พูด')) {
-                fallbackSkills.push({ code: '2.1', level: Math.min(2, formData.activityLevel), reason: 'มีการนำเสนอ' });
+            if (combined.includes('ทีม') || combined.includes('กลุ่ม') || combined.includes('ร่วมกัน') || combined.includes('ประสาน')) {
+                skills.push({ code: '3.3', level: Math.min(2, maxLevel), reason: 'ทำงานร่วมกับผู้อื่น' });
             }
-            if (actName.includes('team') || desc.includes('ทีม') || desc.includes('กลุ่ม')) {
-                fallbackSkills.push({ code: '3.3', level: Math.min(2, formData.activityLevel), reason: 'ทำงานเป็นทีม' });
+            if (combined.includes('staff') || combined.includes('สต๊าฟ') || combined.includes('ช่วยงาน')) {
+                skills.push({ code: '3.1', level: Math.min(2, maxLevel), reason: 'ทำหน้าที่เป็น Staff' });
             }
-            if (actName.includes('project') || desc.includes('โครงการ') || desc.includes('โปรเจค')) {
-                fallbackSkills.push({ code: '5.2', level: Math.min(3, formData.activityLevel), reason: 'เกี่ยวกับโครงการ' });
+            if (combined.includes('ผู้จัด') || combined.includes('หัวหน้า') || combined.includes('organizer') || combined.includes('วางแผน')) {
+                skills.push({ code: '5.2', level: Math.min(3, maxLevel), reason: 'มีบทบาทในการจัดการ' });
             }
-            if (actName.includes('english') || desc.includes('อังกฤษ') || desc.includes('english')) {
-                fallbackSkills.push({ code: '2.3', level: Math.min(2, formData.activityLevel), reason: 'ใช้ภาษาอังกฤษ' });
+            if (combined.includes('เรียนรู้') || combined.includes('อบรม') || combined.includes('workshop')) {
+                skills.push({ code: '4.1', level: Math.min(2, maxLevel), reason: 'เรียนรู้สิ่งใหม่' });
             }
-            if (actName.includes('digital') || desc.includes('ดิจิทัล') || desc.includes('เทคโนโลยี') || desc.includes('ai')) {
-                fallbackSkills.push({ code: '4.2', level: Math.min(2, formData.activityLevel), reason: 'เกี่ยวกับดิจิทัล' });
+            if (combined.includes('ดิจิทัล') || combined.includes('ai') || combined.includes('เทคโนโลยี') || combined.includes('โปรแกรม') || combined.includes('software')) {
+                skills.push({ code: '4.2', level: Math.min(2, maxLevel), reason: 'ใช้เทคโนโลยีดิจิทัล' });
+            }
+            if (combined.includes('เครื่องมือ') || combined.includes('อุปกรณ์') || combined.includes('tool')) {
+                skills.push({ code: '4.3', level: Math.min(2, maxLevel), reason: 'ใช้เครื่องมือเฉพาะทาง' });
+            }
+            if (combined.includes('วิเคราะห์') || combined.includes('คิด') || combined.includes('แก้ปัญหา')) {
+                skills.push({ code: '1.1', level: Math.min(2, maxLevel), reason: 'ฝึกการคิดวิเคราะห์' });
+            }
+            if (combined.includes('อังกฤษ') || combined.includes('english')) {
+                skills.push({ code: '2.3', level: Math.min(2, maxLevel), reason: 'ใช้ภาษาอังกฤษ' });
             }
             
             // Default if no matches
-            if (fallbackSkills.length === 0) {
-                fallbackSkills.push({ code: '4.1', level: Math.min(2, formData.activityLevel), reason: 'การเรียนรู้จากกิจกรรม' });
+            if (skills.length === 0) {
+                skills.push({ code: '4.1', level: Math.min(2, maxLevel), reason: 'เรียนรู้จากกิจกรรม' });
             }
             
-            return { skills: fallbackSkills.slice(0, 3) };
+            return { skills: skills.slice(0, 3) };
         }
 
         async function submitActivity(event) {
             event.preventDefault();
             if (!currentStudent) return;
             
-            showLoading(true, '🤖 กำลังวิเคราะห์ด้วย AI...');
+            // Validate reflection fields
+            const role = document.getElementById('reflection-role').value.trim();
+            const activities = document.getElementById('reflection-activities').value.trim();
+            const learnings = document.getElementById('reflection-learnings').value.trim();
+            
+            if (role.length < 5) {
+                alert('⚠️ กรุณากรอกบทบาทในกิจกรรมให้ละเอียดกว่านี้');
+                document.getElementById('reflection-role').focus();
+                return;
+            }
+            if (activities.length < 10) {
+                alert('⚠️ กรุณากรอกสิ่งที่ได้ทำในกิจกรรมให้ละเอียดกว่านี้');
+                document.getElementById('reflection-activities').focus();
+                return;
+            }
+            if (learnings.length < 10) {
+                alert('⚠️ กรุณากรอกสิ่งที่ได้เรียนรู้ให้ละเอียดกว่านี้');
+                document.getElementById('reflection-learnings').focus();
+                return;
+            }
+            
+            showLoading(true, '🤖 กำลังวิเคราะห์ทักษะด้วย AI...');
             
             try {
                 const formData = {
@@ -655,12 +629,17 @@
                     duration: parseInt(document.getElementById('duration').value),
                     durationUnit: document.getElementById('duration-unit').value,
                     activityLevel: parseInt(document.querySelector('input[name="activity-level"]:checked').value),
-                    description: document.getElementById('description').value.trim(),
+                    // Reflection data
+                    role: role,
+                    activities: activities,
+                    learnings: learnings,
+                    // Combined description for backward compatibility
+                    description: `บทบาท: ${role}\nสิ่งที่ทำ: ${activities}\nสิ่งที่เรียนรู้: ${learnings}`,
                     evidenceLink: document.getElementById('evidence-link').value.trim(),
-                    evidenceDescription: document.getElementById('evidence-desc').value.trim(),
-                    studentSelectedSkills: [...selectedSkills]
+                    evidenceDescription: document.getElementById('evidence-desc').value.trim()
                 };
                 
+                // Check for duplicate
                 const existingQuery = await db.collection('submissions')
                     .where('studentEmail', '==', currentStudent.email)
                     .where('activityName', '==', formData.activityName)
@@ -672,10 +651,13 @@
                     return;
                 }
                 
+                // AI Analysis
                 aiAnalysisResult = await analyzeWithAI(formData);
                 pendingFormData = formData;
                 showLoading(false);
-                showAIAnalysisModal(formData, aiAnalysisResult);
+                
+                // Show AI result modal
+                showAIResultModal(aiAnalysisResult);
                 
             } catch (error) {
                 alert('❌ เกิดข้อผิดพลาด: ' + error.message);
@@ -683,42 +665,27 @@
             }
         }
 
-        function showAIAnalysisModal(formData, aiResult) {
-            const content = document.getElementById('ai-analysis-content');
-            content.innerHTML = `
-                <div class="comparison-row">
-                    <div class="comparison-col your-skills">
-                        <h5>🎯 ทักษะที่คุณเลือก</h5>
-                        ${formData.studentSelectedSkills.length > 0 ? 
-                            formData.studentSelectedSkills.map(skill => {
-                                const criteria = CRITERIA_LIST.find(c => c.code === skill.code);
-                                return `<div class="ai-skill-item">
-                                    <div class="skill-detail">
-                                        <span class="skill-code">${skill.code}</span>
-                                        <span class="skill-name">${criteria?.nameTh || skill.code}</span>
-                                    </div>
-                                    <span class="skill-level">Lv.${skill.level}</span>
-                                </div>`;
-                            }).join('') 
-                            : '<p style="color:#999;">ไม่ได้เลือกทักษะ</p>'
-                        }
+        function showAIResultModal(aiResult) {
+            const content = document.getElementById('ai-result-content');
+            
+            let html = '';
+            aiResult.skills.forEach(skill => {
+                const criteria = CRITERIA_LIST.find(c => c.code === skill.code);
+                html += `
+                    <div class="ai-skill-card">
+                        <div class="skill-header">
+                            <div>
+                                <span class="skill-code">${skill.code}</span>
+                                <span class="skill-name">${criteria?.nameTh || skill.code}</span>
+                            </div>
+                            <span class="skill-level">Level ${skill.level}</span>
+                        </div>
+                        <div class="skill-reason">${skill.reason || '-'}</div>
                     </div>
-                    <div class="comparison-col ai-skills">
-                        <h5>🤖 AI แนะนำ</h5>
-                        ${aiResult.skills.map(skill => {
-                            const criteria = CRITERIA_LIST.find(c => c.code === skill.code);
-                            return `<div class="ai-skill-item">
-                                <div class="skill-detail">
-                                    <span class="skill-code">${skill.code}</span>
-                                    <span class="skill-name">${criteria?.nameTh || skill.code}</span>
-                                    <div class="ai-reason">💡 ${skill.reason || '-'}</div>
-                                </div>
-                                <span class="skill-level">Lv.${skill.level}</span>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
+                `;
+            });
+            
+            content.innerHTML = html;
             document.getElementById('ai-modal').classList.add('show');
         }
 
@@ -736,10 +703,8 @@
                     submittedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
+                // Reset form
                 document.getElementById('activity-form').reset();
-                selectedSkills = [];
-                initializeSkillsList();
-                updateSkillsCounter();
                 pendingFormData = null;
                 aiAnalysisResult = null;
                 
@@ -759,7 +724,6 @@
             try {
                 const query = await db.collection('submissions')
                     .where('studentEmail', '==', currentStudent.email)
-                    .orderBy('submittedAt', 'desc')
                     .get();
                 
                 if (query.empty) {
@@ -767,7 +731,14 @@
                     return;
                 }
                 
-                container.innerHTML = query.docs.map(doc => {
+                // Sort by submittedAt desc in JavaScript
+                const docs = query.docs.sort((a, b) => {
+                    const timeA = a.data().submittedAt?.toDate?.() || new Date(0);
+                    const timeB = b.data().submittedAt?.toDate?.() || new Date(0);
+                    return timeB - timeA;
+                });
+                
+                container.innerHTML = docs.map(doc => {
                     const data = doc.data();
                     const statusClass = data.status?.toLowerCase().includes('approved') ? 'approved' : 
                                         data.status?.toLowerCase().includes('rejected') ? 'rejected' : 'pending';
@@ -793,6 +764,7 @@
                     </div>`;
                 }).join('');
             } catch (error) {
+                console.error('Load submissions error:', error);
                 container.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>ไม่สามารถโหลดข้อมูลได้</p></div>';
             }
         }
@@ -815,7 +787,6 @@
                         document.getElementById('display-email').textContent = currentStudent.email;
                         document.getElementById('login-section').style.display = 'none';
                         document.getElementById('form-section').style.display = 'block';
-                        initializeSkillsList();
                         await loadMySubmissions();
                     }
                 } catch (e) { sessionStorage.removeItem('studentSession'); }

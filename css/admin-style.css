@@ -1539,3 +1539,81 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Reflection Display Styles */
+.reflection-display {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reflection-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 15px;
+    border-left: 4px solid #4caf50;
+}
+
+.reflection-item label {
+    display: block;
+    font-weight: 600;
+    color: #2e7d32;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.reflection-item p {
+    margin: 0;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* AI Skills Display */
+.ai-skills-display {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-skill-badge {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 10px;
+    padding: 12px 15px;
+    border-left: 4px solid #4caf50;
+}
+
+.ai-skill-badge .skill-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ai-skill-badge .skill-code {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1em;
+}
+
+.ai-skill-badge .skill-name {
+    color: #333;
+    font-size: 0.95em;
+}
+
+.ai-skill-badge .skill-level {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.ai-skill-badge .skill-reason {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #a5d6a7;
+    font-size: 0.85em;
+    color: #555;
+}
