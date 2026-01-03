@@ -497,11 +497,32 @@
 - สิ่งที่ทำในกิจกรรม: ${formData.activities}
 - สิ่งที่ได้เรียนรู้: ${formData.learnings}
 
-## เกณฑ์กำหนดระดับ (Level) - ต้องพิจารณาจากรูปแบบกิจกรรมและบทบาท:
+## เกณฑ์กำหนดระดับ (Level) ตามรูปแบบกิจกรรม:
 - **Level 1 (รู้จัก)**: ฟังบรรยาย, ดูสาธิต, เรียนออนไลน์ด้วยตัวเอง, ยังไม่ได้ลงมือทำ
 - **Level 2 (เข้าใจ)**: Workshop, Lab, ฝึกปฏิบัติในสถานการณ์จำลอง, มีคนแนะนำ/พี่เลี้ยง
 - **Level 3 (ใช้เป็น)**: ใช้ทักษะด้วยตัวเองในสถานการณ์จริง, ทำโครงการ, แข่งขัน, ไม่มีคนบอก
 - **Level 4 (ผู้นำ)**: เป็นผู้วางแผนจัดงาน, ถ่ายทอดความรู้, สอนคนอื่น, ออกแบบกระบวนการ
+
+## ⚠️ กฎสำคัญ: บทบาทผู้เข้าร่วมมีผลต่อระดับทักษะ
+
+**กิจกรรมเดียวกัน บทบาทต่างกัน = ระดับต่างกัน**
+
+| บทบาท | ระดับที่ควรได้ | เหตุผล |
+|-------|---------------|--------|
+| ผู้จัด/Organizer/ประธาน | Level 4 | วางแผน บริหารจัดการ ออกแบบกระบวนการ |
+| หัวหน้าทีม/Leader | Level 3-4 | นำทีม รับผิดชอบผลลัพธ์ ตัดสินใจ |
+| วิทยากร/ผู้สอน | Level 4 | ถ่ายทอดความรู้ สอนคนอื่น |
+| ผู้นำเสนอ/Presenter | Level 3 | ใช้ทักษะการสื่อสารในสถานการณ์จริง |
+| Staff/ทีมงาน | Level 2-3 | ปฏิบัติหน้าที่ตามที่ได้รับมอบหมาย |
+| ผู้เข้าร่วม/Participant | Level 2 | ฝึกปฏิบัติ เรียนรู้จากกิจกรรม |
+| ผู้ฟัง/Audience | Level 1 | รับความรู้ ยังไม่ได้ลงมือทำ |
+
+**ตัวอย่าง:** กิจกรรม "Workshop AI for Beginners"
+- ผู้จัด → 5.2 การบริหารโครงการ Level 4 (วางแผนและจัดงาน)
+- วิทยากร → 2.1 ทักษะการนำเสนอ Level 4 (สอนคนอื่น)
+- Staff → 3.1 ความเข้าใจในบทบาท Level 2 (ปฏิบัติตามมอบหมาย)
+- ผู้เข้าร่วม → 4.2 ความรู้ด้านดิจิทัล Level 2 (ฝึกปฏิบัติมีคนสอน)
+- ผู้ฟัง → 4.1 ความคล่องตัวในการเรียนรู้ Level 1 (ฟังบรรยาย)
 
 ## CMU Engineer Competency - 6 Domains, 18 ทักษะ:
 
@@ -537,9 +558,9 @@
 
 ## กฎสำคัญ:
 1. เลือก 1-3 ทักษะที่เหมาะสมที่สุด โดยดูจาก "สิ่งที่ทำ" และ "สิ่งที่เรียนรู้" ของนักศึกษาเป็นหลัก
-2. ระดับทักษะ (level) ต้องไม่เกินระดับกิจกรรม (${formData.activityLevel}) และต้องสอดคล้องกับเกณฑ์ Level
-3. ให้เหตุผลสั้นๆ ภาษาไทย อ้างอิงจากข้อมูลที่นักศึกษากรอกจริง
-4. พิจารณาบทบาท: ผู้จัด/Staff/หัวหน้า อาจได้ Level สูงกว่าผู้เข้าร่วมทั่วไป
+2. **กำหนดระดับ (Level) โดยพิจารณาจากบทบาทของนักศึกษาเป็นหลัก** ตามตารางด้านบน
+3. ระดับทักษะต้องไม่เกินระดับกิจกรรม (${formData.activityLevel})
+4. ให้เหตุผลสั้นๆ ภาษาไทย ที่เชื่อมโยงกับบทบาทและสิ่งที่นักศึกษาทำ
 
 ## รูปแบบคำตอบ (JSON เท่านั้น):
 {"skills":[{"code":"X.X","level":N,"reason":"เหตุผลสั้นๆ อ้างอิงจากข้อมูลนักศึกษา"}]}
@@ -585,41 +606,63 @@
         
         function fallbackAnalysis(formData) {
             const combined = `${formData.role} ${formData.activities} ${formData.learnings}`.toLowerCase();
+            const roleText = formData.role.toLowerCase();
             const skills = [];
             const maxLevel = formData.activityLevel;
             
-            // Keyword matching
+            // Determine base level from role
+            let roleBaseLevel = 2; // default
+            if (roleText.includes('ผู้จัด') || roleText.includes('organizer') || roleText.includes('ประธาน') || roleText.includes('จัดงาน')) {
+                roleBaseLevel = 4;
+            } else if (roleText.includes('หัวหน้า') || roleText.includes('leader') || roleText.includes('นำทีม') || roleText.includes('ผู้นำ')) {
+                roleBaseLevel = 3;
+            } else if (roleText.includes('วิทยากร') || roleText.includes('สอน') || roleText.includes('ถ่ายทอด')) {
+                roleBaseLevel = 4;
+            } else if (roleText.includes('นำเสนอ') || roleText.includes('presenter') || roleText.includes('พูด')) {
+                roleBaseLevel = 3;
+            } else if (roleText.includes('staff') || roleText.includes('สต๊าฟ') || roleText.includes('ทีมงาน') || roleText.includes('ช่วยงาน')) {
+                roleBaseLevel = 2;
+            } else if (roleText.includes('ผู้เข้าร่วม') || roleText.includes('participant') || roleText.includes('เข้าร่วม')) {
+                roleBaseLevel = 2;
+            } else if (roleText.includes('ผู้ฟัง') || roleText.includes('audience') || roleText.includes('ฟังบรรยาย')) {
+                roleBaseLevel = 1;
+            }
+            
+            // Keyword matching with role-based level
             if (combined.includes('นำเสนอ') || combined.includes('พูด') || combined.includes('present')) {
-                skills.push({ code: '2.1', level: Math.min(2, maxLevel), reason: 'มีการนำเสนอผลงาน' });
+                skills.push({ code: '2.1', level: Math.min(roleBaseLevel, maxLevel), reason: 'มีการนำเสนอผลงาน' });
             }
             if (combined.includes('ทีม') || combined.includes('กลุ่ม') || combined.includes('ร่วมกัน') || combined.includes('ประสาน')) {
-                skills.push({ code: '3.3', level: Math.min(2, maxLevel), reason: 'ทำงานร่วมกับผู้อื่น' });
+                skills.push({ code: '3.3', level: Math.min(roleBaseLevel, maxLevel), reason: 'ทำงานร่วมกับผู้อื่น' });
             }
-            if (combined.includes('staff') || combined.includes('สต๊าฟ') || combined.includes('ช่วยงาน')) {
-                skills.push({ code: '3.1', level: Math.min(2, maxLevel), reason: 'ทำหน้าที่เป็น Staff' });
+            if (combined.includes('staff') || combined.includes('สต๊าฟ') || combined.includes('ช่วยงาน') || combined.includes('ทีมงาน')) {
+                skills.push({ code: '3.1', level: Math.min(roleBaseLevel, maxLevel), reason: 'ทำหน้าที่เป็น Staff' });
             }
-            if (combined.includes('ผู้จัด') || combined.includes('หัวหน้า') || combined.includes('organizer') || combined.includes('วางแผน')) {
-                skills.push({ code: '5.2', level: Math.min(3, maxLevel), reason: 'มีบทบาทในการจัดการ' });
+            if (combined.includes('ผู้จัด') || combined.includes('หัวหน้า') || combined.includes('organizer') || combined.includes('วางแผน') || combined.includes('บริหาร')) {
+                skills.push({ code: '5.2', level: Math.min(roleBaseLevel, maxLevel), reason: 'มีบทบาทในการจัดการ' });
             }
             if (combined.includes('เรียนรู้') || combined.includes('อบรม') || combined.includes('workshop')) {
-                skills.push({ code: '4.1', level: Math.min(2, maxLevel), reason: 'เรียนรู้สิ่งใหม่' });
+                skills.push({ code: '4.1', level: Math.min(roleBaseLevel, maxLevel), reason: 'เรียนรู้สิ่งใหม่' });
             }
             if (combined.includes('ดิจิทัล') || combined.includes('ai') || combined.includes('เทคโนโลยี') || combined.includes('โปรแกรม') || combined.includes('software')) {
-                skills.push({ code: '4.2', level: Math.min(2, maxLevel), reason: 'ใช้เทคโนโลยีดิจิทัล' });
+                skills.push({ code: '4.2', level: Math.min(roleBaseLevel, maxLevel), reason: 'ใช้เทคโนโลยีดิจิทัล' });
             }
             if (combined.includes('เครื่องมือ') || combined.includes('อุปกรณ์') || combined.includes('tool')) {
-                skills.push({ code: '4.3', level: Math.min(2, maxLevel), reason: 'ใช้เครื่องมือเฉพาะทาง' });
+                skills.push({ code: '4.3', level: Math.min(roleBaseLevel, maxLevel), reason: 'ใช้เครื่องมือเฉพาะทาง' });
             }
             if (combined.includes('วิเคราะห์') || combined.includes('คิด') || combined.includes('แก้ปัญหา')) {
-                skills.push({ code: '1.1', level: Math.min(2, maxLevel), reason: 'ฝึกการคิดวิเคราะห์' });
+                skills.push({ code: '1.1', level: Math.min(roleBaseLevel, maxLevel), reason: 'ฝึกการคิดวิเคราะห์' });
             }
             if (combined.includes('อังกฤษ') || combined.includes('english')) {
-                skills.push({ code: '2.3', level: Math.min(2, maxLevel), reason: 'ใช้ภาษาอังกฤษ' });
+                skills.push({ code: '2.3', level: Math.min(roleBaseLevel, maxLevel), reason: 'ใช้ภาษาอังกฤษ' });
+            }
+            if (combined.includes('สอน') || combined.includes('ถ่ายทอด') || combined.includes('วิทยากร')) {
+                skills.push({ code: '2.1', level: Math.min(4, maxLevel), reason: 'ถ่ายทอดความรู้ให้ผู้อื่น' });
             }
             
             // Default if no matches
             if (skills.length === 0) {
-                skills.push({ code: '4.1', level: Math.min(2, maxLevel), reason: 'เรียนรู้จากกิจกรรม' });
+                skills.push({ code: '4.1', level: Math.min(roleBaseLevel, maxLevel), reason: 'เรียนรู้จากกิจกรรม' });
             }
             
             return { skills: skills.slice(0, 3) };
