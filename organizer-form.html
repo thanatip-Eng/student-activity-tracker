@@ -1173,8 +1173,10 @@
         }
 
         // ============================================
-        // AI SKILL ANALYSIS
+        // AI SKILL ANALYSIS (Google Gemini API)
         // ============================================
+        const GEMINI_API_KEY = 'AIzaSyC2QtrwrHYjQkrFW3zzSAQqXMq5BGnl5Zw';
+        
         async function analyzeSkillsWithAI() {
             const activityName = document.getElementById('activity-name').value.trim();
             const description = document.getElementById('description').value.trim();
@@ -1203,16 +1205,18 @@
             suggestedDiv.innerHTML = `
                 <div class="ai-loading">
                     <span class="spinner"></span>
-                    กำลังวิเคราะห์ทักษะที่เหมาะสม...
+                    กำลังวิเคราะห์ทักษะด้วย AI...
                 </div>
             `;
             
-            // Simulate processing delay
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
             try {
-                // Use intelligent rule-based analysis
-                const skills = analyzeWithRules(activityName, description, currentRole, roleName);
+                const prompt = buildGeminiPrompt(activityName, description, roleName);
+                const response = await callGeminiAPI(prompt);
+                const skills = parseGeminiResponse(response);
+                
+                if (skills.length === 0) {
+                    throw new Error('ไม่สามารถวิเคราะห์ทักษะได้');
+                }
                 
                 displayAISuggestions(skills);
                 
@@ -1239,7 +1243,120 @@
             btn.innerHTML = '🤖 วิเคราะห์โดย AI | AI Analyze';
         }
         
-        // Intelligent rule-based skill analysis
+        function buildGeminiPrompt(activityName, description, roleName) {
+            return `คุณเป็นผู้เชี่ยวชาญด้านการพัฒนาทักษะนักศึกษาวิศวกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่
+
+## CMU Engineer Competency Framework (V4)
+
+### 6 Domains และ 18 Sub-criteria:
+
+**Domain 1: การคิดเชิงวิพากษ์และการแก้ปัญหา (Critical Thinking & Problem Solving)**
+- 1.1 การให้เหตุผลเชิงวิเคราะห์ (Analytical Reasoning)
+- 1.2 การแก้ปัญหาอย่างเป็นระบบ (Systematic Problem Solving)
+- 1.3 การคิดเชิงระบบและบริบททางสังคม (Systems Thinking & Societal Context)
+
+**Domain 2: การสื่อสาร (Communication)**
+- 2.1 ทักษะการนำเสนอ (Presentation Skills)
+- 2.2 การฟังและความเข้าใจ (Listening and Comprehension)
+- 2.3 การสื่อสารภาษาอังกฤษ (English Communication)
+
+**Domain 3: การทำงานเป็นทีมและความร่วมมือ (Teamwork & Collaboration)**
+- 3.1 ความเข้าใจในบทบาทและการปฏิบัติงาน (Role Understanding and Execution)
+- 3.2 การจัดการงาน (Task Management)
+- 3.3 การทำงานร่วมกัน (Collaborative Work)
+
+**Domain 4: การเติบโตทางวิชาชีพและการปรับตัว (Professional Growth & Adaptability)**
+- 4.1 ความคล่องตัวในการเรียนรู้ (Learning Agility)
+- 4.2 ความรู้ด้านดิจิทัล (Digital Literacy)
+- 4.3 ความเชี่ยวชาญด้านเครื่องมือ (Tool Proficiency)
+
+**Domain 5: นวัตกรรมและความเข้าใจทางธุรกิจ (Innovation & Business Acumen)**
+- 5.1 การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง (Human-Centered Design)
+- 5.2 การบริหารโครงการ (Project Management)
+- 5.3 ความตระหนักรู้ทางธุรกิจและการเป็นผู้ประกอบการ (Business & Entrepreneurial Awareness)
+
+**Domain 6: การพัฒนาตนเองและความยืดหยุ่น (Self-Development & Resilience)**
+- 6.1 การเติบโตส่วนบุคคลและการตระหนักรู้ในตนเอง (Personal Growth & Self-Awareness)
+- 6.2 ความยืดหยุ่นและการปรับตัว (Resilience & Adaptability)
+- 6.3 ความเข้าอกเข้าใจและความเข้าใจระหว่างบุคคล (Empathy & Interpersonal Understanding)
+
+### เกณฑ์การกำหนดระดับ (Level):
+- **Level 1 (รู้จัก)**: ฟังบรรยาย, เรียนออนไลน์ด้วยตัวเอง, ยังไม่เคยใช้งานจริง
+- **Level 2 (เข้าใจ)**: Workshop, Lab, ฝึกปฏิบัติในสถานการณ์จำลองที่มีคนแนะนำ
+- **Level 3 (ใช้เป็น)**: ใช้ทักษะด้วยตัวเองในสถานการณ์จริง เช่น ทำโครงการ, การแข่งขัน
+- **Level 4 (ผู้นำ)**: เป็นผู้วางแผนจัดงาน, ถ่ายทอดความรู้, สอนคนอื่น
+
+---
+
+## ข้อมูลกิจกรรมที่ต้องวิเคราะห์:
+
+**ชื่อกิจกรรม:** ${activityName}
+**รายละเอียด:** ${description || 'ไม่ได้ระบุ'}
+**บทบาทผู้เข้าร่วม:** ${roleName}
+
+---
+
+## คำสั่ง:
+1. วิเคราะห์กิจกรรมนี้และเลือกทักษะที่เหมาะสม 1-3 ทักษะ
+2. กำหนดระดับ (Level 1-4) ตามเกณฑ์ด้านบน โดยพิจารณาจากรูปแบบกิจกรรมและบทบาทของผู้เข้าร่วม
+3. อธิบายเหตุผลสั้นๆ ว่าทำไมถึงเลือกทักษะนั้น
+
+## รูปแบบคำตอบ (JSON เท่านั้น):
+\`\`\`json
+[
+  {"code": "X.X", "level": N, "reason": "เหตุผลสั้นๆ เป็นภาษาไทย"}
+]
+\`\`\`
+
+ตอบเฉพาะ JSON เท่านั้น ไม่ต้องมีคำอธิบายเพิ่มเติม`;
+        }
+        
+        async function callGeminiAPI(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: 1024
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || 'Gemini API Error');
+            }
+            
+            const data = await response.json();
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+        
+        function parseGeminiResponse(responseText) {
+            // Extract JSON from response
+            const jsonMatch = responseText.match(/\[[\s\S]*?\]/);
+            if (!jsonMatch) {
+                console.error('No JSON found in response:', responseText);
+                throw new Error('ไม่พบข้อมูล JSON ในคำตอบ');
+            }
+            
+            const skills = JSON.parse(jsonMatch[0]);
+            
+            // Validate and filter valid skills
+            return skills.filter(s => {
+                const valid = CRITERIA_LIST.find(c => c.code === s.code);
+                return valid && s.level >= 1 && s.level <= 4;
+            }).slice(0, 3); // Max 3 skills
+        }
+        
+        // Fallback rule-based analysis (if API fails)
         function analyzeWithRules(activityName, description, role, roleName) {
             const text = (activityName + ' ' + description).toLowerCase();
             const rolePreset = ROLE_PRESETS[role];
