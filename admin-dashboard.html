@@ -861,7 +861,7 @@
             // Format 1: Check for skills array
             if (activity.skills && Array.isArray(activity.skills) && activity.skills.length > 0) {
                 skills = [...activity.skills];
-            } else {
+            } else if (typeof CRITERIA_LIST !== 'undefined') {
                 // Format 2: Check for direct code format (e.g., "1.1": 2 or "1_1": 2)
                 CRITERIA_LIST.forEach(criteria => {
                     const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
@@ -2475,26 +2475,23 @@
 
         async function loadAllActivitiesAdmin() {
             const list = document.getElementById('activities-manage-list');
+            if (!list) return;
+            
             list.innerHTML = '<div class="loading-inline">กำลังโหลด... | Loading...</div>';
             
             try {
                 const snapshot = await db.collection('activities').get();
                 allActivitiesCache = [];
                 
-                let withSkills = 0;
-                
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     allActivitiesCache.push({ id: doc.id, ...data });
-                    if (data.skills && data.skills.length > 0) withSkills++;
                 });
                 
                 // Sort by name
                 allActivitiesCache.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 
-                document.getElementById('total-activities-admin').textContent = allActivitiesCache.length;
-                document.getElementById('activities-with-skills').textContent = withSkills;
-                
+                // Stats are updated inside renderActivitiesAdminList
                 renderActivitiesAdminList(allActivitiesCache);
                 
             } catch (error) {
@@ -2526,7 +2523,7 @@
             // Format 1: Check for skills array
             if (activity.skills && Array.isArray(activity.skills) && activity.skills.length > 0) {
                 skills = [...activity.skills];
-            } else {
+            } else if (typeof CRITERIA_LIST !== 'undefined') {
                 // Format 2: Check for direct code format (e.g., "1.1": 2 or "1_1": 2)
                 CRITERIA_LIST.forEach(criteria => {
                     const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
@@ -2545,6 +2542,11 @@
 
         function renderActivitiesAdminList(activities) {
             const list = document.getElementById('activities-manage-list');
+            
+            if (!list) {
+                console.warn('activities-manage-list element not found');
+                return;
+            }
             
             if (activities.length === 0) {
                 list.innerHTML = `<div class="empty-state"><p>📭 ไม่พบกิจกรรม | No activities found</p></div>`;
@@ -2594,9 +2596,11 @@
                 `;
             }).join('');
             
-            // Update stats
-            document.getElementById('total-activities-count').textContent = activities.length;
-            document.getElementById('with-skills-count').textContent = withSkills;
+            // Update stats (with null check)
+            const totalEl = document.getElementById('total-activities-count');
+            const skillsEl = document.getElementById('with-skills-count');
+            if (totalEl) totalEl.textContent = activities.length;
+            if (skillsEl) skillsEl.textContent = withSkills;
             
             list.innerHTML = html;
         }
