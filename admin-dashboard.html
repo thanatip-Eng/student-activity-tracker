@@ -371,18 +371,18 @@
                 </div>
                 
                 <!-- Activities Stats -->
-                <div class="organizers-stats" style="margin-bottom: 20px;">
-                    <div class="org-stat">
-                        <span class="org-stat-number" id="total-activities-admin">0</span>
-                        <span class="org-stat-label">กิจกรรมทั้งหมด | Total</span>
+                <div class="activity-manage-stats">
+                    <div class="activity-stat-card">
+                        <span class="activity-stat-number" id="total-activities-count">0</span>
+                        <span class="activity-stat-label">กิจกรรมทั้งหมด | Total</span>
                     </div>
-                    <div class="org-stat">
-                        <span class="org-stat-number" id="activities-with-skills">0</span>
-                        <span class="org-stat-label">มี Skills | With Skills</span>
+                    <div class="activity-stat-card has-skills">
+                        <span class="activity-stat-number" id="with-skills-count">0</span>
+                        <span class="activity-stat-label">มี Skills | With Skills</span>
                     </div>
                 </div>
                 
-                <div id="activities-manage-list" class="organizers-list">
+                <div id="activities-manage-list" class="activities-manage-grid">
                     <div class="loading-inline">กรุณาค้นหาหรือกด "ทั้งหมด" | Search or click "All"</div>
                 </div>
             </div>
@@ -853,6 +853,37 @@
         }
 
         // ============================================
+        // EXTRACT SKILLS FROM ACTIVITY (various formats)
+        // ============================================
+        function extractSkillsAdmin(activity) {
+            let skills = [];
+            
+            // Format 1: Check for skills array
+            if (activity.skills && Array.isArray(activity.skills) && activity.skills.length > 0) {
+                skills = [...activity.skills];
+            } else {
+                // Format 2: Check for direct code format (e.g., "1.1": 2 or "1_1": 2)
+                CRITERIA_LIST.forEach(criteria => {
+                    const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
+                    if (value && value > 0) {
+                        skills.push({
+                            code: criteria.code,
+                            level: parseInt(value)
+                        });
+                    }
+                });
+            }
+            
+            // For student view - limit to top 3 skills
+            if (skills.length > 3) {
+                skills.sort((a, b) => b.level - a.level);
+                skills = skills.slice(0, 3);
+            }
+            
+            return skills;
+        }
+
+        // ============================================
         // ADMIN STUDENT SEARCH
         // ============================================
         async function searchStudentAdmin() {
@@ -981,20 +1012,6 @@
             }
             
             return activities;
-        }
-
-        function extractSkillsAdmin(activity) {
-            const skills = [];
-            if (activity.skills && Array.isArray(activity.skills)) {
-                return activity.skills;
-            }
-            CRITERIA_LIST.forEach(criteria => {
-                const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
-                if (activity[fieldName] && activity[fieldName] > 0) {
-                    skills.push({ code: criteria.code, level: activity[fieldName] });
-                }
-            });
-            return skills;
         }
 
         function calculateScoresAdmin(activities) {
@@ -2501,6 +2518,31 @@
             renderActivitiesAdminList(filtered);
         }
 
+        // extractSkillsAdmin is defined earlier around line 858
+        // For activity management list, we use a separate function that shows all skills
+        function extractAllSkillsAdmin(activity) {
+            let skills = [];
+            
+            // Format 1: Check for skills array
+            if (activity.skills && Array.isArray(activity.skills) && activity.skills.length > 0) {
+                skills = [...activity.skills];
+            } else {
+                // Format 2: Check for direct code format (e.g., "1.1": 2 or "1_1": 2)
+                CRITERIA_LIST.forEach(criteria => {
+                    const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
+                    if (value && value > 0) {
+                        skills.push({
+                            code: criteria.code,
+                            level: parseInt(value)
+                        });
+                    }
+                });
+            }
+            
+            // Return ALL skills for admin view (display will show warning if > 3)
+            return skills;
+        }
+
         function renderActivitiesAdminList(activities) {
             const list = document.getElementById('activities-manage-list');
             
@@ -2509,31 +2551,54 @@
                 return;
             }
             
-            list.innerHTML = activities.map(act => {
-                const skillsHtml = act.skills && act.skills.length > 0 
-                    ? act.skills.map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join(' ')
+            // Count activities with/without skills
+            let withSkills = 0;
+            let withoutSkills = 0;
+            
+            const html = activities.map(act => {
+                const skills = extractAllSkillsAdmin(act);
+                const hasSkills = skills.length > 0;
+                
+                if (hasSkills) withSkills++;
+                else withoutSkills++;
+                
+                // Warning if more than 3 skills
+                const overLimitWarning = skills.length > 3 
+                    ? `<span style="color:#e74c3c; font-size:0.8em; margin-left:5px;">⚠️ เกิน 3 ทักษะ</span>` 
+                    : '';
+                
+                const skillsHtml = hasSkills 
+                    ? skills.slice(0, 5).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join(' ') + 
+                      (skills.length > 5 ? `<span style="color:#666; font-size:0.8em;"> +${skills.length - 5} more</span>` : '') +
+                      overLimitWarning
                     : '<span style="color:#e74c3c;">⚠️ ไม่มี skills</span>';
                 
                 return `
-                    <div class="organizer-item" style="border-left: 4px solid ${act.skills?.length ? '#27ae60' : '#e74c3c'};">
-                        <div class="org-info" style="flex:1;">
-                            <div class="org-email" style="font-weight:600; color:#1a472a;">
-                                ${act.name || 'ไม่ระบุชื่อ'}
-                            </div>
-                            <div class="org-name" style="font-size:0.85em; color:#666;">
-                                📅 ${act.date || '-'} | 👤 ${act.organizer || '-'}
-                            </div>
-                            <div style="margin-top:5px;">
-                                ${skillsHtml}
+                    <div class="activity-manage-card ${hasSkills ? 'has-skills' : 'no-skills'}">
+                        <div class="activity-manage-header">
+                            <h4 class="activity-manage-title">${act.name || 'ไม่ระบุชื่อ'}</h4>
+                            <div class="activity-manage-actions">
+                                <button class="btn-act-edit" onclick="editActivityAdmin('${act.id}')">✏️ แก้ไข</button>
+                                <button class="btn-act-delete" onclick="deleteActivityAdmin('${act.id}', '${(act.name || '').replace(/'/g, "\\'")}')">🗑️ ลบ</button>
                             </div>
                         </div>
-                        <div class="org-actions">
-                            <button class="btn-mini btn-edit" onclick="editActivityAdmin('${act.id}')">✏️ แก้ไข</button>
-                            <button class="btn-mini btn-delete" onclick="deleteActivityAdmin('${act.id}', '${(act.name || '').replace(/'/g, "\\'")}')">🗑️ ลบ</button>
+                        <div class="activity-manage-meta">
+                            <span>📅 ${act.date || '-'}</span>
+                            <span>👤 ${act.organizer || '-'}</span>
+                            <span>📊 Level ${act.level || '-'}</span>
+                        </div>
+                        <div class="activity-manage-skills">
+                            ${skillsHtml}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            // Update stats
+            document.getElementById('total-activities-count').textContent = activities.length;
+            document.getElementById('with-skills-count').textContent = withSkills;
+            
+            list.innerHTML = html;
         }
 
         function openAddActivityModal() {

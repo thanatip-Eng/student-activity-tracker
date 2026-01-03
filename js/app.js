@@ -224,36 +224,42 @@ async function loadStudentActivities() {
 // EXTRACT SKILLS FROM ACTIVITY
 // ============================================
 function extractSkills(activity) {
-    const skills = [];
+    let skills = [];
     
     // Format 1: Check for skills array (from CSV import or new format)
     if (activity.skills && Array.isArray(activity.skills)) {
-        return activity.skills;
-    }
-    
-    // Format 2: Check for criteria_X_X format
-    CRITERIA_LIST.forEach(criteria => {
-        const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
-        if (activity[fieldName] && activity[fieldName] > 0) {
-            skills.push({
-                code: criteria.code,
-                level: parseInt(activity[fieldName])
-            });
-        }
-    });
-    
-    // Format 3: Check for direct code format (e.g., "1.1": 2)
-    if (skills.length === 0) {
+        skills = [...activity.skills];
+    } else {
+        // Format 2: Check for criteria_X_X format
         CRITERIA_LIST.forEach(criteria => {
-            // Check both "1.1" and "1_1" formats
-            const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
-            if (value && value > 0) {
+            const fieldName = `criteria_${criteria.code.replace('.', '_')}`;
+            if (activity[fieldName] && activity[fieldName] > 0) {
                 skills.push({
                     code: criteria.code,
-                    level: parseInt(value)
+                    level: parseInt(activity[fieldName])
                 });
             }
         });
+        
+        // Format 3: Check for direct code format (e.g., "1.1": 2 or "1_1": 2)
+        if (skills.length === 0) {
+            CRITERIA_LIST.forEach(criteria => {
+                // Check both "1.1" and "1_1" formats
+                const value = activity[criteria.code] || activity[criteria.code.replace('.', '_')];
+                if (value && value > 0) {
+                    skills.push({
+                        code: criteria.code,
+                        level: parseInt(value)
+                    });
+                }
+            });
+        }
+    }
+    
+    // Limit to top 3 skills by level (highest first)
+    if (skills.length > 3) {
+        skills.sort((a, b) => b.level - a.level);
+        skills = skills.slice(0, 3);
     }
     
     return skills;

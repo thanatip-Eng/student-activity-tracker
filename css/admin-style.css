@@ -1617,3 +1617,114 @@ body {
     font-size: 0.85em;
     color: #555;
 }
+
+/* Activity Management Styles */
+.activity-manage-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.activity-stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: white;
+}
+
+.activity-stat-card.has-skills {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+}
+
+.activity-stat-number {
+    display: block;
+    font-size: 2.5em;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.activity-stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.activities-manage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 15px;
+}
+
+.activity-manage-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-left: 4px solid #27ae60;
+    transition: all 0.3s;
+}
+
+.activity-manage-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.activity-manage-card.no-skills {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+}
+
+.activity-manage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.activity-manage-title {
+    margin: 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: #1a1a2e;
+    line-height: 1.3;
+    flex: 1;
+}
+
+.activity-manage-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.activity-manage-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.activity-manage-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .activities-manage-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-manage-header {
+        flex-direction: column;
+    }
+    
+    .activity-manage-actions {
+        align-self: flex-end;
+    }
+}
