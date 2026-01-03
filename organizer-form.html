@@ -1016,27 +1016,13 @@
             });
             document.querySelector(`.role-card[data-role="${role}"]`).classList.add('selected');
             
-            // Apply preset skills
-            const preset = ROLE_PRESETS[role];
-            selectedSkills = preset.skills.map(s => {
-                const criteria = CRITERIA_LIST.find(c => c.code === s.code);
-                return {
-                    code: s.code,
-                    level: s.level,
-                    nameTh: criteria.nameTh,
-                    nameEn: criteria.nameEn
-                };
-            });
-            
-            // Show preset skills info
+            // Don't auto-apply skills - let user click AI Analyze button
+            // Just show a hint that they can use AI analysis
             const presetDisplay = document.getElementById('preset-skills-display');
-            const presetList = document.getElementById('preset-skills-list');
-            presetDisplay.style.display = 'block';
-            presetList.innerHTML = selectedSkills.map(s => 
-                `<span class="preset-skill-tag">${s.code} ${s.nameTh} Lv.${s.level}</span>`
-            ).join('');
+            presetDisplay.style.display = 'none';
             
-            renderSelectedSkills();
+            // Clear any previous AI analysis result
+            document.getElementById('ai-analysis-result').style.display = 'none';
         }
 
         // LOGIN - Anyone can register
@@ -1192,8 +1178,6 @@
         async function analyzeSkillsWithAI() {
             const activityName = document.getElementById('activity-name').value.trim();
             const description = document.getElementById('description').value.trim();
-            const roleSelect = document.getElementById('participation-role');
-            const roleName = roleSelect.options[roleSelect.selectedIndex]?.text || '';
             
             if (!activityName) {
                 alert('⚠️ กรุณากรอกชื่อกิจกรรมก่อน | Please enter activity name first');
@@ -1204,6 +1188,9 @@
                 alert('⚠️ กรุณาเลือกบทบาทของผู้เข้าร่วมก่อน | Please select participant role first');
                 return;
             }
+            
+            // Get role name from ROLE_PRESETS
+            const roleName = ROLE_PRESETS[currentRole]?.name || currentRole;
             
             const btn = document.querySelector('.btn-ai-analyze');
             const resultDiv = document.getElementById('ai-analysis-result');
@@ -1236,7 +1223,7 @@
                     nameTh: CRITERIA_LIST.find(c => c.code === s.code)?.nameTh || '',
                     nameEn: CRITERIA_LIST.find(c => c.code === s.code)?.nameEn || ''
                 }));
-                updateSelectedSkillsDisplay();
+                renderSelectedSkills();
                 
             } catch (error) {
                 console.error('AI Analysis error:', error);
@@ -1412,7 +1399,7 @@
             document.getElementById('ai-analysis-result').style.display = 'none';
             document.getElementById('ai-suggested-skills').innerHTML = '';
             selectedSkills = [];
-            updateSelectedSkillsDisplay();
+            renderSelectedSkills();
         }
 
         function openSkillModal() {
