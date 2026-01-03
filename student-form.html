@@ -133,6 +133,23 @@
             color: #1565c0;
             border: 1px solid #90caf9;
         }
+        .ai-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65em;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .ai-badge-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .ai-badge-rule {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
         
         /* Character counter */
         .char-counter {
@@ -465,7 +482,7 @@
         }
 
         async function analyzeWithAI(formData) {
-            const GEMINI_API_KEY = 'AIzaSyCkImt0c2mVpDs0IYCwedICILocuOjORTw';
+            const GEMINI_API_KEY = 'AIzaSyCiFyQQGHrp5gO0yjFtYALsqu_Fxpdydoo';
             
             const prompt = `คุณเป็นผู้เชี่ยวชาญวิเคราะห์ทักษะจากกิจกรรมนักศึกษาวิศวกรรม มหาวิทยาลัยเชียงใหม่ ตาม CMU Engineer Competency V4 Rubric
 
@@ -552,15 +569,18 @@
                             ...s,
                             level: Math.min(s.level, formData.activityLevel)
                         })).slice(0, 3);
+                        analysis.usedAI = true;
                         return analysis;
                     }
                 }
             } catch (error) {
-                console.error('AI error:', error);
+                console.warn('AI error, using fallback:', error);
             }
             
             // Fallback analysis based on keywords
-            return fallbackAnalysis(formData);
+            const fallback = fallbackAnalysis(formData);
+            fallback.usedAI = false;
+            return fallback;
         }
         
         function fallbackAnalysis(formData) {
@@ -682,6 +702,16 @@
 
         function showAIResultModal(aiResult) {
             const content = document.getElementById('ai-result-content');
+            const titleEl = document.querySelector('#ai-modal h3');
+            
+            // Update title with badge
+            if (titleEl) {
+                if (aiResult.usedAI) {
+                    titleEl.innerHTML = 'ผลการวิเคราะห์ทักษะจาก AI <span class="ai-badge ai-badge-ai">AI</span>';
+                } else {
+                    titleEl.innerHTML = 'ผลการวิเคราะห์ทักษะอัตโนมัติ <span class="ai-badge ai-badge-rule">Auto</span>';
+                }
+            }
             
             let html = '';
             aiResult.skills.forEach(skill => {

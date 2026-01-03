@@ -526,6 +526,23 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .ai-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .ai-badge-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .ai-badge-rule {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
         
         .student-ids-input {
             font-family: monospace;
@@ -1175,7 +1192,7 @@
         // ============================================
         // AI SKILL ANALYSIS (Google Gemini API)
         // ============================================
-        const GEMINI_API_KEY = 'AIzaSyCkImt0c2mVpDs0IYCwedICILocuOjORTw';
+        const GEMINI_API_KEY = 'AIzaSyDH_1F71TLYIOTLQ5BDs0axJuhVhIvXhl8';
         
         async function analyzeSkillsWithAI() {
             const activityName = document.getElementById('activity-name').value.trim();
@@ -1209,35 +1226,37 @@
                 </div>
             `;
             
+            let skills = [];
+            let usedAI = false;
+            
             try {
                 const prompt = buildGeminiPrompt(activityName, description, roleName);
                 const response = await callGeminiAPI(prompt);
-                const skills = parseGeminiResponse(response);
+                skills = parseGeminiResponse(response);
                 
-                if (skills.length === 0) {
-                    throw new Error('ไม่สามารถวิเคราะห์ทักษะได้');
+                if (skills.length > 0) {
+                    usedAI = true;
                 }
-                
-                displayAISuggestions(skills);
-                
-                // Auto-apply to selected skills
-                selectedSkills = skills.map(s => ({
-                    code: s.code,
-                    level: s.level,
-                    nameTh: CRITERIA_LIST.find(c => c.code === s.code)?.nameTh || '',
-                    nameEn: CRITERIA_LIST.find(c => c.code === s.code)?.nameEn || ''
-                }));
-                renderSelectedSkills();
-                
             } catch (error) {
-                console.error('AI Analysis error:', error);
-                suggestedDiv.innerHTML = `
-                    <div style="color: #c62828; text-align: center; padding: 20px;">
-                        ❌ เกิดข้อผิดพลาด: ${error.message}<br>
-                        <small>กรุณาลองใหม่อีกครั้ง หรือเลือกทักษะด้วยตนเอง</small>
-                    </div>
-                `;
+                console.warn('AI Analysis failed, using fallback:', error.message);
             }
+            
+            // Fallback to rule-based if AI failed or returned empty
+            if (skills.length === 0) {
+                skills = analyzeWithRules(activityName, description, currentRole, roleName);
+                usedAI = false;
+            }
+            
+            displayAISuggestions(skills, usedAI);
+            
+            // Auto-apply to selected skills
+            selectedSkills = skills.map(s => ({
+                code: s.code,
+                level: s.level,
+                nameTh: CRITERIA_LIST.find(c => c.code === s.code)?.nameTh || '',
+                nameEn: CRITERIA_LIST.find(c => c.code === s.code)?.nameEn || ''
+            }));
+            renderSelectedSkills();
             
             btn.disabled = false;
             btn.innerHTML = '🤖 วิเคราะห์โดย AI | AI Analyze';
@@ -1485,8 +1504,18 @@
             });
         }
         
-        function displayAISuggestions(skills) {
+        function displayAISuggestions(skills, usedAI = true) {
             const container = document.getElementById('ai-suggested-skills');
+            const headerEl = document.querySelector('.ai-result-header span');
+            
+            // Update header with indicator
+            if (headerEl) {
+                if (usedAI) {
+                    headerEl.innerHTML = '🤖 ผลการวิเคราะห์จาก AI <span class="ai-badge ai-badge-ai">AI</span>';
+                } else {
+                    headerEl.innerHTML = '🤖 ผลการวิเคราะห์อัตโนมัติ <span class="ai-badge ai-badge-rule">Auto</span>';
+                }
+            }
             
             if (skills.length === 0) {
                 container.innerHTML = `
