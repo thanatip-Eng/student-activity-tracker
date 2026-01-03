@@ -382,8 +382,23 @@
                     </div>
                 </div>
                 
-                <div id="activities-manage-list" class="activities-manage-grid">
-                    <div class="loading-inline">กรุณาค้นหาหรือกด "ทั้งหมด" | Search or click "All"</div>
+                <!-- Activities Table -->
+                <div class="table-container">
+                    <table class="activity-table" id="activities-manage-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">ชื่อกิจกรรม | Activity</th>
+                                <th style="width: 15%;">ผู้จัด | Organizer</th>
+                                <th style="width: 12%;">วันที่ | Date</th>
+                                <th style="width: 8%;">Level</th>
+                                <th style="width: 25%;">Skills</th>
+                                <th style="width: 10%;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activities-manage-list">
+                            <tr><td colspan="6" class="loading-cell">กรุณาค้นหาหรือกด "ทั้งหมด" | Search or click "All"</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -2477,7 +2492,7 @@
             const list = document.getElementById('activities-manage-list');
             if (!list) return;
             
-            list.innerHTML = '<div class="loading-inline">กำลังโหลด... | Loading...</div>';
+            list.innerHTML = '<tr><td colspan="6" class="loading-cell">⏳ กำลังโหลด... | Loading...</td></tr>';
             
             try {
                 const snapshot = await db.collection('activities').get();
@@ -2496,7 +2511,7 @@
                 
             } catch (error) {
                 console.error('Load activities error:', error);
-                list.innerHTML = `<div class="empty-state"><p>❌ Error: ${error.message}</p></div>`;
+                list.innerHTML = `<tr><td colspan="6" class="empty-cell">❌ Error: ${error.message}</td></tr>`;
             }
         }
 
@@ -2549,50 +2564,47 @@
             }
             
             if (activities.length === 0) {
-                list.innerHTML = `<div class="empty-state"><p>📭 ไม่พบกิจกรรม | No activities found</p></div>`;
+                list.innerHTML = `<tr><td colspan="6" class="empty-cell">📭 ไม่พบกิจกรรม | No activities found</td></tr>`;
                 return;
             }
             
             // Count activities with/without skills
             let withSkills = 0;
-            let withoutSkills = 0;
             
-            const html = activities.map(act => {
+            const html = activities.map((act, index) => {
                 const skills = extractAllSkillsAdmin(act);
                 const hasSkills = skills.length > 0;
                 
                 if (hasSkills) withSkills++;
-                else withoutSkills++;
                 
                 // Warning if more than 3 skills
                 const overLimitWarning = skills.length > 3 
-                    ? `<span style="color:#e74c3c; font-size:0.8em; margin-left:5px;">⚠️ เกิน 3 ทักษะ</span>` 
+                    ? `<span class="skill-warning">⚠️ ${skills.length}</span>` 
                     : '';
                 
                 const skillsHtml = hasSkills 
-                    ? skills.slice(0, 5).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join(' ') + 
-                      (skills.length > 5 ? `<span style="color:#666; font-size:0.8em;"> +${skills.length - 5} more</span>` : '') +
+                    ? skills.slice(0, 4).map(s => `<span class="skill-badge">${s.code}:${s.level}</span>`).join('') + 
+                      (skills.length > 4 ? `<span class="skill-more">+${skills.length - 4}</span>` : '') +
                       overLimitWarning
-                    : '<span style="color:#e74c3c;">⚠️ ไม่มี skills</span>';
+                    : '<span class="no-skill">⚠️ ไม่มี</span>';
+                
+                const rowClass = hasSkills ? '' : 'no-skills-row';
                 
                 return `
-                    <div class="activity-manage-card ${hasSkills ? 'has-skills' : 'no-skills'}">
-                        <div class="activity-manage-header">
-                            <h4 class="activity-manage-title">${act.name || 'ไม่ระบุชื่อ'}</h4>
-                            <div class="activity-manage-actions">
-                                <button class="btn-act-edit" onclick="editActivityAdmin('${act.id}')">✏️ แก้ไข</button>
-                                <button class="btn-act-delete" onclick="deleteActivityAdmin('${act.id}', '${(act.name || '').replace(/'/g, "\\'")}')">🗑️ ลบ</button>
-                            </div>
-                        </div>
-                        <div class="activity-manage-meta">
-                            <span>📅 ${act.date || '-'}</span>
-                            <span>👤 ${act.organizer || '-'}</span>
-                            <span>📊 Level ${act.level || '-'}</span>
-                        </div>
-                        <div class="activity-manage-skills">
-                            ${skillsHtml}
-                        </div>
-                    </div>
+                    <tr class="${rowClass}">
+                        <td class="activity-name-cell">
+                            <span class="row-num">${index + 1}.</span>
+                            ${act.name || 'ไม่ระบุชื่อ'}
+                        </td>
+                        <td>${act.organizer || '-'}</td>
+                        <td>${act.date || '-'}</td>
+                        <td class="center">${act.level || '-'}</td>
+                        <td class="skills-cell">${skillsHtml}</td>
+                        <td class="actions-cell">
+                            <button class="btn-table-edit" onclick="editActivityAdmin('${act.id}')" title="แก้ไข">✏️</button>
+                            <button class="btn-table-delete" onclick="deleteActivityAdmin('${act.id}', '${(act.name || '').replace(/'/g, "\\'")}')" title="ลบ">🗑️</button>
+                        </td>
+                    </tr>
                 `;
             }).join('');
             

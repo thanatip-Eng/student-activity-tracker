@@ -1651,80 +1651,149 @@ body {
     opacity: 0.9;
 }
 
-.activities-manage-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 15px;
-}
-
-.activity-manage-card {
-    background: white;
+/* Activity Table */
+.table-container {
+    overflow-x: auto;
     border-radius: 12px;
-    padding: 15px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    border-left: 4px solid #27ae60;
-    transition: all 0.3s;
 }
 
-.activity-manage-card:hover {
-    box-shadow: 0 5px 20px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 0.9em;
 }
 
-.activity-manage-card.no-skills {
-    border-left-color: #e74c3c;
-    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+.activity-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
-.activity-manage-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.activity-manage-title {
-    margin: 0;
-    font-size: 1em;
+.activity-table th {
+    padding: 12px 10px;
+    text-align: left;
     font-weight: 600;
-    color: #1a1a2e;
-    line-height: 1.3;
-    flex: 1;
+    white-space: nowrap;
 }
 
-.activity-manage-actions {
-    display: flex;
-    gap: 5px;
-    flex-shrink: 0;
+.activity-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
 }
 
-.activity-manage-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+.activity-table tbody tr:hover {
+    background: #f8f9ff;
+}
+
+.activity-table tbody tr.no-skills-row {
+    background: #fff5f5;
+}
+
+.activity-table tbody tr.no-skills-row:hover {
+    background: #ffebee;
+}
+
+.activity-name-cell {
+    font-weight: 500;
+    color: #333;
+}
+
+.row-num {
+    color: #999;
     font-size: 0.85em;
-    color: #666;
-    margin-bottom: 10px;
+    margin-right: 5px;
 }
 
-.activity-manage-skills {
+.center {
+    text-align: center;
+}
+
+.skills-cell {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 3px;
     align-items: center;
 }
 
+.skill-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.skill-more {
+    color: #666;
+    font-size: 0.75em;
+    margin-left: 3px;
+}
+
+.skill-warning {
+    background: #ffebee;
+    color: #c62828;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    margin-left: 3px;
+}
+
+.no-skill {
+    color: #e74c3c;
+    font-size: 0.85em;
+}
+
+.actions-cell {
+    white-space: nowrap;
+}
+
+.btn-table-edit, .btn-table-delete {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.btn-table-edit {
+    background: #e3f2fd;
+    margin-right: 3px;
+}
+
+.btn-table-edit:hover {
+    background: #bbdefb;
+}
+
+.btn-table-delete {
+    background: #ffebee;
+}
+
+.btn-table-delete:hover {
+    background: #ffcdd2;
+}
+
+.empty-cell, .loading-cell {
+    text-align: center;
+    padding: 40px !important;
+    color: #666;
+}
+
 @media (max-width: 768px) {
-    .activities-manage-grid {
-        grid-template-columns: 1fr;
+    .activity-table {
+        font-size: 0.8em;
     }
     
-    .activity-manage-header {
-        flex-direction: column;
+    .activity-table th,
+    .activity-table td {
+        padding: 8px 5px;
     }
     
-    .activity-manage-actions {
-        align-self: flex-end;
+    .skill-badge {
+        font-size: 0.7em;
+        padding: 1px 4px;
     }
 }
