@@ -402,6 +402,131 @@
             transition: all 0.3s;
         }
         .btn-add-skill:hover { background: #e8f5e9; }
+        
+        /* AI Analysis Section */
+        .ai-analyze-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-ai-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-ai-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-ai-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .ai-hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .ai-analysis-result {
+            background: linear-gradient(135deg, #f3e7ff 0%, #e8f4fd 100%);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .ai-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #5a4fcf;
+        }
+        .btn-clear-ai {
+            background: #ffebee;
+            border: none;
+            color: #c62828;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .btn-clear-ai:hover { background: #ffcdd2; }
+        .ai-suggested-skills {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ai-skill-item {
+            background: white;
+            border-radius: 10px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .ai-skill-info {
+            flex: 1;
+        }
+        .ai-skill-code {
+            font-weight: 700;
+            color: #667eea;
+        }
+        .ai-skill-name {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .ai-skill-reason {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        .ai-skill-level {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+        .ai-note {
+            margin-top: 12px;
+            font-size: 0.9em;
+            color: #5a4fcf;
+            text-align: center;
+        }
+        .ai-loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        .ai-loading .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         .student-ids-input {
             font-family: monospace;
             min-height: 120px;
@@ -715,6 +840,22 @@
 
                         <!-- Step 3: Skills -->
                         <div class="section-title">🎯 ขั้นตอน 3: ทักษะที่ได้รับ | Step 3: Skills <span class="required">*</span></div>
+                        
+                        <div class="ai-analyze-section">
+                            <button type="button" class="btn-ai-analyze" onclick="analyzeSkillsWithAI()">
+                                🤖 วิเคราะห์โดย AI | AI Analyze
+                            </button>
+                            <span class="ai-hint">หรือเลือกทักษะด้วยตนเองด้านล่าง</span>
+                        </div>
+                        
+                        <div id="ai-analysis-result" class="ai-analysis-result" style="display: none;">
+                            <div class="ai-result-header">
+                                <span>🤖 ผลการวิเคราะห์จาก AI</span>
+                                <button type="button" class="btn-clear-ai" onclick="clearAIAnalysis()">✕ ล้าง</button>
+                            </div>
+                            <div id="ai-suggested-skills" class="ai-suggested-skills"></div>
+                            <p class="ai-note">💡 คุณสามารถแก้ไข เพิ่ม หรือลบทักษะได้ด้านล่าง</p>
+                        </div>
                         
                         <div id="preset-skills-display" class="preset-skills-info" style="display: none;">
                             <h5>⚡ ทักษะที่แนะนำตามบทบาท | Recommended Skills for Role</h5>
@@ -1043,6 +1184,235 @@
                 counter.textContent = `${count}/${MAX_SKILLS}`;
                 counter.style.background = count >= MAX_SKILLS ? '#f39c12' : '#27ae60';
             }
+        }
+
+        // ============================================
+        // AI SKILL ANALYSIS
+        // ============================================
+        async function analyzeSkillsWithAI() {
+            const activityName = document.getElementById('activity-name').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const roleSelect = document.getElementById('participation-role');
+            const roleName = roleSelect.options[roleSelect.selectedIndex]?.text || '';
+            
+            if (!activityName) {
+                alert('⚠️ กรุณากรอกชื่อกิจกรรมก่อน | Please enter activity name first');
+                return;
+            }
+            
+            if (!currentRole) {
+                alert('⚠️ กรุณาเลือกบทบาทของผู้เข้าร่วมก่อน | Please select participant role first');
+                return;
+            }
+            
+            const btn = document.querySelector('.btn-ai-analyze');
+            const resultDiv = document.getElementById('ai-analysis-result');
+            const suggestedDiv = document.getElementById('ai-suggested-skills');
+            
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> กำลังวิเคราะห์...';
+            resultDiv.style.display = 'block';
+            suggestedDiv.innerHTML = `
+                <div class="ai-loading">
+                    <span class="spinner"></span>
+                    กำลังวิเคราะห์ทักษะที่เหมาะสม...
+                </div>
+            `;
+            
+            // Simulate processing delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            try {
+                // Use intelligent rule-based analysis
+                const skills = analyzeWithRules(activityName, description, currentRole, roleName);
+                
+                displayAISuggestions(skills);
+                
+                // Auto-apply to selected skills
+                selectedSkills = skills.map(s => ({
+                    code: s.code,
+                    level: s.level,
+                    nameTh: CRITERIA_LIST.find(c => c.code === s.code)?.nameTh || '',
+                    nameEn: CRITERIA_LIST.find(c => c.code === s.code)?.nameEn || ''
+                }));
+                updateSelectedSkillsDisplay();
+                
+            } catch (error) {
+                console.error('AI Analysis error:', error);
+                suggestedDiv.innerHTML = `
+                    <div style="color: #c62828; text-align: center; padding: 20px;">
+                        ❌ เกิดข้อผิดพลาด: ${error.message}<br>
+                        <small>กรุณาลองใหม่อีกครั้ง หรือเลือกทักษะด้วยตนเอง</small>
+                    </div>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '🤖 วิเคราะห์โดย AI | AI Analyze';
+        }
+        
+        // Intelligent rule-based skill analysis
+        function analyzeWithRules(activityName, description, role, roleName) {
+            const text = (activityName + ' ' + description).toLowerCase();
+            const rolePreset = ROLE_PRESETS[role];
+            const baseLevel = rolePreset?.defaultLevel || 2;
+            
+            // Keywords mapping to skills with weights
+            const keywordMap = {
+                '1.1': { keywords: ['วิเคราะห์', 'analysis', 'คิด', 'think', 'วิจัย', 'research', 'problem', 'ปัญหา', 'แก้ไข', 'solve'], weight: 1 },
+                '1.2': { keywords: ['สังเคราะห์', 'synthesis', 'สรุป', 'conclude', 'รวม', 'integrate', 'ประมวล'], weight: 1 },
+                '1.3': { keywords: ['วิพากษ์', 'critique', 'ประเมิน', 'evaluate', 'ตัดสิน', 'judge', 'review'], weight: 1 },
+                '2.1': { keywords: ['ฟัง', 'listen', 'สื่อสาร', 'communicate', 'พูด', 'speak', 'present', 'นำเสนอ', 'อภิปราย'], weight: 1 },
+                '2.2': { keywords: ['เขียน', 'write', 'รายงาน', 'report', 'เอกสาร', 'document', 'บทความ', 'article'], weight: 1 },
+                '2.3': { keywords: ['ภาษา', 'language', 'english', 'อังกฤษ', 'international', 'global', 'foreign'], weight: 1 },
+                '3.1': { keywords: ['ทีม', 'team', 'กลุ่ม', 'group', 'ร่วม', 'collaborate', 'cooperation', 'ร่วมมือ'], weight: 1 },
+                '3.2': { keywords: ['ผู้นำ', 'leader', 'lead', 'นำ', 'บริหาร', 'manage', 'ประธาน', 'หัวหน้า', 'captain'], weight: 1 },
+                '3.3': { keywords: ['เครือข่าย', 'network', 'สัมพันธ์', 'relation', 'social', 'connect', 'พันธมิตร'], weight: 1 },
+                '4.1': { keywords: ['ดิจิทัล', 'digital', 'เทคโนโลยี', 'technology', 'คอมพิวเตอร์', 'computer', 'ai', 'โปรแกรม', 'coding', 'software', 'app'], weight: 1 },
+                '4.2': { keywords: ['เรียนรู้', 'learn', 'พัฒนา', 'develop', 'skill', 'ทักษะ', 'training', 'อบรม', 'workshop'], weight: 1 },
+                '4.3': { keywords: ['ข้อมูล', 'data', 'สารสนเทศ', 'information', 'วิเคราะห์ข้อมูล', 'database', 'analytics'], weight: 1 },
+                '5.1': { keywords: ['สร้างสรรค์', 'creative', 'ความคิด', 'idea', 'ใหม่', 'new', 'innovative', 'คิดค้น'], weight: 1 },
+                '5.2': { keywords: ['นวัตกรรม', 'innovation', 'ประดิษฐ์', 'invent', 'design', 'ออกแบบ', 'startup', 'prototype', 'product'], weight: 1 },
+                '5.3': { keywords: ['ผู้ประกอบการ', 'entrepreneur', 'ธุรกิจ', 'business', 'enterprise', 'marketing', 'pitch'], weight: 1 },
+                '6.1': { keywords: ['จริยธรรม', 'ethic', 'คุณธรรม', 'moral', 'ซื่อสัตย์', 'honest', 'integrity'], weight: 1 },
+                '6.2': { keywords: ['วิชาชีพ', 'profession', 'มาตรฐาน', 'standard', 'วิศวกร', 'engineer', 'license', 'กว.'], weight: 1 },
+                '6.3': { keywords: ['สังคม', 'social', 'ชุมชน', 'community', 'อาสา', 'volunteer', 'csr', 'จิตอาสา', 'บำเพ็ญ', 'สาธารณะ'], weight: 1 }
+            };
+            
+            // Activity type patterns with skill boosts
+            const activityPatterns = [
+                { pattern: /hackathon|แฮกกาธอน/i, skills: [{ code: '5.2', boost: 2 }, { code: '3.1', boost: 1 }, { code: '1.1', boost: 1 }] },
+                { pattern: /workshop|เวิร์คชอป|ฝึกอบรม/i, skills: [{ code: '4.2', boost: 2 }, { code: '4.1', boost: 1 }] },
+                { pattern: /seminar|สัมมนา|บรรยาย/i, skills: [{ code: '2.1', boost: 1 }, { code: '4.2', boost: 1 }] },
+                { pattern: /volunteer|อาสา|จิตอาสา|บำเพ็ญ/i, skills: [{ code: '6.3', boost: 3 }, { code: '3.3', boost: 1 }] },
+                { pattern: /แข่งขัน|competition|contest|ประกวด/i, skills: [{ code: '1.1', boost: 2 }, { code: '3.1', boost: 1 }] },
+                { pattern: /นำเสนอ|presentation|pitch/i, skills: [{ code: '2.1', boost: 2 }, { code: '2.2', boost: 1 }] },
+                { pattern: /camp|ค่าย|เข้าค่าย/i, skills: [{ code: '3.1', boost: 2 }, { code: '3.2', boost: 1 }] },
+                { pattern: /startup|ธุรกิจ|entrepreneur/i, skills: [{ code: '5.3', boost: 2 }, { code: '5.2', boost: 1 }] },
+                { pattern: /research|วิจัย|ศึกษา/i, skills: [{ code: '1.1', boost: 2 }, { code: '1.2', boost: 1 }] },
+                { pattern: /sport|กีฬา|marathon|วิ่ง/i, skills: [{ code: '3.1', boost: 1 }, { code: '6.3', boost: 1 }] },
+                { pattern: /international|ต่างประเทศ|exchange/i, skills: [{ code: '2.3', boost: 2 }, { code: '3.3', boost: 1 }] },
+                { pattern: /coding|programming|โปรแกรม|code/i, skills: [{ code: '4.1', boost: 2 }, { code: '1.1', boost: 1 }] },
+                { pattern: /ai|machine learning|data science/i, skills: [{ code: '4.1', boost: 2 }, { code: '4.3', boost: 2 }] },
+                { pattern: /design|ออกแบบ|ux|ui/i, skills: [{ code: '5.1', boost: 2 }, { code: '5.2', boost: 1 }] }
+            ];
+            
+            // Score each skill
+            const scores = {};
+            
+            // Check keywords
+            for (const [code, { keywords, weight }] of Object.entries(keywordMap)) {
+                for (const kw of keywords) {
+                    if (text.includes(kw)) {
+                        scores[code] = (scores[code] || 0) + weight;
+                    }
+                }
+            }
+            
+            // Check activity patterns
+            for (const { pattern, skills } of activityPatterns) {
+                if (pattern.test(text)) {
+                    for (const { code, boost } of skills) {
+                        scores[code] = (scores[code] || 0) + boost;
+                    }
+                }
+            }
+            
+            // Add role preset skills
+            if (rolePreset?.skills) {
+                for (const skill of rolePreset.skills) {
+                    scores[skill.code] = (scores[skill.code] || 0) + 2;
+                }
+            }
+            
+            // Sort and pick top 3
+            const sortedSkills = Object.entries(scores)
+                .filter(([_, score]) => score > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+            
+            // If no matches, use role preset
+            if (sortedSkills.length === 0 && rolePreset?.skills) {
+                return rolePreset.skills.slice(0, 3).map(s => ({
+                    code: s.code,
+                    level: s.level,
+                    reason: 'แนะนำตามบทบาท: ' + roleName
+                }));
+            }
+            
+            // Reasons for each skill
+            const reasons = {
+                '1.1': 'การคิดวิเคราะห์และแก้ปัญหา',
+                '1.2': 'การสังเคราะห์และสรุปความรู้',
+                '1.3': 'การประเมินและวิพากษ์',
+                '2.1': 'การสื่อสารและนำเสนอ',
+                '2.2': 'การเขียนและรายงาน',
+                '2.3': 'ภาษาต่างประเทศ',
+                '3.1': 'การทำงานเป็นทีม',
+                '3.2': 'ภาวะผู้นำและการบริหาร',
+                '3.3': 'การสร้างเครือข่าย',
+                '4.1': 'ทักษะดิจิทัลและเทคโนโลยี',
+                '4.2': 'การเรียนรู้ตลอดชีวิต',
+                '4.3': 'การจัดการข้อมูลสารสนเทศ',
+                '5.1': 'ความคิดสร้างสรรค์',
+                '5.2': 'การสร้างนวัตกรรม',
+                '5.3': 'ความเป็นผู้ประกอบการ',
+                '6.1': 'จริยธรรมและคุณธรรม',
+                '6.2': 'จรรยาบรรณวิชาชีพ',
+                '6.3': 'ความรับผิดชอบต่อสังคม'
+            };
+            
+            return sortedSkills.map(([code, score]) => {
+                // Adjust level based on role
+                let level = baseLevel;
+                if (role === 'leader' || role === 'organizer' || role === 'presenter') {
+                    level = Math.min(level + 1, 4);
+                }
+                if (role === 'participant' || role === 'audience') {
+                    level = Math.max(level - 1, 1);
+                }
+                
+                return {
+                    code,
+                    level,
+                    reason: reasons[code] || 'วิเคราะห์จากกิจกรรม'
+                };
+            });
+        }
+        
+        function displayAISuggestions(skills) {
+            const container = document.getElementById('ai-suggested-skills');
+            
+            if (skills.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        ไม่สามารถวิเคราะห์ทักษะได้ กรุณาเลือกด้วยตนเอง
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = skills.map(s => {
+                const criteria = CRITERIA_LIST.find(c => c.code === s.code);
+                return `
+                    <div class="ai-skill-item">
+                        <div class="ai-skill-info">
+                            <span class="ai-skill-code">${s.code}</span>
+                            <span class="ai-skill-name">${criteria?.nameTh || ''}</span>
+                            ${s.reason ? `<div class="ai-skill-reason">💬 ${s.reason}</div>` : ''}
+                        </div>
+                        <span class="ai-skill-level">Lv.${s.level}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function clearAIAnalysis() {
+            document.getElementById('ai-analysis-result').style.display = 'none';
+            document.getElementById('ai-suggested-skills').innerHTML = '';
+            selectedSkills = [];
+            updateSelectedSkillsDisplay();
         }
 
         function openSkillModal() {
