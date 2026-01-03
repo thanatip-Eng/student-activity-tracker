@@ -1245,6 +1245,12 @@
             const aiSkillMap = {};
             aiSkills.forEach(s => { aiSkillMap[s.code] = s.level; });
             
+            // Schedule initialization after DOM update
+            setTimeout(() => {
+                updateAdminSkillCounter();
+                initSkillCheckboxListeners();
+            }, 100);
+            
             return `
                 <div class="skill-limit-note" style="background:#fff3cd;padding:10px;border-radius:8px;margin-bottom:15px;font-size:0.9em;">
                     <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับไม่เกิน Level ${maxLevel}
@@ -1270,19 +1276,16 @@
                         </div>
                     `}).join('')}
                 </div>
-                <script>
-                    // Initialize counter
-                    setTimeout(() => updateAdminSkillCounter(), 100);
-                    
-                    // Add event listeners for checkboxes
-                    document.querySelectorAll('.skill-checkbox').forEach(cb => {
-                        cb.addEventListener('change', function() {
-                            const levelSelect = document.querySelector('.skill-level-select[data-code="' + this.dataset.code + '"]');
-                            levelSelect.disabled = !this.checked;
-                        });
-                    });
-                </script>
             `;
+        }
+        
+        function initSkillCheckboxListeners() {
+            document.querySelectorAll('.skill-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const levelSelect = document.querySelector('.skill-level-select[data-code="' + this.dataset.code + '"]');
+                    if (levelSelect) levelSelect.disabled = !this.checked;
+                });
+            });
         }
         
         function updateAdminSkillCounter() {
