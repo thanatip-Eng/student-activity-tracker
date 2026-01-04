@@ -143,6 +143,39 @@
             line-height: 1.5;
         }
         
+        /* Info Links */
+        .info-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        
+        .info-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 30px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .info-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .info-link .link-icon {
+            font-size: 1.3em;
+        }
+        
         /* Portal Cards */
         .portals {
             display: grid;
@@ -397,6 +430,18 @@
                 <h3>Badge & Certificate</h3>
                 <p>รับ Badge เมื่อผ่านเกณฑ์แต่ละด้าน</p>
             </div>
+        </div>
+        
+        <!-- Info Links -->
+        <div class="info-links">
+            <a href="competency-framework.html" class="info-link">
+                <span class="link-icon">📊</span>
+                <span>ดูกรอบทักษะ 6 Domains</span>
+            </a>
+            <a href="skills-mapping.html" class="info-link">
+                <span class="link-icon">🎯</span>
+                <span>กิจกรรม → ทักษะ</span>
+            </a>
         </div>
         
         <!-- Portal Cards -->

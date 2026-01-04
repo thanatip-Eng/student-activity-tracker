@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMU Entaneer Competency Framework</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --domain1: #E74C3C;
+            --domain2: #3498DB;
+            --domain3: #27AE60;
+            --domain4: #9B59B6;
+            --domain5: #F39C12;
+            --domain6: #1ABC9C;
+            --bg-dark: #1A1A2E;
+            --bg-card: #16213E;
+            --text-light: #FFFFFF;
+            --text-muted: #A0AEC0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Prompt', 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cmu-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 24px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .cmu-badge span {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .header h1 {
+            color: var(--text-light);
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        /* Levels Section */
+        .levels-section {
+            padding: 30px 40px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .levels-title {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .level-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .level-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 700;
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .level-name {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .level-desc {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Main Content */
+        .content {
+            padding: 40px;
+        }
+
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        /* Domain Cards */
+        .domain-card {
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .domain-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .domain-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .domain-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .domain-title-box {
+            flex: 1;
+        }
+
+        .domain-number {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .domain-title-th {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-light);
+            line-height: 1.3;
+        }
+
+        .domain-title-en {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            font-weight: 400;
+        }
+
+        .domain-content {
+            padding: 0 24px 24px;
+        }
+
+        .sub-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid rgba(255,255,255,0.3);
+        }
+
+        .sub-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .sub-number {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        .sub-text {
+            flex: 1;
+        }
+
+        .sub-th {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-bottom: 2px;
+        }
+
+        .sub-en {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Domain Colors */
+        .domain-1 {
+            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+        }
+
+        .domain-2 {
+            background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+        }
+
+        .domain-3 {
+            background: linear-gradient(135deg, #27AE60 0%, #1E8449 100%);
+        }
+
+        .domain-4 {
+            background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+        }
+
+        .domain-5 {
+            background: linear-gradient(135deg, #F39C12 0%, #D68910 100%);
+        }
+
+        .domain-6 {
+            background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(255,255,255,0.03);
+            padding: 30px 40px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .footer-brand {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .domains-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .levels-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .levels-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .domain-card {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .domain-card:nth-child(1) { animation-delay: 0.1s; }
+        .domain-card:nth-child(2) { animation-delay: 0.2s; }
+        .domain-card:nth-child(3) { animation-delay: 0.3s; }
+        .domain-card:nth-child(4) { animation-delay: 0.4s; }
+        .domain-card:nth-child(5) { animation-delay: 0.5s; }
+        .domain-card:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <a href="index.html" class="back-btn">← กลับหน้าหลัก</a>
+            <div class="cmu-badge">
+                <span>🎓 FACULTY OF ENGINEERING</span>
+            </div>
+            <h1>CMU Entaneer Competency</h1>
+            <p>กรอบสมรรถนะวิศวกร มหาวิทยาลัยเชียงใหม่</p>
+            <div class="version-badge">Version 4.0</div>
+        </div>
+
+        <!-- Levels Section -->
+        <div class="levels-section">
+            <div class="levels-title">📊 ระดับความสามารถ 4 ระดับ</div>
+            <div class="levels-grid">
+                <div class="level-item">
+                    <div class="level-number">1</div>
+                    <div class="level-name">รู้จัก</div>
+                    <div class="level-desc">ยังไม่เคยใช้</div>
+                </div>
+                <div class="level-item">
+                    <div class="level-number">2</div>
+                    <div class="level-name">เข้าใจ</div>
+                    <div class="level-desc">ฝึกใช้ในสถานการณ์จำลอง</div>
+                </div>
+                <div class="level-item">
+                    <div class="level-number">3</div>
+                    <div class="level-name">ใช้เป็น</div>
+                    <div class="level-desc">ประยุกต์ใช้ในสถานการณ์จริง</div>
+                </div>
+                <div class="level-item">
+                    <div class="level-number">4</div>
+                    <div class="level-name">ผู้นำ</div>
+                    <div class="level-desc">สอน/สร้างให้ผู้อื่น</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="domains-grid">
+                <!-- Domain 1 -->
+                <div class="domain-card domain-1">
+                    <div class="domain-header">
+                        <div class="domain-icon">🧠</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 1</div>
+                            <div class="domain-title-th">การคิดเชิงวิพากษ์และการแก้ปัญหา</div>
+                            <div class="domain-title-en">Critical Thinking & Problem Solving</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">1.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การให้เหตุผลเชิงวิเคราะห์</div>
+                                <div class="sub-en">Analytical Reasoning</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">1.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การแก้ปัญหาอย่างเป็นระบบ</div>
+                                <div class="sub-en">Systematic Problem Solving</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">1.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การคิดเชิงระบบและบริบททางสังคม</div>
+                                <div class="sub-en">Systems Thinking & Societal Context</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 2 -->
+                <div class="domain-card domain-2">
+                    <div class="domain-header">
+                        <div class="domain-icon">💬</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 2</div>
+                            <div class="domain-title-th">การสื่อสาร</div>
+                            <div class="domain-title-en">Communication</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">2.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ทักษะการนำเสนอ</div>
+                                <div class="sub-en">Presentation Skills</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">2.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การฟังและความเข้าใจ</div>
+                                <div class="sub-en">Listening and Comprehension</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">2.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การสื่อสารภาษาอังกฤษ</div>
+                                <div class="sub-en">English Communication</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 3 -->
+                <div class="domain-card domain-3">
+                    <div class="domain-header">
+                        <div class="domain-icon">🤝</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 3</div>
+                            <div class="domain-title-th">การทำงานเป็นทีมและความร่วมมือ</div>
+                            <div class="domain-title-en">Teamwork & Collaboration</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">3.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความเข้าใจในบทบาทและการปฏิบัติงาน</div>
+                                <div class="sub-en">Role Understanding and Execution</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">3.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การจัดการงาน</div>
+                                <div class="sub-en">Task Management</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">3.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การทำงานร่วมกัน</div>
+                                <div class="sub-en">Collaborative Work</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 4 -->
+                <div class="domain-card domain-4">
+                    <div class="domain-header">
+                        <div class="domain-icon">🚀</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 4</div>
+                            <div class="domain-title-th">การเติบโตทางวิชาชีพและการปรับตัว</div>
+                            <div class="domain-title-en">Professional Growth & Adaptability</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">4.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความคล่องตัวในการเรียนรู้</div>
+                                <div class="sub-en">Learning Agility</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">4.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความรู้ด้านดิจิทัล</div>
+                                <div class="sub-en">Digital Literacy</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">4.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความเชี่ยวชาญด้านเครื่องมือ</div>
+                                <div class="sub-en">Tool Proficiency</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 5 -->
+                <div class="domain-card domain-5">
+                    <div class="domain-header">
+                        <div class="domain-icon">💡</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 5</div>
+                            <div class="domain-title-th">นวัตกรรมและความเข้าใจทางธุรกิจ</div>
+                            <div class="domain-title-en">Innovation & Business Acumen</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">5.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง</div>
+                                <div class="sub-en">Human-Centered Design</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">5.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การบริหารโครงการ</div>
+                                <div class="sub-en">Project Management</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">5.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความตระหนักรู้ทางธุรกิจ</div>
+                                <div class="sub-en">Business & Entrepreneurial Awareness</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain 6 -->
+                <div class="domain-card domain-6">
+                    <div class="domain-header">
+                        <div class="domain-icon">🌱</div>
+                        <div class="domain-title-box">
+                            <div class="domain-number">DOMAIN 6</div>
+                            <div class="domain-title-th">การพัฒนาตนเองและความยืดหยุ่น</div>
+                            <div class="domain-title-en">Self-Development & Resilience</div>
+                        </div>
+                    </div>
+                    <div class="domain-content">
+                        <div class="sub-item">
+                            <span class="sub-number">6.1</span>
+                            <div class="sub-text">
+                                <div class="sub-th">การเติบโตส่วนบุคคลและการตระหนักรู้ในตนเอง</div>
+                                <div class="sub-en">Personal Growth & Self-Awareness</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">6.2</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความยืดหยุ่นและการปรับตัว</div>
+                                <div class="sub-en">Resilience & Adaptability</div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <span class="sub-number">6.3</span>
+                            <div class="sub-text">
+                                <div class="sub-th">ความเข้าอกเข้าใจระหว่างบุคคล</div>
+                                <div class="sub-en">Empathy & Interpersonal Understanding</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">พัฒนาทักษะครบทุกมิติ พร้อมเป็นวิศวกรแห่งอนาคต 🎯</p>
+            <div class="footer-brand">Student Talent Development Program<br>Faculty of Engineering, Chiang Mai University</div>
+        </div>
+    </div>
+</body>
+</html>
