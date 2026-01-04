@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน | Student Activity Tracking System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            --gray: #718096;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            line-height: 1.8;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        .logo h1 {
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: sticky;
+            top: 110px;
+            height: fit-content;
+        }
+
+        .nav-menu {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-menu h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-menu ul {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 5px;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #a0aec0;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        .nav-menu .sub-menu {
+            margin-left: 15px;
+            font-size: 0.9em;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            color: #a78bfa;
+            margin: 30px 0 15px;
+        }
+
+        h4 {
+            font-size: 1.1em;
+            color: #93c5fd;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #cbd5e0;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: white;
+        }
+
+        .card p {
+            font-size: 0.95em;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            font-weight: 600;
+            color: white;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Steps */
+        .steps {
+            margin: 20px 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h4 {
+            margin-top: 0;
+            color: white;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .badge-auto {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .badge-level {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .info-box.tip {
+            background: rgba(72, 187, 120, 0.1);
+            border-left: 4px solid #48bb78;
+        }
+
+        .info-box.warning {
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid #ed8936;
+        }
+
+        .info-box.important {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h4 {
+            margin-top: 0;
+        }
+
+        /* Code */
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #f093fb;
+        }
+
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: #cbd5e0;
+        }
+
+        /* Screenshots placeholder */
+        .screenshot {
+            background: rgba(0,0,0,0.2);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            color: #718096;
+            margin: 20px 0;
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 30px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+        }
+
+        .flow-item {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 60px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: relative;
+                top: 0;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-content {
+                padding: 25px;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .step {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="images/aw_eng_logo-01.png" alt="Logo" onerror="this.style.display='none'">
+                <h1>📖 คู่มือการใช้งานระบบ</h1>
+            </div>
+            <a href="index.html" class="back-btn">← กลับหน้าหลัก</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <h3>📑 สารบัญ</h3>
+                <ul>
+                    <li><a href="#overview">🏠 ภาพรวมระบบ</a></li>
+                    <li><a href="#student-guide">👨‍🎓 คู่มือนักศึกษา</a></li>
+                    <ul class="sub-menu">
+                        <li><a href="#student-login">เข้าสู่ระบบ</a></li>
+                        <li><a href="#student-submit">แจ้งกิจกรรม</a></li>
+                        <li><a href="#student-track">ติดตามสถานะ</a></li>
+                    </ul>
+                    <li><a href="#organizer-guide">🎯 คู่มือผู้จัดกิจกรรม</a></li>
+                    <ul class="sub-menu">
+                        <li><a href="#org-create">สร้างกิจกรรม</a></li>
+                        <li><a href="#org-skills">กำหนดทักษะ</a></li>
+                    </ul>
+                    <li><a href="#admin-guide">⚙️ คู่มือ Admin</a></li>
+                    <ul class="sub-menu">
+                        <li><a href="#admin-review">ตรวจสอบกิจกรรม</a></li>
+                        <li><a href="#admin-manage">จัดการข้อมูล</a></li>
+                    </ul>
+                    <li><a href="#ai-analysis">🤖 ระบบ AI Analysis</a></li>
+                    <li><a href="#competency">📊 เกณฑ์ทักษะ</a></li>
+                    <li><a href="#role-levels">🎭 บทบาทและระดับ</a></li>
+                    <li><a href="#faq">❓ คำถามที่พบบ่อย</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview" class="section">
+                <h2>🏠 ภาพรวมระบบ</h2>
+                <p>ระบบติดตามกิจกรรมและพัฒนาทักษะนักศึกษา (Student Activity Tracking System) เป็นระบบที่ช่วยบันทึกและติดตามการเข้าร่วมกิจกรรมของนักศึกษา พร้อมวิเคราะห์ทักษะตามกรอบ CMU Engineer Competency V4</p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-icon">👨‍🎓</div>
+                        <h4>Student Portal</h4>
+                        <p>สำหรับนักศึกษาเข้าดูคะแนนทักษะ แจ้งกิจกรรม และติดตามสถานะ</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🎯</div>
+                        <h4>Organizer Portal</h4>
+                        <p>สำหรับผู้จัดกิจกรรมสร้างกิจกรรมใหม่ และกำหนดทักษะที่ได้รับ</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">⚙️</div>
+                        <h4>Admin Portal</h4>
+                        <p>สำหรับ Admin ตรวจสอบ อนุมัติกิจกรรม และจัดการข้อมูลระบบ</p>
+                    </div>
+                </div>
+
+                <h3>🔄 Flow การทำงานของระบบ</h3>
+                <div class="flow-diagram">
+                    <div class="flow-item">📝 นักศึกษาแจ้งกิจกรรม</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">🤖 AI วิเคราะห์ทักษะ</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">👨‍💼 Admin ตรวจสอบ</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">✅ อนุมัติ/ปฏิเสธ</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">📊 อัพเดทคะแนน</div>
+                </div>
+            </section>
+
+            <!-- Student Guide -->
+            <section id="student-guide" class="section">
+                <h2>👨‍🎓 คู่มือสำหรับนักศึกษา</h2>
+
+                <h3 id="student-login">1. การเข้าสู่ระบบ</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>เข้าหน้าเว็บไซต์</h4>
+                            <p>เปิดเว็บไซต์ระบบแล้วคลิก <strong>"Student Portal"</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>กรอก Email</h4>
+                            <p>กรอก Email ที่ลงทะเบียนในระบบ (เช่น 640610001@cmu.ac.th)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>ดู Dashboard</h4>
+                            <p>ระบบจะแสดงข้อมูลทักษะ, กราฟ Radar Chart, และประวัติกิจกรรม</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="student-submit">2. การแจ้งกิจกรรม</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>คลิก "แจ้งกิจกรรมใหม่"</h4>
+                            <p>ในหน้า Dashboard คลิกปุ่ม <strong>"แจ้งกิจกรรมใหม่"</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>กรอกข้อมูลกิจกรรม</h4>
+                            <p>กรอกชื่อกิจกรรม, ผู้จัด, ระดับ, ระยะเวลา, และวันที่</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>⭐ ตอบคำถามสะท้อนคิด (สำคัญมาก!)</h4>
+                            <p>กรอก 3 คำถาม:</p>
+                            <ul>
+                                <li><strong>บทบาทในกิจกรรม</strong> - เช่น "ผู้จัดงาน", "Staff ลงทะเบียน", "ผู้เข้าร่วม"</li>
+                                <li><strong>สิ่งที่ทำในกิจกรรม</strong> - อธิบายว่าทำอะไรบ้าง</li>
+                                <li><strong>สิ่งที่ได้เรียนรู้</strong> - สิ่งที่ได้รับจากกิจกรรม</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>ส่งและตรวจสอบผล AI</h4>
+                            <p>ระบบจะวิเคราะห์ทักษะด้วย AI และแสดงผลลัพธ์ พร้อม Badge:</p>
+                            <p>
+                                <span class="badge badge-ai">AI</span> = วิเคราะห์โดย Google Gemini AI<br>
+                                <span class="badge badge-auto">Auto</span> = วิเคราะห์อัตโนมัติ (Rule-based)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>ยืนยันการส่ง</h4>
+                            <p>ตรวจสอบทักษะที่ได้แล้วคลิก <strong>"ยืนยันส่ง"</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box important">
+                    <h4>💡 เคล็ดลับ: บทบาทมีผลต่อระดับทักษะ!</h4>
+                    <p>การกรอก "บทบาท" อย่างชัดเจนจะช่วยให้ AI วิเคราะห์ระดับทักษะได้แม่นยำขึ้น เช่น:</p>
+                    <ul>
+                        <li>กรอกว่า "ผู้จัดงาน" → อาจได้ Level 4</li>
+                        <li>กรอกว่า "ผู้เข้าร่วม" → อาจได้ Level 2</li>
+                    </ul>
+                </div>
+
+                <h3 id="student-track">3. การติดตามสถานะ</h3>
+                <p>ในหน้า Dashboard ส่วน <strong>"กิจกรรมที่แจ้งไว้"</strong> จะแสดงสถานะ:</p>
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>สถานะ</th>
+                            <th>ความหมาย</th>
+                            <th>สิ่งที่ทำได้</th>
+                        </tr>
+                        <tr>
+                            <td><span style="color:#ed8936">🟡 รอตรวจสอบ</span></td>
+                            <td>กำลังรอ Admin ตรวจสอบ</td>
+                            <td>แก้ไข / ลบได้</td>
+                        </tr>
+                        <tr>
+                            <td><span style="color:#48bb78">🟢 อนุมัติแล้ว</span></td>
+                            <td>คะแนนถูกบันทึกเรียบร้อย</td>
+                            <td>ดูรายละเอียด</td>
+                        </tr>
+                        <tr>
+                            <td><span style="color:#f56565">🔴 ไม่อนุมัติ</span></td>
+                            <td>ถูกปฏิเสธพร้อมเหตุผล</td>
+                            <td>ดูเหตุผล / ส่งใหม่</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Organizer Guide -->
+            <section id="organizer-guide" class="section">
+                <h2>🎯 คู่มือสำหรับผู้จัดกิจกรรม</h2>
+
+                <h3 id="org-create">1. การสร้างกิจกรรมใหม่</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>เข้า Organizer Portal</h4>
+                            <p>คลิก <strong>"Organizer Portal"</strong> จากหน้าแรก</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>กรอกข้อมูลกิจกรรม (ขั้นตอนที่ 1)</h4>
+                            <ul>
+                                <li>ชื่อกิจกรรม</li>
+                                <li>รายละเอียด</li>
+                                <li>ระดับกิจกรรม (1-4)</li>
+                                <li>ระยะเวลา</li>
+                                <li>วันที่จัดกิจกรรม</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>เพิ่มรายชื่อนักศึกษา (ขั้นตอนที่ 2)</h4>
+                            <p>กรอกรหัสนักศึกษา หรือ Email โดยคั่นด้วย Enter หรือ Comma</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="org-skills">2. การกำหนดทักษะ (ขั้นตอนที่ 3)</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>เลือกบทบาทผู้เข้าร่วม</h4>
+                            <p>เลือกบทบาทหลักของนักศึกษาที่เข้าร่วม เช่น:</p>
+                            <ul>
+                                <li><strong>ผู้จัดกิจกรรม</strong> - สำหรับคนที่วางแผนและจัดงาน</li>
+                                <li><strong>ผู้นำทีม</strong> - สำหรับหัวหน้ากลุ่ม</li>
+                                <li><strong>Staff/ทีมงาน</strong> - สำหรับผู้ช่วยงาน</li>
+                                <li><strong>ผู้เข้าร่วม</strong> - สำหรับผู้เข้าร่วมทั่วไป</li>
+                                <li><strong>ผู้ฟัง</strong> - สำหรับผู้ฟังบรรยาย</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>คลิก "🤖 วิเคราะห์โดย AI"</h4>
+                            <p>ระบบจะวิเคราะห์และแนะนำทักษะ 1-3 รายการ พร้อมระดับที่เหมาะสม</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>ตรวจสอบและปรับแก้</h4>
+                            <p>สามารถเพิ่ม/ลบ/แก้ไขทักษะได้ตามความเหมาะสม</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <h4>⚠️ สำคัญ: บทบาทต่างกัน = ระดับต่างกัน</h4>
+                    <p>กิจกรรมเดียวกัน หากนักศึกษามีบทบาทต่างกัน ควรสร้างแยกตามบทบาท เพื่อให้ได้ระดับทักษะที่เหมาะสม</p>
+                </div>
+            </section>
+
+            <!-- Admin Guide -->
+            <section id="admin-guide" class="section">
+                <h2>⚙️ คู่มือสำหรับ Admin</h2>
+
+                <h3 id="admin-review">1. การตรวจสอบกิจกรรม</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>เข้า Admin Portal</h4>
+                            <p>คลิก <strong>"Admin Portal"</strong> และใส่รหัสผ่าน</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>ดูรายการรอตรวจสอบ</h4>
+                            <p>Tab <strong>"กิจกรรมรอตรวจสอบ"</strong> แสดงรายการที่นักศึกษาแจ้งเข้ามา</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>ตรวจสอบรายละเอียด</h4>
+                            <p>คลิกดูรายละเอียด, คำตอบสะท้อนคิด, และทักษะที่ AI แนะนำ</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>อนุมัติหรือปฏิเสธ</h4>
+                            <ul>
+                                <li><strong>✅ อนุมัติ</strong> - คะแนนจะถูกบันทึกให้นักศึกษาทันที</li>
+                                <li><strong>❌ ไม่อนุมัติ</strong> - ต้องระบุเหตุผลการปฏิเสธ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="admin-manage">2. การจัดการข้อมูล</h3>
+                <p>ในหน้า <strong>"จัดการข้อมูล"</strong> สามารถ:</p>
+                <ul>
+                    <li>ดูรายชื่อนักศึกษาทั้งหมด</li>
+                    <li>ดูกิจกรรมที่อนุมัติแล้ว</li>
+                    <li>ค้นหาและกรองข้อมูล</li>
+                    <li>Export ข้อมูลเป็น CSV</li>
+                </ul>
+
+                <div class="info-box tip">
+                    <h4>💡 เคล็ดลับสำหรับ Admin</h4>
+                    <ul>
+                        <li>ตรวจสอบ "บทบาท" ที่นักศึกษากรอก กับ "ทักษะ" ที่ได้รับว่าสอดคล้องกัน</li>
+                        <li>หากระดับสูงเกินไป สามารถปรับลดก่อนอนุมัติ</li>
+                        <li>ใส่เหตุผลการปฏิเสธที่ชัดเจน เพื่อให้นักศึกษาแก้ไขและส่งใหม่ได้</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- AI Analysis -->
+            <section id="ai-analysis" class="section">
+                <h2>🤖 ระบบ AI Analysis</h2>
+                <p>ระบบใช้ <strong>Google Gemini AI</strong> ในการวิเคราะห์ทักษะจากข้อมูลกิจกรรมและคำตอบสะท้อนคิดของนักศึกษา</p>
+
+                <h3>วิธีการทำงาน</h3>
+                <div class="flow-diagram">
+                    <div class="flow-item">📝 ข้อมูลกิจกรรม</div>
+                    <span class="flow-arrow">+</span>
+                    <div class="flow-item">💭 คำตอบสะท้อนคิด</div>
+                    <span class="flow-arrow">+</span>
+                    <div class="flow-item">🎭 บทบาท</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">🤖 Gemini AI</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-item">📊 ทักษะ + Level</div>
+                </div>
+
+                <h3>ประเภทการวิเคราะห์</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>Badge</th>
+                            <th>ประเภท</th>
+                            <th>รายละเอียด</th>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-ai">AI</span></td>
+                            <td>Gemini AI</td>
+                            <td>วิเคราะห์โดย Google Gemini 2.0 Flash พิจารณาบริบททั้งหมด</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-auto">Auto</span></td>
+                            <td>Rule-based</td>
+                            <td>วิเคราะห์จาก Keyword เมื่อ AI ไม่พร้อมใช้งาน (Fallback)</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>สิ่งที่ AI พิจารณา</h3>
+                <ul>
+                    <li><strong>ชื่อและรายละเอียดกิจกรรม</strong> - ประเภทกิจกรรม (Workshop, สัมมนา, แข่งขัน, ฯลฯ)</li>
+                    <li><strong>บทบาทของนักศึกษา</strong> - ผู้จัด, Staff, ผู้เข้าร่วม, ผู้ฟัง</li>
+                    <li><strong>สิ่งที่ทำในกิจกรรม</strong> - กิจกรรมที่ลงมือทำจริง</li>
+                    <li><strong>สิ่งที่ได้เรียนรู้</strong> - ผลลัพธ์และการเรียนรู้ที่ได้รับ</li>
+                    <li><strong>ระดับกิจกรรม</strong> - จำกัดระดับทักษะไม่ให้เกินระดับกิจกรรม</li>
+                </ul>
+            </section>
+
+            <!-- Competency Framework -->
+            <section id="competency" class="section">
+                <h2>📊 CMU Engineer Competency V4</h2>
+                <p>กรอบทักษะ 6 Domains, 18 Sub-criteria สำหรับวิศวกรรมศาสตร์</p>
+
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Code</th>
+                            <th>ทักษะ (ไทย)</th>
+                            <th>Skill (English)</th>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>1. Critical Thinking</strong><br>การคิดเชิงวิพากษ์</td>
+                            <td>1.1</td>
+                            <td>การให้เหตุผลเชิงวิเคราะห์</td>
+                            <td>Analytical Reasoning</td>
+                        </tr>
+                        <tr>
+                            <td>1.2</td>
+                            <td>การแก้ปัญหาอย่างเป็นระบบ</td>
+                            <td>Systematic Problem Solving</td>
+                        </tr>
+                        <tr>
+                            <td>1.3</td>
+                            <td>การคิดเชิงระบบ</td>
+                            <td>Systems Thinking</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>2. Communication</strong><br>การสื่อสาร</td>
+                            <td>2.1</td>
+                            <td>ทักษะการนำเสนอ</td>
+                            <td>Presentation Skills</td>
+                        </tr>
+                        <tr>
+                            <td>2.2</td>
+                            <td>การฟังและความเข้าใจ</td>
+                            <td>Listening & Comprehension</td>
+                        </tr>
+                        <tr>
+                            <td>2.3</td>
+                            <td>การสื่อสารภาษาอังกฤษ</td>
+                            <td>English Communication</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>3. Teamwork</strong><br>การทำงานเป็นทีม</td>
+                            <td>3.1</td>
+                            <td>ความเข้าใจในบทบาท</td>
+                            <td>Role Understanding</td>
+                        </tr>
+                        <tr>
+                            <td>3.2</td>
+                            <td>การจัดการงาน</td>
+                            <td>Task Management</td>
+                        </tr>
+                        <tr>
+                            <td>3.3</td>
+                            <td>การทำงานร่วมกัน</td>
+                            <td>Collaborative Work</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>4. Professional Growth</strong><br>การเติบโตทางวิชาชีพ</td>
+                            <td>4.1</td>
+                            <td>ความคล่องตัวในการเรียนรู้</td>
+                            <td>Learning Agility</td>
+                        </tr>
+                        <tr>
+                            <td>4.2</td>
+                            <td>ความรู้ด้านดิจิทัล</td>
+                            <td>Digital Literacy</td>
+                        </tr>
+                        <tr>
+                            <td>4.3</td>
+                            <td>ความเชี่ยวชาญเครื่องมือ</td>
+                            <td>Tool Proficiency</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>5. Innovation</strong><br>นวัตกรรมและธุรกิจ</td>
+                            <td>5.1</td>
+                            <td>การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง</td>
+                            <td>Human-Centered Design</td>
+                        </tr>
+                        <tr>
+                            <td>5.2</td>
+                            <td>การบริหารโครงการ</td>
+                            <td>Project Management</td>
+                        </tr>
+                        <tr>
+                            <td>5.3</td>
+                            <td>ความตระหนักทางธุรกิจ</td>
+                            <td>Business Awareness</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="3"><strong>6. Self-Development</strong><br>การพัฒนาตนเอง</td>
+                            <td>6.1</td>
+                            <td>การเติบโตส่วนบุคคล</td>
+                            <td>Personal Growth</td>
+                        </tr>
+                        <tr>
+                            <td>6.2</td>
+                            <td>ความยืดหยุ่น</td>
+                            <td>Resilience & Adaptability</td>
+                        </tr>
+                        <tr>
+                            <td>6.3</td>
+                            <td>ความเห็นอกเห็นใจ</td>
+                            <td>Empathy</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>เกณฑ์การจบการศึกษา</h3>
+                <div class="info-box important">
+                    <h4>🎓 เงื่อนไขที่ต้องผ่าน</h4>
+                    <ul>
+                        <li>คะแนนรวมทุกทักษะ ≥ <strong>10 คะแนน</strong></li>
+                        <li>มีทักษะที่ได้คะแนน ≥ <strong>3 ทักษะ</strong> (Unique competencies)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Role and Levels -->
+            <section id="role-levels" class="section">
+                <h2>🎭 บทบาทและระดับทักษะ</h2>
+                <p>บทบาทของนักศึกษาในกิจกรรมมีผลต่อระดับทักษะที่ได้รับ</p>
+
+                <h3>เกณฑ์ระดับตามรูปแบบกิจกรรม</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>Level</th>
+                            <th>ชื่อระดับ</th>
+                            <th>ลักษณะกิจกรรม</th>
+                            <th>ตัวอย่าง</th>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-level">Level 1</span></td>
+                            <td>รู้จัก</td>
+                            <td>ฟังบรรยาย, ดูสาธิต, เรียนออนไลน์</td>
+                            <td>นั่งฟังสัมมนา, ดู Video</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-level">Level 2</span></td>
+                            <td>เข้าใจ</td>
+                            <td>Workshop, Lab, ฝึกปฏิบัติมีคนแนะนำ</td>
+                            <td>ทำ Workshop, ฝึกกับพี่เลี้ยง</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-level">Level 3</span></td>
+                            <td>ใช้เป็น</td>
+                            <td>ทำโครงการจริง, แข่งขัน, ใช้ทักษะด้วยตัวเอง</td>
+                            <td>Hackathon, โปรเจคจริง</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-level">Level 4</span></td>
+                            <td>ผู้นำ</td>
+                            <td>วางแผนจัดงาน, สอนคนอื่น, ออกแบบกระบวนการ</td>
+                            <td>เป็นวิทยากร, จัดค่าย</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>⚠️ บทบาทต่างกัน = ระดับต่างกัน</h3>
+                <p>กิจกรรมเดียวกัน นักศึกษาบทบาทต่างกันจะได้ระดับต่างกัน:</p>
+
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>บทบาท</th>
+                            <th>ระดับที่ควรได้</th>
+                            <th>เหตุผล</th>
+                        </tr>
+                        <tr>
+                            <td><strong>ผู้จัด / Organizer / ประธาน</strong></td>
+                            <td><span class="badge badge-level">Level 4</span></td>
+                            <td>วางแผน บริหารจัดการ ออกแบบกระบวนการ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>วิทยากร / ผู้สอน</strong></td>
+                            <td><span class="badge badge-level">Level 4</span></td>
+                            <td>ถ่ายทอดความรู้ สอนคนอื่น</td>
+                        </tr>
+                        <tr>
+                            <td><strong>หัวหน้าทีม / Leader</strong></td>
+                            <td><span class="badge badge-level">Level 3-4</span></td>
+                            <td>นำทีม รับผิดชอบผลลัพธ์ ตัดสินใจ</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ผู้นำเสนอ / Presenter</strong></td>
+                            <td><span class="badge badge-level">Level 3</span></td>
+                            <td>ใช้ทักษะการสื่อสารในสถานการณ์จริง</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staff / ทีมงาน</strong></td>
+                            <td><span class="badge badge-level">Level 2-3</span></td>
+                            <td>ปฏิบัติหน้าที่ตามที่ได้รับมอบหมาย</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ผู้เข้าร่วม / Participant</strong></td>
+                            <td><span class="badge badge-level">Level 2</span></td>
+                            <td>ฝึกปฏิบัติ เรียนรู้จากกิจกรรม</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ผู้ฟัง / Audience</strong></td>
+                            <td><span class="badge badge-level">Level 1</span></td>
+                            <td>รับความรู้ ยังไม่ได้ลงมือทำ</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>ตัวอย่าง: กิจกรรม "Workshop AI for Beginners"</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <tr>
+                            <th>บทบาท</th>
+                            <th>ทักษะที่ได้</th>
+                            <th>Level</th>
+                        </tr>
+                        <tr>
+                            <td>ผู้จัดงาน</td>
+                            <td>5.2 การบริหารโครงการ</td>
+                            <td><span class="badge badge-level">Level 4</span></td>
+                        </tr>
+                        <tr>
+                            <td>วิทยากร</td>
+                            <td>2.1 ทักษะการนำเสนอ</td>
+                            <td><span class="badge badge-level">Level 4</span></td>
+                        </tr>
+                        <tr>
+                            <td>Staff ลงทะเบียน</td>
+                            <td>3.1 ความเข้าใจในบทบาท</td>
+                            <td><span class="badge badge-level">Level 2</span></td>
+                        </tr>
+                        <tr>
+                            <td>ผู้เข้าร่วม Workshop</td>
+                            <td>4.2 ความรู้ด้านดิจิทัล</td>
+                            <td><span class="badge badge-level">Level 2</span></td>
+                        </tr>
+                        <tr>
+                            <td>ผู้ฟังบรรยาย</td>
+                            <td>4.1 ความคล่องตัวในการเรียนรู้</td>
+                            <td><span class="badge badge-level">Level 1</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section id="faq" class="section">
+                <h2>❓ คำถามที่พบบ่อย</h2>
+
+                <h3>สำหรับนักศึกษา</h3>
+                
+                <h4>Q: ทำไมต้องกรอกคำถามสะท้อนคิด?</h4>
+                <p>A: คำถามสะท้อนคิด (บทบาท, สิ่งที่ทำ, สิ่งที่เรียนรู้) ช่วยให้ AI วิเคราะห์ทักษะได้แม่นยำขึ้น และช่วย Admin ตรวจสอบว่านักศึกษาได้รับประโยชน์จากกิจกรรมจริง</p>
+
+                <h4>Q: ทำไมได้ Level ต่ำกว่าที่คาด?</h4>
+                <p>A: ระดับทักษะขึ้นอยู่กับ "บทบาท" ที่กรอก หากกรอกว่าเป็น "ผู้เข้าร่วม" จะได้ Level 2 แต่ถ้ากรอกว่าเป็น "ผู้จัดงาน" อาจได้ Level 4</p>
+
+                <h4>Q: แก้ไขกิจกรรมที่ส่งไปแล้วได้ไหม?</h4>
+                <p>A: ได้ หากสถานะยังเป็น "รอตรวจสอบ" สามารถแก้ไขหรือลบได้ แต่หากอนุมัติแล้วจะแก้ไขไม่ได้</p>
+
+                <h4>Q: ถูกปฏิเสธแล้วทำอย่างไร?</h4>
+                <p>A: อ่านเหตุผลที่ Admin ระบุ แก้ไขข้อมูล แล้วส่งใหม่ได้</p>
+
+                <h3>สำหรับผู้จัดกิจกรรม</h3>
+
+                <h4>Q: ต้องสร้างกิจกรรมแยกตามบทบาทไหม?</h4>
+                <p>A: แนะนำให้แยก หากนักศึกษามีบทบาทต่างกันมาก เช่น แยก "ผู้จัด" กับ "ผู้เข้าร่วม" เพื่อให้ได้ระดับทักษะที่เหมาะสม</p>
+
+                <h4>Q: AI วิเคราะห์ผิดทำอย่างไร?</h4>
+                <p>A: สามารถแก้ไขทักษะด้วยตนเองได้ก่อนยืนยัน AI เป็นเพียงตัวช่วยแนะนำ</p>
+
+                <h3>สำหรับ Admin</h3>
+
+                <h4>Q: ลืมรหัสผ่าน Admin ทำอย่างไร?</h4>
+                <p>A: ติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่าน</p>
+
+                <h4>Q: เปลี่ยนทักษะก่อนอนุมัติได้ไหม?</h4>
+                <p>A: ได้ Admin สามารถแก้ไขทักษะและระดับก่อนกดอนุมัติ</p>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>📖 คู่มือการใช้งานระบบ Student Activity Tracking System</p>
+        <p>Faculty of Engineering, Chiang Mai University</p>
+        <p style="margin-top: 10px; font-size: 0.9em;">Version 2.0 | Last Updated: January 2026</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+
+        // Active nav item on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-menu a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
