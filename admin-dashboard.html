@@ -201,6 +201,7 @@
                 <a href="student-form.html">📝 แจ้งกิจกรรม | Submit</a>
                 <a href="organizer-form.html">👨‍💼 ผู้จัด | Organizer</a>
                 <a href="data-management.html">📊 จัดการ | Manage</a>
+                <a href="research-analytics.html">🔬 วิจัย | Research</a>
             </nav>
         </header>
 
@@ -1446,6 +1447,28 @@
                         ${renderSkillsEditor(item)}
                     </div>
                 </div>
+                
+                <!-- AI Feedback for Research -->
+                <div class="detail-section" id="ai-feedback-section" style="background:#f8f9fa;border-radius:10px;padding:15px;margin-top:15px;">
+                    <h4 style="margin-bottom:10px;">📊 ประเมิน AI (สำหรับวิจัย)</h4>
+                    <div style="display:flex;gap:15px;flex-wrap:wrap;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <span style="font-size:0.9em;">AI วิเคราะห์แม่นยำ:</span>
+                            <select id="ai-accuracy-rating" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:0.9em;">
+                                <option value="">-- เลือก --</option>
+                                <option value="5">5 - แม่นมาก (ไม่ต้องแก้)</option>
+                                <option value="4">4 - แม่น (แก้เล็กน้อย)</option>
+                                <option value="3">3 - ปานกลาง</option>
+                                <option value="2">2 - ไม่แม่น</option>
+                                <option value="1">1 - ผิดทั้งหมด</option>
+                            </select>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                            <input type="checkbox" id="ai-modified-checkbox" style="width:18px;height:18px;">
+                            <span style="font-size:0.9em;">แก้ไขทักษะจาก AI</span>
+                        </label>
+                    </div>
+                </div>
             `;
             
             // Footer buttons based on status
@@ -1674,11 +1697,46 @@
             showLoading(true, 'กำลังอนุมัติ...');
             
             try {
-                // Update submission status
+                // === Research Data Collection ===
+                const aiAccuracyRating = document.getElementById('ai-accuracy-rating')?.value || null;
+                const adminModified = document.getElementById('ai-modified-checkbox')?.checked || false;
+                
+                // Compare AI suggestions with approved skills
+                const aiSkills = currentItem.aiSuggestedSkills || [];
+                const aiSkillCodes = aiSkills.map(s => s.code);
+                const approvedSkillCodes = skills.map(s => s.code);
+                
+                // Calculate skill match
+                const matchedSkills = approvedSkillCodes.filter(code => aiSkillCodes.includes(code));
+                const skillMatchRate = aiSkillCodes.length > 0 ? (matchedSkills.length / aiSkillCodes.length) : 0;
+                
+                // Calculate level accuracy
+                let levelMatchCount = 0;
+                skills.forEach(approved => {
+                    const aiSkill = aiSkills.find(ai => ai.code === approved.code);
+                    if (aiSkill && aiSkill.level === approved.level) {
+                        levelMatchCount++;
+                    }
+                });
+                const levelMatchRate = matchedSkills.length > 0 ? (levelMatchCount / matchedSkills.length) : 0;
+                
+                // Update submission status with research data
                 await db.collection('submissions').doc(currentItem.id).update({
                     status: 'Approved',
                     approvedSkills: skills,
-                    reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    
+                    // Research logging
+                    '_research.adminReview': {
+                        aiAccuracyRating: aiAccuracyRating ? parseInt(aiAccuracyRating) : null,
+                        adminModifiedSkills: adminModified,
+                        skillMatchRate: skillMatchRate,
+                        levelMatchRate: levelMatchRate,
+                        matchedSkillCount: matchedSkills.length,
+                        aiSkillCount: aiSkillCodes.length,
+                        approvedSkillCount: approvedSkillCodes.length,
+                        reviewTimestamp: new Date().toISOString()
+                    }
                 });
                 
                 // Add to participation

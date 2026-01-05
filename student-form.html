@@ -160,6 +160,72 @@
         }
         .char-counter.warning { color: #f39c12; }
         .char-counter.good { color: #27ae60; }
+        
+        /* Survey Modal Styles */
+        .survey-modal {
+            text-align: center;
+        }
+        .survey-question {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .survey-question:last-of-type {
+            border-bottom: none;
+        }
+        .survey-question label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .rating-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .rating-group label {
+            flex: 1;
+            text-align: center;
+            padding: 10px 5px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .rating-group label:hover {
+            background: #e8f4fd;
+        }
+        .rating-group input[type="radio"] {
+            display: none;
+        }
+        .rating-group input[type="radio"]:checked + label,
+        .rating-group label:has(input:checked) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .rating-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 5px;
+        }
+        .btn-secondary {
+            padding: 12px 24px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
     </style>
 </head>
 <body>
@@ -392,6 +458,83 @@
                 <button onclick="closeModal()" class="btn-primary">ตกลง</button>
             </div>
         </div>
+        
+        <!-- Survey Modal for Research -->
+        <div id="survey-modal" class="modal-overlay">
+            <div class="modal survey-modal" style="max-width: 500px;">
+                <div class="modal-icon">📝</div>
+                <h3>แบบประเมินความพึงพอใจ</h3>
+                <p style="color: #666; margin-bottom: 20px;">ช่วยประเมินระบบเพื่อการพัฒนาต่อไป (ใช้เวลา 30 วินาที)</p>
+                
+                <form id="survey-form" style="text-align: left;">
+                    <input type="hidden" id="survey-submission-id">
+                    <input type="hidden" id="survey-activity-name">
+                    
+                    <!-- Q1: Ease of use -->
+                    <div class="survey-question">
+                        <label>1. ระบบใช้งานง่าย</label>
+                        <div class="rating-group">
+                            <label><input type="radio" name="q1_ease" value="1" required> 1</label>
+                            <label><input type="radio" name="q1_ease" value="2"> 2</label>
+                            <label><input type="radio" name="q1_ease" value="3"> 3</label>
+                            <label><input type="radio" name="q1_ease" value="4"> 4</label>
+                            <label><input type="radio" name="q1_ease" value="5"> 5</label>
+                        </div>
+                        <div class="rating-labels"><span>ไม่เห็นด้วย</span><span>เห็นด้วยมาก</span></div>
+                    </div>
+                    
+                    <!-- Q2: AI Helpfulness -->
+                    <div class="survey-question">
+                        <label>2. AI วิเคราะห์ทักษะได้ตรงกับที่คาดหวัง</label>
+                        <div class="rating-group">
+                            <label><input type="radio" name="q2_ai" value="1" required> 1</label>
+                            <label><input type="radio" name="q2_ai" value="2"> 2</label>
+                            <label><input type="radio" name="q2_ai" value="3"> 3</label>
+                            <label><input type="radio" name="q2_ai" value="4"> 4</label>
+                            <label><input type="radio" name="q2_ai" value="5"> 5</label>
+                        </div>
+                        <div class="rating-labels"><span>ไม่เห็นด้วย</span><span>เห็นด้วยมาก</span></div>
+                    </div>
+                    
+                    <!-- Q3: Understanding -->
+                    <div class="survey-question">
+                        <label>3. คำถามสะท้อนคิดช่วยให้ทบทวนการเรียนรู้</label>
+                        <div class="rating-group">
+                            <label><input type="radio" name="q3_reflection" value="1" required> 1</label>
+                            <label><input type="radio" name="q3_reflection" value="2"> 2</label>
+                            <label><input type="radio" name="q3_reflection" value="3"> 3</label>
+                            <label><input type="radio" name="q3_reflection" value="4"> 4</label>
+                            <label><input type="radio" name="q3_reflection" value="5"> 5</label>
+                        </div>
+                        <div class="rating-labels"><span>ไม่เห็นด้วย</span><span>เห็นด้วยมาก</span></div>
+                    </div>
+                    
+                    <!-- Q4: Would recommend -->
+                    <div class="survey-question">
+                        <label>4. จะแนะนำระบบนี้ให้เพื่อน</label>
+                        <div class="rating-group">
+                            <label><input type="radio" name="q4_recommend" value="1" required> 1</label>
+                            <label><input type="radio" name="q4_recommend" value="2"> 2</label>
+                            <label><input type="radio" name="q4_recommend" value="3"> 3</label>
+                            <label><input type="radio" name="q4_recommend" value="4"> 4</label>
+                            <label><input type="radio" name="q4_recommend" value="5"> 5</label>
+                        </div>
+                        <div class="rating-labels"><span>ไม่เห็นด้วย</span><span>เห็นด้วยมาก</span></div>
+                    </div>
+                    
+                    <!-- Q5: Open feedback -->
+                    <div class="survey-question">
+                        <label>5. ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</label>
+                        <textarea id="survey-feedback" rows="2" placeholder="พิมพ์ความคิดเห็น..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="skipSurvey()" class="btn-secondary" style="flex:1;">ข้ามไปก่อน</button>
+                        <button type="submit" class="btn-primary" style="flex:1;">ส่งแบบประเมิน</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -423,6 +566,12 @@
         let currentStudent = null;
         let pendingFormData = null;
         let aiAnalysisResult = null;
+        
+        // === Research Logging Variables ===
+        let formStartTime = null;
+        let aiAnalysisStartTime = null;
+        let aiAnalysisEndTime = null;
+        let sessionStartTime = Date.now();
 
         // Character counter
         function updateCharCount(textarea, counterId) {
@@ -467,6 +616,9 @@
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('form-section').style.display = 'block';
                 
+                // Track form start time for research
+                formStartTime = Date.now();
+                
                 await loadMySubmissions();
             } catch (error) {
                 errorEl.textContent = '❌ เกิดข้อผิดพลาด';
@@ -483,6 +635,9 @@
 
         async function analyzeWithAI(formData) {
             const GEMINI_API_KEY = 'AIzaSyCiFyQQGHrp5gO0yjFtYALsqu_Fxpdydoo';
+            
+            // Track AI analysis start time
+            aiAnalysisStartTime = Date.now();
             
             const prompt = `คุณเป็นผู้เชี่ยวชาญวิเคราะห์ทักษะจากกิจกรรมนักศึกษาวิศวกรรม มหาวิทยาลัยเชียงใหม่ ตาม CMU Engineer Competency V4 Rubric
 
@@ -585,12 +740,14 @@
                     const jsonMatch = text.match(/\{[\s\S]*\}/);
                     
                     if (jsonMatch) {
+                        aiAnalysisEndTime = Date.now();
                         const analysis = JSON.parse(jsonMatch[0]);
                         analysis.skills = analysis.skills.map(s => ({
                             ...s,
                             level: Math.min(s.level, formData.activityLevel)
                         })).slice(0, 3);
                         analysis.usedAI = true;
+                        analysis.aiResponseTime = aiAnalysisEndTime - aiAnalysisStartTime;
                         return analysis;
                     }
                 }
@@ -599,8 +756,10 @@
             }
             
             // Fallback analysis based on keywords
+            aiAnalysisEndTime = Date.now();
             const fallback = fallbackAnalysis(formData);
             fallback.usedAI = false;
+            fallback.aiResponseTime = aiAnalysisEndTime - aiAnalysisStartTime;
             return fallback;
         }
         
@@ -784,19 +943,48 @@
             closeAIModal();
             
             try {
-                await db.collection('submissions').add({
+                // Calculate research metrics
+                const submissionTime = Date.now();
+                const formCompletionTime = formStartTime ? (submissionTime - formStartTime) : null;
+                
+                // Create submission with research logging data
+                const submissionData = {
                     ...pendingFormData,
                     aiSuggestedSkills: aiAnalysisResult.skills,
                     status: 'Pending Review',
-                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                    submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    
+                    // === Research Logging Data ===
+                    _research: {
+                        usedAI: aiAnalysisResult.usedAI || false,
+                        aiResponseTimeMs: aiAnalysisResult.aiResponseTime || null,
+                        formCompletionTimeMs: formCompletionTime,
+                        reflectionLengths: {
+                            role: pendingFormData.role?.length || 0,
+                            activities: pendingFormData.activities?.length || 0,
+                            learnings: pendingFormData.learnings?.length || 0,
+                            total: (pendingFormData.role?.length || 0) + 
+                                   (pendingFormData.activities?.length || 0) + 
+                                   (pendingFormData.learnings?.length || 0)
+                        },
+                        activityLevel: pendingFormData.activityLevel,
+                        skillCount: aiAnalysisResult.skills?.length || 0,
+                        timestamp: new Date().toISOString(),
+                        userAgent: navigator.userAgent
+                    }
+                };
+                
+                const docRef = await db.collection('submissions').add(submissionData);
                 
                 // Reset form
                 document.getElementById('activity-form').reset();
+                const savedFormData = {...pendingFormData};
                 pendingFormData = null;
                 aiAnalysisResult = null;
+                formStartTime = Date.now(); // Reset for next submission
                 
-                document.getElementById('success-modal').classList.add('show');
+                // Show survey modal instead of success modal
+                showSurveyModal(docRef.id, savedFormData.activityName);
                 await loadMySubmissions();
             } catch (error) {
                 alert('❌ เกิดข้อผิดพลาด: ' + error.message);
@@ -806,6 +994,65 @@
 
         function closeAIModal() { document.getElementById('ai-modal').classList.remove('show'); }
         function closeModal() { document.getElementById('success-modal').classList.remove('show'); }
+        
+        // === Survey Functions ===
+        function showSurveyModal(submissionId, activityName) {
+            document.getElementById('survey-submission-id').value = submissionId;
+            document.getElementById('survey-activity-name').value = activityName;
+            document.getElementById('survey-form').reset();
+            document.getElementById('survey-modal').classList.add('show');
+        }
+        
+        function closeSurveyModal() {
+            document.getElementById('survey-modal').classList.remove('show');
+        }
+        
+        function skipSurvey() {
+            closeSurveyModal();
+            // Show brief success message
+            document.getElementById('success-modal').classList.add('show');
+        }
+        
+        document.getElementById('survey-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submissionId = document.getElementById('survey-submission-id').value;
+            const surveyData = {
+                submissionId: submissionId,
+                activityName: document.getElementById('survey-activity-name').value,
+                studentEmail: currentStudent?.email,
+                responses: {
+                    easeOfUse: parseInt(document.querySelector('input[name="q1_ease"]:checked')?.value) || null,
+                    aiAccuracy: parseInt(document.querySelector('input[name="q2_ai"]:checked')?.value) || null,
+                    reflectionHelpful: parseInt(document.querySelector('input[name="q3_reflection"]:checked')?.value) || null,
+                    wouldRecommend: parseInt(document.querySelector('input[name="q4_recommend"]:checked')?.value) || null,
+                    feedback: document.getElementById('survey-feedback').value.trim()
+                },
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                // Save survey response
+                await db.collection('surveys').add(surveyData);
+                
+                // Update submission with survey flag
+                if (submissionId) {
+                    await db.collection('submissions').doc(submissionId).update({
+                        '_research.surveyCompleted': true
+                    });
+                }
+                
+                closeSurveyModal();
+                
+                // Show thank you message
+                alert('🙏 ขอบคุณสำหรับความคิดเห็น!');
+                
+            } catch (error) {
+                console.error('Survey error:', error);
+                closeSurveyModal();
+            }
+        });
 
         async function loadMySubmissions() {
             const container = document.getElementById('my-submissions');
