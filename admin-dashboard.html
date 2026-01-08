@@ -1298,6 +1298,15 @@
                 const statusClass = getStatusClass(item.status);
                 const statusText = getStatusText(item.status);
                 
+                // Get participant count from different possible fields
+                const participantCount = item.studentCount || 
+                                        (item.studentIds?.length) || 
+                                        (item.studentEmails?.length) || 
+                                        (item.participants?.length) || 0;
+                
+                // Get date from different possible fields
+                const activityDate = item.activityDate || item.startDate || '-';
+                
                 return `
                     <div class="submission-card organizer-card" onclick="showOrganizerDetail('${item.id}')">
                         <div class="submission-main">
@@ -1306,8 +1315,8 @@
                         </div>
                         <div class="submission-info">
                             <span>👨‍💼 ${item.organizerName || '-'}</span>
-                            <span>📅 ${item.startDate || '-'} - ${item.endDate || '-'}</span>
-                            <span>👥 ${item.studentCount || 0} คน</span>
+                            <span>📅 ${activityDate}</span>
+                            <span>👥 ${participantCount} คน</span>
                         </div>
                         <div class="submission-skills">
                             ${(item.skills || []).slice(0, 5).map(s => `
@@ -1498,6 +1507,15 @@
             
             document.getElementById('modal-title').textContent = '👨‍💼 ' + (item.activityName || 'กิจกรรม');
             
+            // Get participant count from different possible fields
+            const participantCount = item.studentCount || 
+                                    (item.studentIds?.length) || 
+                                    (item.studentEmails?.length) || 
+                                    (item.participants?.length) || 0;
+            
+            // Get date from different possible fields  
+            const activityDate = item.activityDate || item.startDate || '-';
+            
             document.getElementById('modal-body').innerHTML = `
                 <div class="detail-section">
                     <h4>👤 ข้อมูลผู้จัด</h4>
@@ -1526,7 +1544,7 @@
                         </div>
                         <div class="detail-item">
                             <label>วันที่</label>
-                            <span>${item.startDate || '-'} - ${item.endDate || '-'}</span>
+                            <span>${activityDate}</span>
                         </div>
                         <div class="detail-item">
                             <label>ระยะเวลา</label>
@@ -1538,7 +1556,7 @@
                         </div>
                         <div class="detail-item">
                             <label>จำนวนผู้เข้าร่วม</label>
-                            <span>${item.studentCount || 0} คน</span>
+                            <span>${participantCount} คน</span>
                         </div>
                     </div>
                     <div class="detail-item full">

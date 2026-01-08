@@ -334,10 +334,15 @@ body {
 
 .level-option {
     cursor: pointer;
+    position: relative;
 }
 
 .level-option input {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
 }
 
 .level-card {
