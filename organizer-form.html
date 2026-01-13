@@ -1839,9 +1839,10 @@
                                 📅 ${d.activityDate || '-'} | 👥 ${(d.studentIds || []).length} คน | 📊 Lv.${d.activityLevel || 2}
                             </div>
                             <div class="activity-skills">
-                                ${(d.skills || []).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join('')}
+                                ${(d.approvedSkills || d.skills || []).map(s => `<span class="skill-mini">${s.code} Lv.${s.level}</span>`).join('')}
                             </div>
                             ${d.status === 'Rejected' && d.rejectReason ? `<div style="color:#e74c3c;font-size:0.9em;margin-bottom:10px;">❌ เหตุผล: ${d.rejectReason}</div>` : ''}
+                            ${d.status === 'Approved' && d.adminNote ? `<div style="background:#e3f2fd;color:#1565c0;font-size:0.9em;padding:10px;border-radius:8px;margin-bottom:10px;border-left:3px solid #2196f3;">📝 หมายเหตุจาก Admin: ${d.adminNote}</div>` : ''}
                             <div class="activity-actions">
                                 ${d.status === 'Draft' || d.status === 'Rejected' ? `
                                     <button class="btn-action btn-edit" onclick="editActivity('${doc.id}')">✏️ แก้ไข</button>

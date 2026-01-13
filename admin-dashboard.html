@@ -1570,13 +1570,39 @@
                 </div>
                 
                 <div class="detail-section">
-                    <h4>🎯 ทักษะที่กำหนด</h4>
-                    <div class="skills-display">
+                    <h4>🎯 ทักษะที่ผู้จัดกำหนด</h4>
+                    <div class="skills-display" style="margin-bottom: 15px; padding: 10px; background: rgba(102,126,234,0.1); border-radius: 10px;">
                         ${(item.skills || []).map(s => `
-                            <span class="skill-tag">${s.code} ${s.nameTh || ''} <strong>Lv.${s.level}</strong></span>
+                            <span class="skill-tag" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                ${s.code} ${s.nameTh || ''} <strong>Lv.${s.level}</strong>
+                            </span>
                         `).join('') || '<span class="no-skills">ไม่มีทักษะ</span>'}
                     </div>
                 </div>
+                
+                ${item.status?.toLowerCase() === 'pending' ? `
+                <div class="detail-section">
+                    <h4>✏️ ทักษะที่อนุมัติ (Admin แก้ไขได้) <span style="font-size:0.8em;color:#666;">สูงสุด 3 ทักษะ</span></h4>
+                    <div class="skills-editor" id="organizer-skills-editor">
+                        ${renderOrganizerSkillsEditor(item)}
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>📝 หมายเหตุถึงผู้จัด (ถ้ามี)</h4>
+                    <textarea id="admin-note-to-organizer" rows="3" 
+                        placeholder="ใส่ข้อความแจ้งผู้จัด เช่น แก้ไขทักษะแล้ว, ข้อเสนอแนะ..."
+                        style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-family:inherit;font-size:0.95em;resize:vertical;"
+                    >${item.adminNote || ''}</textarea>
+                </div>
+                ` : (item.adminNote ? `
+                <div class="detail-section">
+                    <h4>📝 หมายเหตุจาก Admin</h4>
+                    <div style="background:#f8f9fa;padding:15px;border-radius:10px;border-left:4px solid #667eea;">
+                        ${item.adminNote}
+                    </div>
+                </div>
+                ` : '')}
                 
                 ${item.studentIds?.length > 0 ? `
                 <div class="detail-section">
@@ -1646,6 +1672,80 @@
                     `}).join('')}
                 </div>
             `;
+        }
+        
+        // Render skills editor for organizer activities (uses organizer's skills as default)
+        function renderOrganizerSkillsEditor(item) {
+            const maxLevel = item.activityLevel || 4;
+            const organizerSkills = item.skills || [];
+            
+            // Create a map of organizer suggested skills for easy lookup
+            const organizerSkillMap = {};
+            organizerSkills.forEach(s => { organizerSkillMap[s.code] = s.level; });
+            
+            // Schedule initialization after DOM update
+            setTimeout(() => {
+                updateOrganizerSkillCounter();
+                initOrganizerSkillCheckboxListeners();
+            }, 100);
+            
+            return `
+                <div class="skill-limit-note" style="background:#e8f4fd;padding:10px;border-radius:8px;margin-bottom:15px;font-size:0.9em;">
+                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับไม่เกิน Level ${maxLevel}
+                    <span id="organizer-skill-counter" style="float:right;background:#667eea;color:white;padding:2px 10px;border-radius:15px;">0/3</span>
+                </div>
+                <div class="skill-editor-list">
+                    ${CRITERIA_LIST.map(c => {
+                        const isOrganizerSuggested = organizerSkillMap.hasOwnProperty(c.code);
+                        const suggestedLevel = organizerSkillMap[c.code] || 2;
+                        return `
+                        <div class="skill-editor-item organizer-skill-item ${isOrganizerSuggested ? 'organizer-suggested' : ''}" style="${isOrganizerSuggested ? 'background:#e3f2fd;border-left:3px solid #2196f3;' : ''}">
+                            <label>
+                                <input type="checkbox" class="organizer-skill-checkbox" data-code="${c.code}" 
+                                    ${isOrganizerSuggested ? 'checked' : ''} onchange="updateOrganizerSkillCounter()">
+                                <span>${c.code} ${c.nameTh}</span>
+                                ${isOrganizerSuggested ? '<span style="background:#2196f3;color:white;padding:1px 6px;border-radius:10px;font-size:0.7em;margin-left:5px;">ผู้จัด</span>' : ''}
+                            </label>
+                            <select class="organizer-skill-level-select" data-code="${c.code}" ${isOrganizerSuggested ? '' : 'disabled'}>
+                                ${[1,2,3,4].map(l => `
+                                    <option value="${l}" ${l > maxLevel ? 'disabled' : ''} ${l === suggestedLevel && isOrganizerSuggested ? 'selected' : ''}>Lv.${l}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+        }
+        
+        function initOrganizerSkillCheckboxListeners() {
+            document.querySelectorAll('.organizer-skill-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const levelSelect = document.querySelector('.organizer-skill-level-select[data-code="' + this.dataset.code + '"]');
+                    if (levelSelect) levelSelect.disabled = !this.checked;
+                });
+            });
+        }
+        
+        function updateOrganizerSkillCounter() {
+            const checkedCount = document.querySelectorAll('.organizer-skill-checkbox:checked').length;
+            const counter = document.getElementById('organizer-skill-counter');
+            if (counter) {
+                counter.textContent = checkedCount + '/3';
+                counter.style.background = checkedCount > 3 ? '#e74c3c' : (checkedCount === 3 ? '#f39c12' : '#667eea');
+            }
+            
+            // Disable unchecked checkboxes if limit reached
+            if (checkedCount >= 3) {
+                document.querySelectorAll('.organizer-skill-checkbox:not(:checked)').forEach(cb => {
+                    cb.disabled = true;
+                    cb.closest('.organizer-skill-item').style.opacity = '0.5';
+                });
+            } else {
+                document.querySelectorAll('.organizer-skill-checkbox').forEach(cb => {
+                    cb.disabled = false;
+                    cb.closest('.organizer-skill-item').style.opacity = '1';
+                });
+            }
         }
         
         function initSkillCheckboxListeners() {
@@ -1808,42 +1908,69 @@
         async function approveOrganizerActivity() {
             if (!currentItem) return;
             
+            // Get selected skills from editor
+            const skills = [];
+            document.querySelectorAll('.organizer-skill-checkbox:checked').forEach(cb => {
+                const code = cb.dataset.code;
+                const levelSelect = document.querySelector(`.organizer-skill-level-select[data-code="${code}"]`);
+                const criteria = CRITERIA_LIST.find(c => c.code === code);
+                skills.push({
+                    code: code,
+                    level: parseInt(levelSelect.value),
+                    nameTh: criteria?.nameTh || '',
+                    nameEn: criteria?.nameEn || ''
+                });
+            });
+            
+            if (skills.length === 0) {
+                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ');
+                return;
+            }
+            
+            if (skills.length > 3) {
+                alert('⚠️ เลือกทักษะได้ไม่เกิน 3 ทักษะ | Maximum 3 skills allowed');
+                return;
+            }
+            
+            // Get admin note
+            const adminNote = document.getElementById('admin-note-to-organizer')?.value?.trim() || '';
+            
             showLoading(true, 'กำลังอนุมัติ...');
             
             try {
-                // Update status
+                // Update status with approved skills and note
                 await db.collection('organizerActivities').doc(currentItem.id).update({
                     status: 'Approved',
+                    approvedSkills: skills,
+                    originalSkills: currentItem.skills || [], // Keep original for reference
+                    adminNote: adminNote,
                     approvedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Add activity to master
+                // Add activity to master with approved skills
                 const existingActivity = await db.collection('activities')
                     .where('name', '==', currentItem.activityName)
                     .get();
                 
                 if (existingActivity.empty) {
-                    // Save with skills array for consistency
+                    // Save with approved skills
                     await db.collection('activities').add({
                         name: currentItem.activityName,
                         organizer: currentItem.organizerName || currentItem.department || '',
                         date: currentItem.activityDate || currentItem.startDate || '',
                         level: currentItem.activityLevel || 2,
                         description: currentItem.description || '',
-                        skills: currentItem.skills || [],
+                        skills: skills, // Use approved skills
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // Update existing activity skills if empty
-                    const existingData = existingActivity.docs[0].data();
-                    if ((!existingData.skills || existingData.skills.length === 0) && currentItem.skills?.length > 0) {
-                        await db.collection('activities').doc(existingActivity.docs[0].id).update({
-                            skills: currentItem.skills
-                        });
-                    }
+                    // Update existing activity skills
+                    await db.collection('activities').doc(existingActivity.docs[0].id).update({
+                        skills: skills
+                    });
                 }
                 
-                // Add students to participation
+                // Add students to participation with approved skills
                 const studentIds = currentItem.studentIds || [];
                 for (const studentId of studentIds) {
                     const existing = await db.collection('participation')
@@ -1857,6 +1984,7 @@
                             activityName: currentItem.activityName,
                             status: 'Approved',
                             date: currentItem.activityDate || currentItem.startDate || '',
+                            skills: skills, // Include approved skills
                             source: 'organizer',
                             addedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
