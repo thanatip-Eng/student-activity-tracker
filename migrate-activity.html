@@ -158,6 +158,36 @@
                 <h4>⚠️ คำเตือน</h4>
                 <p>กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนทำการย้าย และควร backup ข้อมูลก่อน</p>
             </div>
+            
+            <!-- Firebase Rules Helper -->
+            <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="color: #1565c0; margin-bottom: 15px;">🔐 Firebase Security Rules</h4>
+                <p style="margin-bottom: 15px; color: #666;">ถ้าเจอ error "Permission denied" ต้องเปิด Rules ก่อนใช้งาน</p>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" style="background: #4caf50; color: white;" onclick="showRules('open')">
+                        🔓 เปิดใช้งาน (Open Rules)
+                    </button>
+                    <button class="btn" style="background: #f44336; color: white;" onclick="showRules('close')">
+                        🔒 ปิดใช้งาน (Secure Rules)
+                    </button>
+                    <a href="https://console.firebase.google.com/project/student-activity-tracker-13eb5/firestore/rules" 
+                       target="_blank" class="btn" style="background: #ff9800; color: white; text-decoration: none;">
+                        ⚙️ เปิด Firebase Console
+                    </a>
+                </div>
+                
+                <div id="rules-display" style="display: none; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong id="rules-title" style="color: #333;"></strong>
+                        <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 14px;" onclick="copyRules()">
+                            📋 Copy
+                        </button>
+                    </div>
+                    <pre id="rules-code" style="background: #263238; color: #aed581; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 0;"></pre>
+                    <p id="rules-note" style="margin-top: 10px; font-size: 0.9em; color: #666;"></p>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -264,6 +294,108 @@
         
         let foundActivity = null;
         let foundDocId = null;
+        let currentRulesType = null;
+        
+        // Firebase Rules templates
+        const RULES_OPEN = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`;
+
+        const RULES_SECURE = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Students - read only
+    match /students/{studentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Activities - public read, authenticated write
+    match /activities/{activityId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Organizer Activities
+    match /organizerActivities/{activityId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Participation
+    match /participation/{participationId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Submissions
+    match /submissions/{submissionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Organizers
+    match /organizers/{odocId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Admins
+    match /admins/{adminId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Surveys
+    match /surveys/{surveyId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}`;
+
+        function showRules(type) {
+            const display = document.getElementById('rules-display');
+            const title = document.getElementById('rules-title');
+            const code = document.getElementById('rules-code');
+            const note = document.getElementById('rules-note');
+            
+            display.style.display = 'block';
+            currentRulesType = type;
+            
+            if (type === 'open') {
+                title.textContent = '🔓 Open Rules (สำหรับใช้งาน Migration Tool)';
+                title.style.color = '#4caf50';
+                code.textContent = RULES_OPEN;
+                note.innerHTML = '⚠️ <strong style="color: #e53935;">ใช้ชั่วคราวเท่านั้น!</strong> Rules นี้เปิด public access - ใช้เสร็จแล้วให้เปลี่ยนกลับเป็น Secure Rules';
+            } else {
+                title.textContent = '🔒 Secure Rules (สำหรับใช้งานปกติ)';
+                title.style.color = '#f44336';
+                code.textContent = RULES_SECURE;
+                note.innerHTML = '✅ <strong style="color: #4caf50;">แนะนำ!</strong> ใช้ Rules นี้สำหรับ production';
+            }
+        }
+        
+        function copyRules() {
+            const rules = currentRulesType === 'open' ? RULES_OPEN : RULES_SECURE;
+            navigator.clipboard.writeText(rules).then(() => {
+                alert('✅ Copied to clipboard!\n\nไปที่ Firebase Console → Firestore → Rules → วาง (Ctrl+V) → Publish');
+            }).catch(err => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = rules;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Copied to clipboard!\n\nไปที่ Firebase Console → Firestore → Rules → วาง (Ctrl+V) → Publish');
+            });
+        }
         
         async function searchActivity() {
             const searchName = document.getElementById('search-name').value.trim();
