@@ -218,11 +218,12 @@
                 <p id="login-error" class="error-message"></p>
                 
                 <div class="first-login-info">
-                    <h4><span class="icon">💡</span> First Time Login</h4>
+                    <h4><span class="icon">💡</span> วิธีเข้าสู่ระบบ | How to Login</h4>
                     <ul>
-                        <li>กรอก Email และ <strong>สร้างรหัสผ่านใหม่</strong></li>
-                        <li>Enter Email and <strong>create your password</strong></li>
-                        <li>ใช้รหัสผ่านนี้ในการเข้าสู่ระบบครั้งต่อไป</li>
+                        <li>Email ของคุณต้องถูกเพิ่มโดย Admin ก่อน</li>
+                        <li>Your email must be added by an Admin first</li>
+                        <li>เข้าครั้งแรก: ใส่ Email + <strong>สร้างรหัสผ่านใหม่</strong></li>
+                        <li>ครั้งถัดไป: ใช้รหัสผ่านที่สร้างไว้</li>
                     </ul>
                 </div>
             </div>
@@ -282,6 +283,7 @@
             <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
             <button class="tab" data-tab="transfer">📤 โอนข้อมูล | Transfer</button>
             <button class="tab" data-tab="organizers">👥 ผู้จัดทะเบียน | Organizers</button>
+            <button class="tab" data-tab="admin-manage">👤 Admin</button>
             <button class="tab" data-tab="export">📥 Export CSV</button>
         </div>
 
@@ -490,6 +492,48 @@
 
                 <div id="organizers-list" class="organizers-list">
                     <div class="loading-inline">กำลังโหลด... | Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Admin Management -->
+        <div id="tab-admin-manage" class="tab-content">
+            <div class="panel">
+                <h2>👤 จัดการ Admin | Admin Management</h2>
+                <p class="panel-desc">เพิ่มหรือลบ Admin ในระบบ | Add or remove system admins</p>
+                
+                <!-- Add New Admin -->
+                <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 2px solid #a5d6a7;">
+                    <h4 style="color: #2e7d32; margin-bottom: 15px;">➕ เพิ่ม Admin ใหม่ | Add New Admin</h4>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email <span style="color: #e74c3c;">*</span></label>
+                            <input type="email" id="new-admin-email" placeholder="email@cmu.ac.th" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">ชื่อ | Name</label>
+                            <input type="text" id="new-admin-name" placeholder="(optional)" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <button onclick="addNewAdmin()" style="padding: 12px 25px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1em;">
+                            ➕ เพิ่ม | Add
+                        </button>
+                    </div>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                        💡 Admin ใหม่จะตั้งรหัสผ่านเองเมื่อเข้าสู่ระบบครั้งแรก | New admin will set password on first login
+                    </p>
+                </div>
+                
+                <!-- Admin List -->
+                <div style="background: white; border-radius: 12px; border: 2px solid #e0e0e0;">
+                    <div style="padding: 15px 20px; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; color: #333;">📋 รายชื่อ Admin | Admin List</h4>
+                        <button onclick="loadAdminList()" style="padding: 8px 15px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div id="admin-list-container" style="padding: 20px;">
+                        <div style="text-align: center; color: #999; padding: 20px;">กำลังโหลด... | Loading...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -836,6 +880,11 @@
                     // Load organizers when tab is clicked
                     if (tab.dataset.tab === 'organizers') {
                         loadOrganizers();
+                    }
+                    
+                    // Load admin list when tab is clicked
+                    if (tab.dataset.tab === 'admin-manage') {
+                        loadAdminList();
                     }
                     
                     // Load activities management when tab is clicked
@@ -3017,31 +3066,29 @@
                 const q = await db.collection('admins').where('email', '==', email).limit(1).get();
                 
                 if (q.empty) {
-                    // First time - create new admin
-                    const newAdmin = {
-                        email: email,
-                        name: email.split('@')[0],
-                        password: password,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    const docRef = await db.collection('admins').add(newAdmin);
-                    currentAdmin = { id: docRef.id, ...newAdmin };
-                } else {
-                    const doc = q.docs[0];
-                    const data = doc.data();
-                    
-                    if (!data.password) {
-                        // Set password for first time
-                        await db.collection('admins').doc(doc.id).update({ password });
-                        data.password = password;
-                    } else if (password !== data.password) {
-                        errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง | Incorrect password';
-                        showLoading(false);
-                        return;
-                    }
-                    
-                    currentAdmin = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
+                    // Email not found - not allowed to self-register
+                    errorEl.textContent = '❌ ไม่พบ Email ในระบบ | Email not found. กรุณาติดต่อ Admin เพื่อเพิ่มสิทธิ์';
+                    showLoading(false);
+                    return;
                 }
+                
+                const doc = q.docs[0];
+                const data = doc.data();
+                
+                if (!data.password) {
+                    // First time login - set password
+                    await db.collection('admins').doc(doc.id).update({ 
+                        password,
+                        firstLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    data.password = password;
+                } else if (password !== data.password) {
+                    errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง | Incorrect password';
+                    showLoading(false);
+                    return;
+                }
+                
+                currentAdmin = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
                 
                 // Store session
                 sessionStorage.setItem('adminSession', JSON.stringify(currentAdmin));
@@ -3087,6 +3134,148 @@
                     sessionStorage.removeItem('adminSession');
                 }
             }
+        }
+
+        // ============================================
+        // ADMIN MANAGEMENT
+        // ============================================
+        
+        async function loadAdminList() {
+            const container = document.getElementById('admin-list-container');
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">กำลังโหลด... | Loading...</div>';
+            
+            try {
+                const snapshot = await db.collection('admins').orderBy('createdAt', 'desc').get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">ไม่มีข้อมูล | No data</div>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += `<thead>
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Email</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">ชื่อ | Name</th>
+                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">สถานะ | Status</th>
+                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">จัดการ | Action</th>
+                    </tr>
+                </thead><tbody>`;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const hasPassword = !!data.password;
+                    const isCurrentAdmin = currentAdmin && data.email === currentAdmin.email;
+                    
+                    const statusBadge = hasPassword 
+                        ? '<span style="background: #e8f5e9; color: #27ae60; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">✅ Active</span>'
+                        : '<span style="background: #fff3e0; color: #f57c00; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">⏳ รอตั้งรหัสผ่าน</span>';
+                    
+                    const deleteBtn = isCurrentAdmin 
+                        ? '<span style="color: #999; font-size: 0.85em;">(คุณ)</span>'
+                        : `<button onclick="deleteAdmin('${doc.id}', '${data.email}')" style="padding: 6px 12px; background: #ffebee; color: #e53935; border: 1px solid #ef9a9a; border-radius: 6px; cursor: pointer; font-size: 0.85em;">🗑️ ลบ</button>`;
+                    
+                    html += `<tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 12px;">${data.email}</td>
+                        <td style="padding: 12px;">${data.name || '-'}</td>
+                        <td style="padding: 12px; text-align: center;">${statusBadge}</td>
+                        <td style="padding: 12px; text-align: center;">${deleteBtn}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                
+            } catch (e) {
+                container.innerHTML = `<div style="text-align: center; color: #e53935; padding: 20px;">❌ Error: ${e.message}</div>`;
+            }
+        }
+        
+        async function addNewAdmin() {
+            const emailInput = document.getElementById('new-admin-email');
+            const nameInput = document.getElementById('new-admin-name');
+            const email = emailInput.value.trim().toLowerCase();
+            const name = nameInput.value.trim();
+            
+            if (!email || !email.includes('@')) {
+                alert('⚠️ กรุณากรอก Email ที่ถูกต้อง | Please enter valid email');
+                emailInput.focus();
+                return;
+            }
+            
+            showLoading(true, 'กำลังเพิ่ม Admin... | Adding admin...');
+            
+            try {
+                // Check if email already exists
+                const existing = await db.collection('admins').where('email', '==', email).limit(1).get();
+                
+                if (!existing.empty) {
+                    alert('⚠️ Email นี้มีอยู่ในระบบแล้ว | This email already exists');
+                    showLoading(false);
+                    return;
+                }
+                
+                // Add new admin (without password)
+                await db.collection('admins').add({
+                    email: email,
+                    name: name || email.split('@')[0],
+                    password: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    addedBy: currentAdmin?.email || 'unknown'
+                });
+                
+                alert('✅ เพิ่ม Admin สำเร็จ!\n\n' + email + ' สามารถเข้าสู่ระบบและตั้งรหัสผ่านได้แล้ว');
+                
+                // Clear inputs
+                emailInput.value = '';
+                nameInput.value = '';
+                
+                // Reload list
+                await loadAdminList();
+                
+            } catch (e) {
+                alert('❌ Error: ' + e.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        async function deleteAdmin(docId, email) {
+            if (!confirm(`⚠️ ยืนยันการลบ Admin?\n\nEmail: ${email}\n\nการกระทำนี้ไม่สามารถยกเลิกได้!`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลังลบ... | Deleting...');
+            
+            try {
+                await db.collection('admins').doc(docId).delete();
+                alert('✅ ลบ Admin สำเร็จ | Admin deleted');
+                await loadAdminList();
+            } catch (e) {
+                alert('❌ Error: ' + e.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        async function resetAdminPassword(docId, email) {
+            if (!confirm(`🔄 Reset Password ของ ${email}?\n\nAdmin คนนี้จะต้องตั้งรหัสผ่านใหม่เมื่อเข้าสู่ระบบครั้งถัดไป`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลัง Reset... | Resetting...');
+            
+            try {
+                await db.collection('admins').doc(docId).update({
+                    password: null
+                });
+                alert('✅ Reset Password สำเร็จ');
+                await loadAdminList();
+            } catch (e) {
+                alert('❌ Error: ' + e.message);
+            }
+            
+            showLoading(false);
         }
 
         // ============================================

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Migration Tool - Move Activities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 30px;
+            color: #fff;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .card h2 { color: #ffd700; margin-bottom: 15px; font-size: 1.2em; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 15px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #ffd700;
+            outline: none;
+        }
+        .form-group select option { background: #1a1a2e; color: white; }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-search { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-migrate { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .result-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .activity-item.selected { border-left-color: #ffd700; background: rgba(255,215,0,0.1); }
+        .activity-item h4 { color: #ffd700; margin-bottom: 8px; }
+        .activity-item p { font-size: 0.9em; color: #ccc; margin-bottom: 5px; }
+        .activity-item .id { font-size: 0.8em; color: #888; }
+        
+        .log-box {
+            background: #000;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-success { color: #2ecc71; }
+        .log-error { color: #e74c3c; }
+        .log-info { color: #3498db; }
+        .log-warn { color: #f39c12; }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .checkbox-label input { width: 20px; height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Migration Tool</h1>
+        <p style="text-align: center; margin-bottom: 30px; color: #ccc;">ย้าย Activity จาก <code>activities</code> → <code>organizerActivities</code></p>
+        
+        <!-- Step 1: Search -->
+        <div class="card">
+            <h2>📌 Step 1: ค้นหา Activity ที่ต้องการย้าย</h2>
+            <div class="form-group">
+                <label>ค้นหาด้วยชื่อกิจกรรม (บางส่วนก็ได้)</label>
+                <input type="text" id="search-name" placeholder="เช่น Unlock Digital Learning">
+            </div>
+            <button class="btn btn-search" onclick="searchActivities()">🔍 ค้นหา</button>
+            
+            <div id="search-results" class="result-box" style="display: none;"></div>
+        </div>
+        
+        <!-- Step 2: Configure -->
+        <div class="card" id="config-section" style="display: none;">
+            <h2>⚙️ Step 2: กำหนดข้อมูลสำหรับ organizerActivities</h2>
+            <div class="form-group">
+                <label>Organizer Email *</label>
+                <input type="email" id="org-email" placeholder="เช่น aurakanya.p@cmu.ac.th">
+            </div>
+            <div class="form-group">
+                <label>Role *</label>
+                <select id="org-role">
+                    <option value="organizer">👑 Organizer (ทีมผู้จัด)</option>
+                    <option value="staff">🤝 Staff (ช่วยงาน)</option>
+                    <option value="participant">👥 Participant (ผู้เข้าร่วม)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status *</label>
+                <select id="org-status">
+                    <option value="Draft">📝 Draft (ร่าง)</option>
+                    <option value="Pending">⏳ Pending (รอตรวจสอบ)</option>
+                    <option value="Approved">✅ Approved (อนุมัติแล้ว)</option>
+                    <option value="Rejected">❌ Rejected (ไม่อนุมัติ)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="delete-original">
+                    ลบ document เดิมใน activities หลังย้ายสำเร็จ
+                </label>
+            </div>
+            <button class="btn btn-migrate" onclick="migrateActivity()">🚀 ย้ายข้อมูล</button>
+        </div>
+        
+        <!-- Log -->
+        <div class="card">
+            <h2>📋 Log</h2>
+            <div id="log-box" class="log-box">
+                <div class="log-info">พร้อมใช้งาน...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        let selectedActivity = null;
+        let selectedDocId = null;
+        
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('log-box');
+            const time = new Date().toLocaleTimeString();
+            logBox.innerHTML += `<div class="log-${type}">[${time}] ${message}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+        
+        async function searchActivities() {
+            const searchName = document.getElementById('search-name').value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (!searchName) {
+                alert('กรุณาใส่ชื่อกิจกรรมที่ต้องการค้นหา');
+                return;
+            }
+            
+            log(`🔍 ค้นหา: "${searchName}"`, 'info');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>กำลังค้นหา...</p>';
+            
+            try {
+                // Search in activities collection
+                const snapshot = await db.collection('activities').get();
+                
+                const matches = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const name = (data.activityName || data.name || '').toLowerCase();
+                    if (name.includes(searchName)) {
+                        matches.push({ id: doc.id, data: data });
+                    }
+                });
+                
+                if (matches.length === 0) {
+                    resultsDiv.innerHTML = '<p style="color: #f39c12;">❌ ไม่พบกิจกรรมที่ตรงกัน</p>';
+                    log('ไม่พบกิจกรรม', 'warn');
+                    return;
+                }
+                
+                log(`✅ พบ ${matches.length} กิจกรรม`, 'success');
+                
+                resultsDiv.innerHTML = matches.map(item => `
+                    <div class="activity-item" id="item-${item.id}" onclick="selectActivity('${item.id}', ${JSON.stringify(item.data).replace(/"/g, '&quot;')})">
+                        <h4>${item.data.activityName || item.data.name || 'ไม่มีชื่อ'}</h4>
+                        <p>📅 วันที่: ${item.data.activityDate || item.data.date || '-'}</p>
+                        <p>👥 นักศึกษา: ${(item.data.studentIds || []).length || item.data.studentCount || 0} คน</p>
+                        <p>🎯 ทักษะ: ${(item.data.skills || []).map(s => s.code || s).join(', ') || '-'}</p>
+                        <p class="id">ID: ${item.id}</p>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                log('❌ Error: ' + e.message, 'error');
+                resultsDiv.innerHTML = `<p style="color: #e74c3c;">Error: ${e.message}</p>`;
+            }
+        }
+        
+        function selectActivity(id, data) {
+            // Deselect previous
+            document.querySelectorAll('.activity-item').forEach(el => el.classList.remove('selected'));
+            
+            // Select new
+            document.getElementById('item-' + id).classList.add('selected');
+            selectedDocId = id;
+            selectedActivity = data;
+            
+            log(`📌 เลือก: ${data.activityName || data.name}`, 'info');
+            
+            // Show config section
+            document.getElementById('config-section').style.display = 'block';
+        }
+        
+        async function migrateActivity() {
+            if (!selectedActivity || !selectedDocId) {
+                alert('กรุณาเลือก Activity ก่อน');
+                return;
+            }
+            
+            const email = document.getElementById('org-email').value.trim().toLowerCase();
+            const role = document.getElementById('org-role').value;
+            const status = document.getElementById('org-status').value;
+            const deleteOriginal = document.getElementById('delete-original').checked;
+            
+            if (!email || !email.includes('@')) {
+                alert('กรุณาใส่ Email ที่ถูกต้อง');
+                return;
+            }
+            
+            if (!confirm(`ยืนยันย้ายกิจกรรม:\n\n"${selectedActivity.activityName || selectedActivity.name}"\n\n→ organizerEmail: ${email}\n→ role: ${role}\n→ status: ${status}\n${deleteOriginal ? '→ จะลบ document เดิม' : ''}`)) {
+                return;
+            }
+            
+            log('🚀 เริ่มย้ายข้อมูล...', 'info');
+            
+            try {
+                // Prepare new document
+                const roleSuffix = {
+                    organizer: '(ทีมผู้จัด)',
+                    staff: '(Staff)',
+                    participant: '(ผู้เข้าร่วม)'
+                };
+                
+                const newData = {
+                    // Copy original data
+                    ...selectedActivity,
+                    
+                    // Add/override required fields
+                    organizerEmail: email,
+                    organizerName: selectedActivity.organizerName || email.split('@')[0],
+                    department: selectedActivity.department || 'คณะวิศวกรรมศาสตร์',
+                    activityNameBase: selectedActivity.activityName || selectedActivity.name,
+                    activityName: `${selectedActivity.activityName || selectedActivity.name} ${roleSuffix[role]}`,
+                    activityDate: selectedActivity.activityDate || selectedActivity.date,
+                    role: role,
+                    roleName: { organizer: 'ทีมผู้จัด | Organizer', staff: 'Staff | Staff', participant: 'ผู้เข้าร่วม | Participant' }[role],
+                    activityLevel: { organizer: 4, staff: 2, participant: 2 }[role],
+                    status: status,
+                    skills: selectedActivity.skills || [],
+                    studentIds: selectedActivity.studentIds || [],
+                    migratedFrom: 'activities',
+                    migratedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    originalDocId: selectedDocId
+                };
+                
+                // Remove fields that don't belong
+                delete newData.studentId;
+                delete newData.name;
+                delete newData.date;
+                
+                log('📝 สร้าง document ใหม่ใน organizerActivities...', 'info');
+                
+                const docRef = await db.collection('organizerActivities').add(newData);
+                log(`✅ สร้างสำเร็จ! New ID: ${docRef.id}`, 'success');
+                
+                if (deleteOriginal) {
+                    log('🗑️ ลบ document เดิม...', 'warn');
+                    await db.collection('activities').doc(selectedDocId).delete();
+                    log('✅ ลบ document เดิมเรียบร้อย', 'success');
+                }
+                
+                log('🎉 ย้ายข้อมูลสำเร็จ!', 'success');
+                alert('✅ ย้ายข้อมูลสำเร็จ!');
+                
+                // Reset
+                selectedActivity = null;
+                selectedDocId = null;
+                document.getElementById('search-results').style.display = 'none';
+                document.getElementById('config-section').style.display = 'none';
+                
+            } catch (e) {
+                log('❌ Error: ' + e.message, 'error');
+                alert('Error: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
