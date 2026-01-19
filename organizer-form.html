@@ -859,6 +859,7 @@
         .btn-action { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9em; transition: all 0.2s; }
         .btn-edit { background: #e3f2fd; color: #1976d2; }
         .btn-delete { background: #ffebee; color: #e74c3c; }
+        .btn-manage-students { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); color: #2e7d32; border: 1px solid #a5d6a7; }
         .btn-action:hover { transform: translateY(-1px); }
         .empty-state { text-align: center; padding: 60px 20px; color: #999; }
         .empty-state .icon { font-size: 4em; margin-bottom: 15px; }
@@ -1217,6 +1218,45 @@
                 <div class="modal-footer">
                     <button class="btn-modal btn-cancel" onclick="closeSkillModal()">ยกเลิก | Cancel</button>
                     <button class="btn-modal btn-confirm" onclick="confirmSkills()">✅ ยืนยัน | Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Students Modal -->
+        <div id="manage-students-modal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3>👥 จัดการนักศึกษา | Manage Students</h3>
+                    <button class="modal-close" onclick="closeManageStudents()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="manage-activity-id">
+                    <div id="manage-activity-info" style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <!-- Activity info will be shown here -->
+                    </div>
+                    
+                    <!-- Add Students Section -->
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #a5d6a7;">
+                        <h4 style="color: #2e7d32; margin-bottom: 15px;">➕ เพิ่มนักศึกษา | Add Students</h4>
+                        <textarea id="add-student-ids" rows="3" placeholder="กรอกรหัสนักศึกษา (หนึ่งรหัสต่อบรรทัด)&#10;640610001&#10;640610002" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 14px;" oninput="updateAddCountPreview()"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <span id="add-count-preview" style="color: #666; font-size: 0.9em;">0 รหัส</span>
+                            <button onclick="addStudentsToActivity()" style="padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                ➕ เพิ่ม | Add
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Students List -->
+                    <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px;">
+                        <div style="padding: 15px 20px; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+                            <h4 style="margin: 0; color: #333;">📋 รายชื่อนักศึกษาปัจจุบัน | Current Students</h4>
+                            <span id="current-student-count" style="background: #667eea; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85em;">0 คน</span>
+                        </div>
+                        <div id="current-students-list" style="padding: 15px; max-height: 300px; overflow-y: auto;">
+                            <!-- Student list will be shown here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2603,6 +2643,9 @@ ${roleDesc ? `หน้าที่: ${roleDesc}` : ''}
                                     <button class="btn-action btn-edit" onclick="editActivity('${doc.id}')">✏️ แก้ไข</button>
                                     <button class="btn-action btn-delete" onclick="deleteActivity('${doc.id}')">🗑️ ลบ</button>
                                 ` : ''}
+                                ${d.status === 'Approved' ? `
+                                    <button class="btn-action btn-manage-students" onclick="openManageStudents('${doc.id}')">👥 จัดการนักศึกษา</button>
+                                ` : ''}
                             </div>
                         </div>`;
                 }).join('');
@@ -2697,6 +2740,211 @@ ${roleDesc ? `หน้าที่: ${roleDesc}` : ''}
                 alert('✅ ลบเรียบร้อย');
                 await loadMyActivities();
             } catch (e) { alert('❌ เกิดข้อผิดพลาด: ' + e.message); }
+            showLoading(false);
+        }
+
+        // ============================================
+        // MANAGE STUDENTS (FOR APPROVED ACTIVITIES)
+        // ============================================
+        
+        let currentManageActivity = null;
+        
+        async function openManageStudents(activityId) {
+            showLoading(true, 'กำลังโหลด...');
+            
+            try {
+                const doc = await db.collection('organizerActivities').doc(activityId).get();
+                if (!doc.exists) {
+                    alert('❌ ไม่พบกิจกรรม');
+                    showLoading(false);
+                    return;
+                }
+                
+                currentManageActivity = { id: activityId, ...doc.data() };
+                
+                // Show activity info
+                document.getElementById('manage-activity-id').value = activityId;
+                document.getElementById('manage-activity-info').innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 1.1em; color: #1a472a;">${currentManageActivity.activityName || currentManageActivity.activityNameBase}</strong>
+                            <p style="margin: 5px 0 0; color: #666; font-size: 0.9em;">
+                                📅 ${currentManageActivity.startDate || '-'} | 
+                                🎯 ${(currentManageActivity.approvedSkills || currentManageActivity.skills || []).map(s => s.code + ' Lv.' + s.level).join(', ')}
+                            </p>
+                        </div>
+                        <span style="background: #e8f5e9; color: #27ae60; padding: 5px 12px; border-radius: 15px; font-size: 0.85em;">✅ อนุมัติแล้ว</span>
+                    </div>
+                `;
+                
+                // Load current students
+                await loadCurrentStudents();
+                
+                // Clear add textarea
+                document.getElementById('add-student-ids').value = '';
+                document.getElementById('add-count-preview').textContent = '0 รหัส';
+                
+                // Show modal
+                document.getElementById('manage-students-modal').classList.add('show');
+                
+            } catch (e) {
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        function closeManageStudents() {
+            document.getElementById('manage-students-modal').classList.remove('show');
+            currentManageActivity = null;
+            loadMyActivities(); // Refresh list
+        }
+        
+        async function loadCurrentStudents() {
+            const list = document.getElementById('current-students-list');
+            const studentIds = currentManageActivity?.studentIds || [];
+            
+            document.getElementById('current-student-count').textContent = studentIds.length + ' คน';
+            
+            if (studentIds.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">ยังไม่มีนักศึกษา</div>';
+                return;
+            }
+            
+            list.innerHTML = studentIds.map((id, index) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: ${index % 2 === 0 ? '#f9f9f9' : 'white'}; border-radius: 8px; margin-bottom: 5px;">
+                    <span style="font-family: monospace; font-size: 1em;">${id}</span>
+                    <button onclick="removeStudentFromActivity('${id}')" style="padding: 5px 12px; background: #ffebee; color: #e53935; border: 1px solid #ef9a9a; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                        🗑️ ลบ
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function updateAddCountPreview() {
+            const textarea = document.getElementById('add-student-ids');
+            const ids = textarea.value.trim().split('\n').filter(id => id.trim().length > 0);
+            document.getElementById('add-count-preview').textContent = ids.length + ' รหัส';
+        }
+        
+        async function addStudentsToActivity() {
+            if (!currentManageActivity) return;
+            
+            const textarea = document.getElementById('add-student-ids');
+            const newIds = textarea.value.trim().split('\n')
+                .map(id => id.trim())
+                .filter(id => id.length > 0);
+            
+            if (newIds.length === 0) {
+                alert('⚠️ กรุณากรอกรหัสนักศึกษา');
+                return;
+            }
+            
+            // Check for duplicates
+            const existingIds = currentManageActivity.studentIds || [];
+            const duplicates = newIds.filter(id => existingIds.includes(id));
+            const uniqueNewIds = newIds.filter(id => !existingIds.includes(id));
+            
+            if (uniqueNewIds.length === 0) {
+                alert('⚠️ รหัสนักศึกษาทั้งหมดมีอยู่ในระบบแล้ว');
+                return;
+            }
+            
+            showLoading(true, 'กำลังเพิ่มนักศึกษา...');
+            
+            try {
+                const activityId = currentManageActivity.id;
+                const updatedIds = [...existingIds, ...uniqueNewIds];
+                
+                // Update organizerActivities
+                await db.collection('organizerActivities').doc(activityId).update({
+                    studentIds: updatedIds,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Create participation records for new students
+                const skills = currentManageActivity.approvedSkills || currentManageActivity.skills || [];
+                const activityName = currentManageActivity.activityName || currentManageActivity.activityNameBase;
+                
+                for (const studentId of uniqueNewIds) {
+                    await db.collection('participation').add({
+                        studentId: studentId,
+                        activityId: activityId,
+                        activityName: activityName,
+                        date: currentManageActivity.startDate || currentManageActivity.activityDate || new Date().toISOString().split('T')[0],
+                        skills: skills,
+                        status: 'Approved',
+                        source: 'organizer-add',
+                        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        addedBy: currentOrganizer?.email || 'organizer'
+                    });
+                }
+                
+                // Update local data
+                currentManageActivity.studentIds = updatedIds;
+                
+                // Refresh list
+                await loadCurrentStudents();
+                
+                // Clear textarea
+                textarea.value = '';
+                document.getElementById('add-count-preview').textContent = '0 รหัส';
+                
+                let msg = `✅ เพิ่มนักศึกษาสำเร็จ ${uniqueNewIds.length} คน`;
+                if (duplicates.length > 0) {
+                    msg += `\n\n⚠️ ข้าม ${duplicates.length} รหัสที่มีอยู่แล้ว: ${duplicates.join(', ')}`;
+                }
+                alert(msg);
+                
+            } catch (e) {
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+            
+            showLoading(false);
+        }
+        
+        async function removeStudentFromActivity(studentId) {
+            if (!currentManageActivity) return;
+            
+            if (!confirm(`⚠️ ยืนยันการลบนักศึกษา ${studentId}?\n\nข้อมูลการเข้าร่วมกิจกรรมของนักศึกษาคนนี้จะถูกลบด้วย`)) {
+                return;
+            }
+            
+            showLoading(true, 'กำลังลบ...');
+            
+            try {
+                const activityId = currentManageActivity.id;
+                const updatedIds = (currentManageActivity.studentIds || []).filter(id => id !== studentId);
+                
+                // Update organizerActivities
+                await db.collection('organizerActivities').doc(activityId).update({
+                    studentIds: updatedIds,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Delete participation record
+                const activityName = currentManageActivity.activityName || currentManageActivity.activityNameBase;
+                const participationQuery = await db.collection('participation')
+                    .where('studentId', '==', studentId)
+                    .where('activityName', '==', activityName)
+                    .get();
+                
+                for (const doc of participationQuery.docs) {
+                    await doc.ref.delete();
+                }
+                
+                // Update local data
+                currentManageActivity.studentIds = updatedIds;
+                
+                // Refresh list
+                await loadCurrentStudents();
+                
+                alert('✅ ลบนักศึกษาเรียบร้อย');
+                
+            } catch (e) {
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+            
             showLoading(false);
         }
 
