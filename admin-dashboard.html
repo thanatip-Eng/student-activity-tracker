@@ -701,6 +701,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="edit-activity-id">
+                    <input type="hidden" id="edit-activity-original-name">
                     
                     <div class="form-group">
                         <label>ชื่อกิจกรรม | Activity Name <span style="color:red">*</span></label>
@@ -2874,6 +2875,7 @@
         function openAddActivityModal() {
             document.getElementById('activity-modal-title').textContent = '➕ เพิ่มกิจกรรม | Add Activity';
             document.getElementById('edit-activity-id').value = '';
+            document.getElementById('edit-activity-original-name').value = '';
             document.getElementById('act-name').value = '';
             document.getElementById('act-organizer').value = '';
             document.getElementById('act-date').value = '';
@@ -2917,6 +2919,7 @@
             
             document.getElementById('activity-modal-title').textContent = '✏️ แก้ไขกิจกรรม | Edit Activity';
             document.getElementById('edit-activity-id').value = activityId;
+            document.getElementById('edit-activity-original-name').value = activity.name || '';
             document.getElementById('act-name').value = activity.name || '';
             document.getElementById('act-organizer').value = activity.organizer || '';
             document.getElementById('act-date').value = activity.date || '';
@@ -2965,6 +2968,7 @@
 
         async function saveActivityAdmin() {
             const activityId = document.getElementById('edit-activity-id').value;
+            const originalName = document.getElementById('edit-activity-original-name').value;
             const name = document.getElementById('act-name').value.trim();
             const organizer = document.getElementById('act-organizer').value.trim();
             const date = document.getElementById('act-date').value;
@@ -2999,10 +3003,37 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
+                let syncCount = 0;
+                
                 if (activityId) {
-                    // Update existing
+                    // Update existing activity
                     await db.collection('activities').doc(activityId).update(activityData);
-                    alert('✅ อัพเดตกิจกรรมเรียบร้อย | Activity updated');
+                    
+                    // Sync participation records if name or skills changed
+                    const nameToSearch = originalName || name;
+                    const participationQuery = await db.collection('participation')
+                        .where('activityName', '==', nameToSearch)
+                        .get();
+                    
+                    if (!participationQuery.empty) {
+                        const batch = db.batch();
+                        participationQuery.forEach(doc => {
+                            batch.update(doc.ref, {
+                                activityName: name,
+                                skills: skills,
+                                date: date,
+                                syncedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            syncCount++;
+                        });
+                        await batch.commit();
+                    }
+                    
+                    let msg = '✅ อัพเดตกิจกรรมเรียบร้อย | Activity updated';
+                    if (syncCount > 0) {
+                        msg += `\n\n📊 อัพเดต ${syncCount} รายการใน participation`;
+                    }
+                    alert(msg);
                 } else {
                     // Create new
                     activityData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
