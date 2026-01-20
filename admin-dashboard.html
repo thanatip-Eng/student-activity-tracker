@@ -278,6 +278,7 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" data-tab="student-search">🔍 ค้นหานศ. | Search Student</button>
+            <button class="tab" data-tab="activity-search">🔎 ค้นหากิจกรรม | Search Activity</button>
             <button class="tab" data-tab="activities-manage">📚 จัดการกิจกรรม | Activities</button>
             <button class="tab" data-tab="student-submissions">📝 นศ.แจ้ง | Student</button>
             <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
@@ -352,6 +353,27 @@
                 <div id="student-not-found" class="not-found-box" style="display: none;">
                     <span class="icon">😕</span>
                     <p>ไม่พบข้อมูลนักศึกษา | Student not found</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Activity Search -->
+        <div id="tab-activity-search" class="tab-content">
+            <div class="panel">
+                <h2>🔎 ค้นหากิจกรรม | Search Activity</h2>
+                <p class="panel-desc">ค้นหาชื่อกิจกรรมและดูรายชื่อนักศึกษาที่เข้าร่วม | Search activity name and view participants</p>
+                
+                <div class="search-box">
+                    <input type="text" id="activity-search-input" placeholder="พิมพ์ชื่อกิจกรรม เช่น สมอง, Workshop, AI..." onkeyup="if(event.key==='Enter') searchActivities()">
+                    <button class="btn-search" onclick="searchActivities()">🔍 ค้นหา | Search</button>
+                </div>
+                
+                <div id="activity-search-stats" style="display: none; margin: 15px 0; padding: 15px; background: #e3f2fd; border-radius: 10px;">
+                    <span id="activity-search-count" style="font-weight: 600; color: #1565c0;"></span>
+                </div>
+                
+                <div id="activity-search-results" style="margin-top: 20px;">
+                    <!-- Results will be shown here -->
                 </div>
             </div>
         </div>
@@ -1020,6 +1042,190 @@
             showLoading(false);
         }
 
+        // ============================================
+        // ACTIVITY SEARCH WITH PARTICIPANTS
+        // ============================================
+        
+        let activitySearchCache = [];
+        let participationCache = [];
+        
+        async function searchActivities() {
+            const searchInput = document.getElementById('activity-search-input').value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('activity-search-results');
+            const statsDiv = document.getElementById('activity-search-stats');
+            
+            if (!searchInput) {
+                alert('กรุณากรอกชื่อกิจกรรม | Please enter activity name');
+                return;
+            }
+            
+            showLoading(true, 'กำลังค้นหา... | Searching...');
+            
+            try {
+                // Load activities if not cached
+                if (activitySearchCache.length === 0) {
+                    const activitiesSnap = await db.collection('activities').get();
+                    activitySearchCache = activitiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), source: 'activities' }));
+                    
+                    const orgActivitiesSnap = await db.collection('organizerActivities').get();
+                    const orgActivities = orgActivitiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), source: 'organizerActivities' }));
+                    activitySearchCache = [...activitySearchCache, ...orgActivities];
+                }
+                
+                // Load participation if not cached
+                if (participationCache.length === 0) {
+                    const participationSnap = await db.collection('participation').get();
+                    participationCache = participationSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                
+                // Filter activities by name
+                const matchedActivities = activitySearchCache.filter(act => {
+                    const name = (act.name || act.activityName || act.activityNameBase || '').toLowerCase();
+                    return name.includes(searchInput);
+                });
+                
+                // Sort by date (newest first)
+                matchedActivities.sort((a, b) => {
+                    const dateA = a.date || a.startDate || a.activityDate || '';
+                    const dateB = b.date || b.startDate || b.activityDate || '';
+                    return dateB.localeCompare(dateA);
+                });
+                
+                // Show stats
+                statsDiv.style.display = 'block';
+                document.getElementById('activity-search-count').textContent = 
+                    `พบ ${matchedActivities.length} กิจกรรม | Found ${matchedActivities.length} activities`;
+                
+                if (matchedActivities.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <span style="font-size: 3em;">😕</span>
+                            <p style="margin-top: 15px;">ไม่พบกิจกรรมที่มีคำว่า "${searchInput}"</p>
+                        </div>
+                    `;
+                    showLoading(false);
+                    return;
+                }
+                
+                // Render results
+                resultsDiv.innerHTML = matchedActivities.map(act => {
+                    const actName = act.name || act.activityName || act.activityNameBase || 'ไม่ระบุชื่อ';
+                    const actDate = act.date || act.startDate || act.activityDate || '-';
+                    const actOrganizer = act.organizer || act.organizerName || '-';
+                    const skills = act.skills || act.approvedSkills || [];
+                    const source = act.source === 'organizerActivities' ? '👨‍💼 ผู้จัด' : '📝 ระบบ';
+                    
+                    // Find participants
+                    let participants = [];
+                    
+                    // From organizerActivities studentIds
+                    if (act.studentIds && act.studentIds.length > 0) {
+                        participants = act.studentIds.map(id => ({ studentId: id, source: 'studentIds' }));
+                    }
+                    
+                    // From participation collection
+                    const participationRecords = participationCache.filter(p => {
+                        const pName = (p.activityName || '').toLowerCase();
+                        return pName === actName.toLowerCase() || pName.includes(actName.toLowerCase().substring(0, 20));
+                    });
+                    
+                    participationRecords.forEach(p => {
+                        if (!participants.find(x => x.studentId === p.studentId)) {
+                            participants.push({ studentId: p.studentId, source: 'participation', status: p.status });
+                        }
+                    });
+                    
+                    const skillsHtml = skills.length > 0 
+                        ? skills.map(s => `<span style="background:#e3f2fd;color:#1565c0;padding:3px 8px;border-radius:12px;font-size:0.8em;margin-right:5px;">${s.code} Lv.${s.level}</span>`).join('')
+                        : '<span style="color:#999;font-size:0.85em;">ไม่ระบุทักษะ</span>';
+                    
+                    const participantsHtml = participants.length > 0
+                        ? `<div style="margin-top: 10px; padding: 15px; background: #f5f5f5; border-radius: 10px;">
+                            <strong style="color: #333;">👥 นักศึกษาที่เข้าร่วม (${participants.length} คน):</strong>
+                            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${participants.map(p => `
+                                    <span style="background: white; border: 1px solid #ddd; padding: 5px 12px; border-radius: 20px; font-family: monospace; font-size: 0.9em; cursor: pointer;" 
+                                          onclick="searchStudentFromActivity('${p.studentId}')" title="คลิกเพื่อดูข้อมูลนักศึกษา">
+                                        ${p.studentId}
+                                    </span>
+                                `).join('')}
+                            </div>
+                           </div>`
+                        : `<div style="margin-top: 10px; padding: 15px; background: #fff3e0; border-radius: 10px; color: #e65100;">
+                            ⚠️ ยังไม่มีนักศึกษาเข้าร่วม
+                           </div>`;
+                    
+                    return `
+                        <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                <div style="flex: 1;">
+                                    <h3 style="color: #1a472a; margin-bottom: 8px; font-size: 1.1em;">${actName}</h3>
+                                    <p style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+                                        📅 ${actDate} | 🏢 ${actOrganizer} | ${source}
+                                    </p>
+                                    <div>${skillsHtml}</div>
+                                </div>
+                                <button onclick="editActivityFromSearch('${act.id}', '${act.source}')" 
+                                        style="padding: 8px 15px; background: #e3f2fd; color: #1565c0; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85em;">
+                                    ✏️ แก้ไข
+                                </button>
+                            </div>
+                            ${participantsHtml}
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Activity search error:', error);
+                resultsDiv.innerHTML = `<div style="color: #e53935; padding: 20px;">❌ เกิดข้อผิดพลาด: ${error.message}</div>`;
+            }
+            
+            showLoading(false);
+        }
+        
+        function searchStudentFromActivity(studentId) {
+            // Switch to student search tab and search
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="student-search"]').classList.add('active');
+            document.getElementById('tab-student-search').classList.add('active');
+            
+            document.getElementById('admin-student-search').value = studentId;
+            searchStudentAdmin();
+        }
+        
+        function editActivityFromSearch(activityId, source) {
+            if (source === 'organizerActivities') {
+                alert('⚠️ กิจกรรมจากผู้จัด - กรุณาแก้ไขในแท็บ "👨‍💼 ผู้จัด | Organizer"');
+                // Switch to organizer tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('[data-tab="organizer-activities"]').classList.add('active');
+                document.getElementById('tab-organizer-activities').classList.add('active');
+            } else {
+                // Switch to activities manage tab and edit
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('[data-tab="activities-manage"]').classList.add('active');
+                document.getElementById('tab-activities-manage').classList.add('active');
+                
+                // Load activities first if needed
+                if (allActivitiesCache.length === 0) {
+                    loadAllActivitiesAdmin().then(() => {
+                        editActivityAdmin(activityId);
+                    });
+                } else {
+                    editActivityAdmin(activityId);
+                }
+            }
+        }
+        
+        // Clear cache when needed
+        function clearActivitySearchCache() {
+            activitySearchCache = [];
+            participationCache = [];
+        }
+
         async function loadStudentActivitiesAdmin(studentId, email) {
             const activities = [];
             
@@ -1218,24 +1424,35 @@
         async function loadAllData() {
             showLoading(true, 'กำลังโหลดข้อมูล...');
             
+            // Clear activity search cache
+            clearActivitySearchCache();
+            
             try {
-                // Load student submissions
-                const submissionsQuery = await db.collection('submissions')
-                    .orderBy('submittedAt', 'desc')
-                    .get();
+                // Load student submissions (no orderBy - sort client-side)
+                const submissionsQuery = await db.collection('submissions').get();
                 studentSubmissions = submissionsQuery.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                // Sort by submittedAt (newest first)
+                studentSubmissions.sort((a, b) => {
+                    const timeA = a.submittedAt?.toMillis?.() || a.submittedAt || 0;
+                    const timeB = b.submittedAt?.toMillis?.() || b.submittedAt || 0;
+                    return timeB - timeA;
+                });
                 
-                // Load organizer activities
-                const activitiesQuery = await db.collection('organizerActivities')
-                    .orderBy('updatedAt', 'desc')
-                    .get();
+                // Load organizer activities (no orderBy - sort client-side)
+                const activitiesQuery = await db.collection('organizerActivities').get();
                 organizerActivities = activitiesQuery.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                // Sort by updatedAt (newest first)
+                organizerActivities.sort((a, b) => {
+                    const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+                    const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+                    return timeB - timeA;
+                });
                 
                 // Update stats
                 updateStats();
@@ -1247,7 +1464,7 @@
                 
             } catch (error) {
                 console.error('Load error:', error);
-                alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
             }
             
             showLoading(false);
@@ -2201,12 +2418,15 @@
             const container = document.getElementById('organizers-list');
             
             try {
-                const query = await db.collection('organizers').orderBy('email').get();
+                const query = await db.collection('organizers').get();
                 
                 allOrganizers = query.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                
+                // Sort by email client-side
+                allOrganizers.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
                 
                 // Update stats
                 document.getElementById('total-organizers').textContent = allOrganizers.length;
@@ -3176,12 +3396,20 @@
             container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">กำลังโหลด... | Loading...</div>';
             
             try {
-                const snapshot = await db.collection('admins').orderBy('createdAt', 'desc').get();
+                const snapshot = await db.collection('admins').get();
                 
                 if (snapshot.empty) {
                     container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">ไม่มีข้อมูล | No data</div>';
                     return;
                 }
+                
+                // Sort by createdAt (newest first) client-side
+                const admins = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                admins.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis?.() || 0;
+                    const timeB = b.createdAt?.toMillis?.() || 0;
+                    return timeB - timeA;
+                });
                 
                 let html = '<table style="width: 100%; border-collapse: collapse;">';
                 html += `<thead>
@@ -3193,8 +3421,7 @@
                     </tr>
                 </thead><tbody>`;
                 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
+                admins.forEach(data => {
                     const hasPassword = !!data.password;
                     const isCurrentAdmin = currentAdmin && data.email === currentAdmin.email;
                     
@@ -3204,7 +3431,7 @@
                     
                     const deleteBtn = isCurrentAdmin 
                         ? '<span style="color: #999; font-size: 0.85em;">(คุณ)</span>'
-                        : `<button onclick="deleteAdmin('${doc.id}', '${data.email}')" style="padding: 6px 12px; background: #ffebee; color: #e53935; border: 1px solid #ef9a9a; border-radius: 6px; cursor: pointer; font-size: 0.85em;">🗑️ ลบ</button>`;
+                        : `<button onclick="deleteAdmin('${data.id}', '${data.email}')" style="padding: 6px 12px; background: #ffebee; color: #e53935; border: 1px solid #ef9a9a; border-radius: 6px; cursor: pointer; font-size: 0.85em;">🗑️ ลบ</button>`;
                     
                     html += `<tr style="border-bottom: 1px solid #eee;">
                         <td style="padding: 12px;">${data.email}</td>
