@@ -391,7 +391,7 @@
                 
                 <!-- Search Box -->
                 <div class="search-box" style="margin-bottom: 20px;">
-                    <input type="text" id="activity-search-input" placeholder="ค้นหากิจกรรม... | Search activity...">
+                    <input type="text" id="activity-manage-search-input" placeholder="ค้นหากิจกรรม... | Search activity...">
                     <button class="btn-search" onclick="searchActivitiesAdmin()">🔍 ค้นหา | Search</button>
                     <button class="btn-search" style="background: #27ae60;" onclick="loadAllActivitiesAdmin()">📋 ทั้งหมด | All</button>
                 </div>
@@ -2991,7 +2991,7 @@
         }
 
         function searchActivitiesAdmin() {
-            const searchTerm = document.getElementById('activity-search-input').value.trim().toLowerCase();
+            const searchTerm = document.getElementById('activity-manage-search-input').value.trim().toLowerCase();
             if (!searchTerm) {
                 loadAllActivitiesAdmin();
                 return;
