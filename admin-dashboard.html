@@ -1429,26 +1429,28 @@
             clearActivitySearchCache();
             
             try {
-                // Load student submissions (no orderBy - sort client-side)
-                const submissionsQuery = await db.collection('submissions').get();
+                // Load both collections in PARALLEL (much faster!)
+                const [submissionsQuery, activitiesQuery] = await Promise.all([
+                    db.collection('submissions').get(),
+                    db.collection('organizerActivities').get()
+                ]);
+                
+                // Process submissions
                 studentSubmissions = submissionsQuery.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-                // Sort by submittedAt (newest first)
                 studentSubmissions.sort((a, b) => {
                     const timeA = a.submittedAt?.toMillis?.() || a.submittedAt || 0;
                     const timeB = b.submittedAt?.toMillis?.() || b.submittedAt || 0;
                     return timeB - timeA;
                 });
                 
-                // Load organizer activities (no orderBy - sort client-side)
-                const activitiesQuery = await db.collection('organizerActivities').get();
+                // Process organizer activities
                 organizerActivities = activitiesQuery.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-                // Sort by updatedAt (newest first)
                 organizerActivities.sort((a, b) => {
                     const timeA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
                     const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;

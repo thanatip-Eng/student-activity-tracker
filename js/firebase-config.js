@@ -11,14 +11,8 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore with settings to fix WebChannel errors
+// Initialize Firestore
 const db = firebase.firestore();
-
-// Use long polling instead of WebChannel to avoid connection errors
-db.settings({
-    experimentalForceLongPolling: true,
-    merge: true
-});
 
 // Collections reference
 const studentsCollection = db.collection('students');
