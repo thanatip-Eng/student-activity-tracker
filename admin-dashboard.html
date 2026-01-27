@@ -2082,6 +2082,9 @@
             showLoading(true, 'กำลังอนุมัติ...');
             
             try {
+                // Use batch write for better performance
+                const batch = db.batch();
+                
                 // === Research Data Collection ===
                 const aiAccuracyRating = document.getElementById('ai-accuracy-rating')?.value || null;
                 const adminModified = document.getElementById('ai-modified-checkbox')?.checked || false;
@@ -2105,13 +2108,12 @@
                 });
                 const levelMatchRate = matchedSkills.length > 0 ? (levelMatchCount / matchedSkills.length) : 0;
                 
-                // Update submission status with research data
-                await db.collection('submissions').doc(currentItem.id).update({
+                // 1. Update submission status with research data
+                const submissionRef = db.collection('submissions').doc(currentItem.id);
+                batch.update(submissionRef, {
                     status: 'Approved',
                     approvedSkills: skills,
                     reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    
-                    // Research logging
                     '_research.adminReview': {
                         aiAccuracyRating: aiAccuracyRating ? parseInt(aiAccuracyRating) : null,
                         adminModifiedSkills: adminModified,
@@ -2124,24 +2126,28 @@
                     }
                 });
                 
-                // Add to participation
-                await db.collection('participation').add({
+                // 2. Add to participation
+                const participationRef = db.collection('participation').doc();
+                batch.set(participationRef, {
                     studentId: currentItem.studentId,
                     activityName: currentItem.activityName,
                     status: 'Approved',
                     date: currentItem.startDate,
+                    skills: skills,
                     source: 'student-submission',
                     addedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Add/update activity
+                // 3. Check existing activity (single query)
                 const existingActivity = await db.collection('activities')
                     .where('name', '==', currentItem.activityName)
+                    .limit(1)
                     .get();
                 
                 if (existingActivity.empty) {
-                    // Save with skills array for consistency
-                    await db.collection('activities').add({
+                    // Add new activity
+                    const activityRef = db.collection('activities').doc();
+                    batch.set(activityRef, {
                         name: currentItem.activityName,
                         level: currentItem.activityLevel,
                         organizer: currentItem.activityOrganizer || '',
@@ -2154,11 +2160,12 @@
                     // Update existing activity skills if empty
                     const existingData = existingActivity.docs[0].data();
                     if (!existingData.skills || existingData.skills.length === 0) {
-                        await db.collection('activities').doc(existingActivity.docs[0].id).update({
-                            skills: skills
-                        });
+                        batch.update(existingActivity.docs[0].ref, { skills: skills });
                     }
                 }
+                
+                // Commit all operations at once
+                await batch.commit();
                 
                 alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
                 closeDetailModal();
@@ -2166,7 +2173,7 @@
                 
             } catch (error) {
                 console.error('Approve error:', error);
-                alert('เกิดข้อผิดพลาด: ' + error.message);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             }
             
             showLoading(false);
@@ -2202,69 +2209,85 @@
             // Get admin note
             const adminNote = document.getElementById('admin-note-to-organizer')?.value?.trim() || '';
             
-            showLoading(true, 'กำลังอนุมัติ...');
+            const studentIds = currentItem.studentIds || [];
+            showLoading(true, `กำลังอนุมัติ... (${studentIds.length} นักศึกษา)`);
             
             try {
-                // Update status with approved skills and note
-                await db.collection('organizerActivities').doc(currentItem.id).update({
+                // Use batch write for better performance
+                const batch = db.batch();
+                
+                // 1. Update organizerActivities status
+                const orgActivityRef = db.collection('organizerActivities').doc(currentItem.id);
+                batch.update(orgActivityRef, {
                     status: 'Approved',
                     approvedSkills: skills,
-                    originalSkills: currentItem.skills || [], // Keep original for reference
+                    originalSkills: currentItem.skills || [],
                     adminNote: adminNote,
                     approvedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Add activity to master with approved skills
+                // 2. Check if activity exists (single query)
                 const existingActivity = await db.collection('activities')
                     .where('name', '==', currentItem.activityName)
+                    .limit(1)
                     .get();
                 
                 if (existingActivity.empty) {
-                    // Save with approved skills
-                    await db.collection('activities').add({
+                    // Add new activity
+                    const newActivityRef = db.collection('activities').doc();
+                    batch.set(newActivityRef, {
                         name: currentItem.activityName,
                         organizer: currentItem.organizerName || currentItem.department || '',
                         date: currentItem.activityDate || currentItem.startDate || '',
                         level: currentItem.activityLevel || 2,
                         description: currentItem.description || '',
-                        skills: skills, // Use approved skills
+                        skills: skills,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // Update existing activity skills
-                    await db.collection('activities').doc(existingActivity.docs[0].id).update({
-                        skills: skills
+                    // Update existing activity
+                    batch.update(existingActivity.docs[0].ref, { skills: skills });
+                }
+                
+                // 3. Get existing participation records in one query
+                let existingParticipation = new Set();
+                if (studentIds.length > 0) {
+                    const participationQuery = await db.collection('participation')
+                        .where('activityName', '==', currentItem.activityName)
+                        .get();
+                    participationQuery.forEach(doc => {
+                        existingParticipation.add(doc.data().studentId);
                     });
                 }
                 
-                // Add students to participation with approved skills
-                const studentIds = currentItem.studentIds || [];
+                // 4. Add participation for new students only (batch)
+                let addedCount = 0;
                 for (const studentId of studentIds) {
-                    const existing = await db.collection('participation')
-                        .where('studentId', '==', studentId)
-                        .where('activityName', '==', currentItem.activityName)
-                        .get();
-                    
-                    if (existing.empty) {
-                        await db.collection('participation').add({
+                    if (!existingParticipation.has(studentId)) {
+                        const newParticipationRef = db.collection('participation').doc();
+                        batch.set(newParticipationRef, {
                             studentId: studentId,
                             activityName: currentItem.activityName,
                             status: 'Approved',
                             date: currentItem.activityDate || currentItem.startDate || '',
-                            skills: skills, // Include approved skills
+                            skills: skills,
                             source: 'organizer',
                             addedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
+                        addedCount++;
                     }
                 }
                 
-                alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
+                // Commit all operations at once
+                await batch.commit();
+                
+                alert(`✅ อนุมัติเรียบร้อย!\n\n📊 เพิ่ม ${addedCount} นักศึกษาใน participation\n⏭️ ข้าม ${studentIds.length - addedCount} คนที่มีอยู่แล้ว`);
                 closeDetailModal();
                 await loadAllData();
                 
             } catch (error) {
                 console.error('Approve error:', error);
-                alert('เกิดข้อผิดพลาด: ' + error.message);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             }
             
             showLoading(false);
