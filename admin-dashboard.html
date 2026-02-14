@@ -1703,28 +1703,33 @@
         // RENDER STUDENT SUBMISSIONS
         // ============================================
         function renderStudentSubmissions() {
-            const container = document.getElementById('student-submissions-list');
-            
-            let filtered = studentSubmissions;
-            if (studentFilter !== 'all') {
-                filtered = studentSubmissions.filter(s => {
-                    const status = s.status?.toLowerCase() || '';
-                    if (studentFilter === 'pending') return status.includes('pending');
-                    if (studentFilter === 'approved') return status === 'approved';
-                    if (studentFilter === 'rejected') return status.includes('rejected');
-                    return true;
-                });
-            }
-            
-            // Show/hide bulk actions based on pending items
-            const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
-            document.getElementById('student-bulk-actions').style.display = hasPending ? 'flex' : 'none';
-            
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">📭</span>
-                        <p>ไม่มีรายการ</p>
+            try {
+                const container = document.getElementById('student-submissions-list');
+                if (!container) return;
+                
+                let filtered = studentSubmissions;
+                if (studentFilter !== 'all') {
+                    filtered = studentSubmissions.filter(s => {
+                        const status = s.status?.toLowerCase() || '';
+                        if (studentFilter === 'pending') return status.includes('pending');
+                        if (studentFilter === 'approved') return status === 'approved';
+                        if (studentFilter === 'rejected') return status.includes('rejected');
+                        return true;
+                    });
+                }
+                
+                // Show/hide bulk actions based on pending items
+                const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
+                const bulkActionsEl = document.getElementById('student-bulk-actions');
+                if (bulkActionsEl) {
+                    bulkActionsEl.style.display = hasPending ? 'flex' : 'none';
+                }
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">📭</span>
+                            <p>ไม่มีรายการ</p>
                     </div>
                 `;
                 return;
@@ -1769,20 +1774,25 @@
             }).join('');
             
             updateStudentSelectedCount();
+            } catch (error) {
+                console.error('renderStudentSubmissions error:', error);
+            }
         }
 
         // ============================================
         // RENDER ORGANIZER ACTIVITIES
         // ============================================
         function renderOrganizerActivities() {
-            const container = document.getElementById('organizer-activities-list');
-            
-            let filtered = organizerActivities;
-            if (organizerFilter !== 'all') {
-                filtered = organizerActivities.filter(a => {
-                    const status = a.status?.toLowerCase() || '';
-                    if (organizerFilter === 'pending') return status === 'pending';
-                    if (organizerFilter === 'approved') return status === 'approved';
+            try {
+                const container = document.getElementById('organizer-activities-list');
+                if (!container) return;
+                
+                let filtered = organizerActivities;
+                if (organizerFilter !== 'all') {
+                    filtered = organizerActivities.filter(a => {
+                        const status = a.status?.toLowerCase() || '';
+                        if (organizerFilter === 'pending') return status === 'pending';
+                        if (organizerFilter === 'approved') return status === 'approved';
                     if (organizerFilter === 'rejected') return status.includes('rejected');
                     return true;
                 });
@@ -1790,7 +1800,10 @@
             
             // Show/hide bulk actions based on pending items
             const hasPending = filtered.some(a => a.status?.toLowerCase() === 'pending');
-            document.getElementById('organizer-bulk-actions').style.display = hasPending ? 'flex' : 'none';
+            const bulkActionsEl = document.getElementById('organizer-bulk-actions');
+            if (bulkActionsEl) {
+                bulkActionsEl.style.display = hasPending ? 'flex' : 'none';
+            }
             
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -1852,6 +1865,9 @@
             }).join('');
             
             updateOrganizerSelectedCount();
+            } catch (error) {
+                console.error('renderOrganizerActivities error:', error);
+            }
         }
 
         // ============================================
@@ -2691,24 +2707,28 @@
         
         function clearStudentSelection() {
             selectedStudentItems.clear();
-            document.getElementById('student-select-all').checked = false;
+            const el = document.getElementById('student-select-all');
+            if (el) el.checked = false;
             updateStudentSelectedCount();
             renderStudentSubmissions();
         }
         
         function clearOrganizerSelection() {
             selectedOrganizerItems.clear();
-            document.getElementById('organizer-select-all').checked = false;
+            const el = document.getElementById('organizer-select-all');
+            if (el) el.checked = false;
             updateOrganizerSelectedCount();
             renderOrganizerActivities();
         }
         
         function updateStudentSelectedCount() {
-            document.getElementById('student-selected-count').textContent = `${selectedStudentItems.size} รายการ`;
+            const el = document.getElementById('student-selected-count');
+            if (el) el.textContent = `${selectedStudentItems.size} รายการ`;
         }
         
         function updateOrganizerSelectedCount() {
-            document.getElementById('organizer-selected-count').textContent = `${selectedOrganizerItems.size} รายการ`;
+            const el = document.getElementById('organizer-selected-count');
+            if (el) el.textContent = `${selectedOrganizerItems.size} รายการ`;
         }
 
         // ============================================
