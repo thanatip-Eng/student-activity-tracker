@@ -1429,7 +1429,7 @@
             clearActivitySearchCache();
             
             try {
-                // Load both collections in PARALLEL (much faster!)
+                // Load both collections in PARALLEL
                 const [submissionsQuery, activitiesQuery] = await Promise.all([
                     db.collection('submissions').get(),
                     db.collection('organizerActivities').get()
@@ -1464,6 +1464,8 @@
                 renderStudentSubmissions();
                 renderOrganizerActivities();
                 updateTransferStats();
+                
+                console.log('✅ Data loaded:', studentSubmissions.length, 'submissions,', organizerActivities.length, 'activities');
                 
             } catch (error) {
                 console.error('Load error:', error);
@@ -2082,6 +2084,7 @@
                 return;
             }
             
+            const itemId = currentItem.id;
             showLoading(true, 'กำลังอนุมัติ...');
             
             try {
@@ -2112,7 +2115,7 @@
                 const levelMatchRate = matchedSkills.length > 0 ? (levelMatchCount / matchedSkills.length) : 0;
                 
                 // 1. Update submission status with research data
-                const submissionRef = db.collection('submissions').doc(currentItem.id);
+                const submissionRef = db.collection('submissions').doc(itemId);
                 batch.update(submissionRef, {
                     status: 'Approved',
                     approvedSkills: skills,
@@ -2170,16 +2173,27 @@
                 // Commit all operations at once
                 await batch.commit();
                 
-                alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
+                // Update local state instead of reloading all data
+                const index = studentSubmissions.findIndex(s => s.id === itemId);
+                if (index !== -1) {
+                    studentSubmissions[index].status = 'Approved';
+                    studentSubmissions[index].approvedSkills = skills;
+                }
+                
+                // Update UI
+                updateStats();
+                renderStudentSubmissions();
+                
                 closeDetailModal();
-                await loadAllData();
+                showLoading(false);
+                
+                alert('✅ อนุมัติเรียบร้อยแล้ว | Approved successfully');
                 
             } catch (error) {
                 console.error('Approve error:', error);
+                showLoading(false);
                 alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             }
-            
-            showLoading(false);
         }
 
         async function approveOrganizerActivity() {
@@ -2213,6 +2227,7 @@
             const adminNote = document.getElementById('admin-note-to-organizer')?.value?.trim() || '';
             
             const studentIds = currentItem.studentIds || [];
+            const itemId = currentItem.id;
             showLoading(true, `กำลังอนุมัติ... (${studentIds.length} นักศึกษา)`);
             
             try {
@@ -2220,7 +2235,7 @@
                 const batch = db.batch();
                 
                 // 1. Update organizerActivities status
-                const orgActivityRef = db.collection('organizerActivities').doc(currentItem.id);
+                const orgActivityRef = db.collection('organizerActivities').doc(itemId);
                 batch.update(orgActivityRef, {
                     status: 'Approved',
                     approvedSkills: skills,
@@ -2284,16 +2299,28 @@
                 // Commit all operations at once
                 await batch.commit();
                 
-                alert(`✅ อนุมัติเรียบร้อย!\n\n📊 เพิ่ม ${addedCount} นักศึกษาใน participation\n⏭️ ข้าม ${studentIds.length - addedCount} คนที่มีอยู่แล้ว`);
+                // Update local state instead of reloading all data
+                const index = organizerActivities.findIndex(a => a.id === itemId);
+                if (index !== -1) {
+                    organizerActivities[index].status = 'Approved';
+                    organizerActivities[index].approvedSkills = skills;
+                    organizerActivities[index].adminNote = adminNote;
+                }
+                
+                // Update UI
+                updateStats();
+                renderOrganizerActivities();
+                
                 closeDetailModal();
-                await loadAllData();
+                showLoading(false);
+                
+                alert(`✅ อนุมัติเรียบร้อย!\n\n📊 เพิ่ม ${addedCount} นักศึกษาใน participation\n⏭️ ข้าม ${studentIds.length - addedCount} คนที่มีอยู่แล้ว`);
                 
             } catch (error) {
                 console.error('Approve error:', error);
+                showLoading(false);
                 alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             }
-            
-            showLoading(false);
         }
 
         function rejectItem() {
@@ -2313,28 +2340,50 @@
                 return;
             }
             
+            const itemId = currentItem.id;
+            const itemType = currentType;
             showLoading(true, 'กำลังปฏิเสธ...');
             
             try {
-                const collection = currentType === 'student' ? 'submissions' : 'organizerActivities';
+                const collection = itemType === 'student' ? 'submissions' : 'organizerActivities';
                 
-                await db.collection(collection).doc(currentItem.id).update({
+                await db.collection(collection).doc(itemId).update({
                     status: 'Rejected',
                     rejectReason: reason,
                     reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                alert('❌ ปฏิเสธเรียบร้อยแล้ว');
+                // Update local state instead of reloading all data
+                if (itemType === 'student') {
+                    const index = studentSubmissions.findIndex(s => s.id === itemId);
+                    if (index !== -1) {
+                        studentSubmissions[index].status = 'Rejected';
+                        studentSubmissions[index].rejectReason = reason;
+                    }
+                    renderStudentSubmissions();
+                } else {
+                    const index = organizerActivities.findIndex(a => a.id === itemId);
+                    if (index !== -1) {
+                        organizerActivities[index].status = 'Rejected';
+                        organizerActivities[index].rejectReason = reason;
+                    }
+                    renderOrganizerActivities();
+                }
+                
+                // Update stats
+                updateStats();
+                
                 closeRejectModal();
                 closeDetailModal();
-                await loadAllData();
+                showLoading(false);
+                
+                alert('❌ ปฏิเสธเรียบร้อยแล้ว');
                 
             } catch (error) {
                 console.error('Reject error:', error);
+                showLoading(false);
                 alert('เกิดข้อผิดพลาด: ' + error.message);
             }
-            
-            showLoading(false);
         }
 
         // ============================================
