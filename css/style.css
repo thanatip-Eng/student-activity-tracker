@@ -342,50 +342,6 @@ body {
     height: 350px;
 }
 
-/* Competency Table */
-.competency-table-wrapper {
-    max-height: 350px;
-    overflow-y: auto;
-}
-
-.competency-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.competency-table th,
-.competency-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-
-.competency-table th {
-    background: #f8f9ff;
-    font-weight: 600;
-    color: #1a1a2e;
-    position: sticky;
-    top: 0;
-}
-
-.competency-table tr:hover {
-    background: #f8f9ff;
-}
-
-.level-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.85em;
-}
-
-.level-0 { background: #f5f5f5; color: #999; }
-.level-1 { background: #e3f2fd; color: #1976d2; }
-.level-2 { background: #e8f5e9; color: #388e3c; }
-.level-3 { background: #fff3e0; color: #f57c00; }
-.level-4 { background: #fce4ec; color: #c2185b; }
-
 /* Activities Card */
 .activities-filter {
     display: flex;
@@ -416,63 +372,6 @@ body {
 .activities-list {
     max-height: 500px;
     overflow-y: auto;
-}
-
-.activity-item {
-    background: #f8f9ff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border-left: 4px solid #667eea;
-    transition: all 0.3s;
-}
-
-.activity-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.activity-item.status-approved {
-    border-left-color: #27ae60;
-}
-
-.activity-item.status-pending {
-    border-left-color: #f39c12;
-}
-
-.activity-item.status-rejected {
-    border-left-color: #e74c3c;
-}
-
-.activity-title {
-    font-weight: 600;
-    color: #1a1a2e;
-    font-size: 1.1em;
-    margin-bottom: 8px;
-}
-
-.activity-meta {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    color: #666;
-    font-size: 0.9em;
-    margin-bottom: 10px;
-}
-
-.activity-skills {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.skill-tag {
-    background: #e8f0ff;
-    color: #667eea;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 0.8em;
-    font-weight: 500;
 }
 
 .status-badge {
