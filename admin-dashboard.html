@@ -298,6 +298,12 @@
             content: '🤖';
             font-size: 0.9em;
         }
+        .ai-skills-label {
+            font-size: 0.75em;
+            color: #888;
+            font-weight: 600;
+            white-space: nowrap;
+        }
         
         /* Bulk Modal Styles */
         .bulk-modal-list {
@@ -1703,33 +1709,28 @@
         // RENDER STUDENT SUBMISSIONS
         // ============================================
         function renderStudentSubmissions() {
-            try {
-                const container = document.getElementById('student-submissions-list');
-                if (!container) return;
-                
-                let filtered = studentSubmissions;
-                if (studentFilter !== 'all') {
-                    filtered = studentSubmissions.filter(s => {
-                        const status = s.status?.toLowerCase() || '';
-                        if (studentFilter === 'pending') return status.includes('pending');
-                        if (studentFilter === 'approved') return status === 'approved';
-                        if (studentFilter === 'rejected') return status.includes('rejected');
-                        return true;
-                    });
-                }
-                
-                // Show/hide bulk actions based on pending items
-                const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
-                const bulkActionsEl = document.getElementById('student-bulk-actions');
-                if (bulkActionsEl) {
-                    bulkActionsEl.style.display = hasPending ? 'flex' : 'none';
-                }
-                
-                if (filtered.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">📭</span>
-                            <p>ไม่มีรายการ</p>
+            const container = document.getElementById('student-submissions-list');
+            
+            let filtered = studentSubmissions;
+            if (studentFilter !== 'all') {
+                filtered = studentSubmissions.filter(s => {
+                    const status = s.status?.toLowerCase() || '';
+                    if (studentFilter === 'pending') return status.includes('pending');
+                    if (studentFilter === 'approved') return status === 'approved';
+                    if (studentFilter === 'rejected') return status.includes('rejected');
+                    return true;
+                });
+            }
+            
+            // Show/hide bulk actions based on pending items
+            const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
+            document.getElementById('student-bulk-actions').style.display = hasPending ? 'flex' : 'none';
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">📭</span>
+                        <p>ไม่มีรายการ</p>
                     </div>
                 `;
                 return;
@@ -1744,9 +1745,13 @@
                 
                 // AI suggested skills preview
                 const aiSkills = item.aiSuggestedSkills || [];
-                const aiSkillsHtml = aiSkills.length > 0 
+                const aiSkillsHtml = aiSkills.length > 0
                     ? `<div class="ai-skills-preview">
-                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        <span class="ai-skills-label">AI แนะนำ:</span>
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span class="ai-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
@@ -1774,25 +1779,20 @@
             }).join('');
             
             updateStudentSelectedCount();
-            } catch (error) {
-                console.error('renderStudentSubmissions error:', error);
-            }
         }
 
         // ============================================
         // RENDER ORGANIZER ACTIVITIES
         // ============================================
         function renderOrganizerActivities() {
-            try {
-                const container = document.getElementById('organizer-activities-list');
-                if (!container) return;
-                
-                let filtered = organizerActivities;
-                if (organizerFilter !== 'all') {
-                    filtered = organizerActivities.filter(a => {
-                        const status = a.status?.toLowerCase() || '';
-                        if (organizerFilter === 'pending') return status === 'pending';
-                        if (organizerFilter === 'approved') return status === 'approved';
+            const container = document.getElementById('organizer-activities-list');
+            
+            let filtered = organizerActivities;
+            if (organizerFilter !== 'all') {
+                filtered = organizerActivities.filter(a => {
+                    const status = a.status?.toLowerCase() || '';
+                    if (organizerFilter === 'pending') return status === 'pending';
+                    if (organizerFilter === 'approved') return status === 'approved';
                     if (organizerFilter === 'rejected') return status.includes('rejected');
                     return true;
                 });
@@ -1800,10 +1800,7 @@
             
             // Show/hide bulk actions based on pending items
             const hasPending = filtered.some(a => a.status?.toLowerCase() === 'pending');
-            const bulkActionsEl = document.getElementById('organizer-bulk-actions');
-            if (bulkActionsEl) {
-                bulkActionsEl.style.display = hasPending ? 'flex' : 'none';
-            }
+            document.getElementById('organizer-bulk-actions').style.display = hasPending ? 'flex' : 'none';
             
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -1832,9 +1829,13 @@
                 
                 // AI suggested skills (from organizer's AI suggestion)
                 const aiSkills = item.aiSuggestedSkills || [];
-                const aiSkillsHtml = aiSkills.length > 0 
+                const aiSkillsHtml = aiSkills.length > 0
                     ? `<div class="ai-skills-preview" style="margin-top: 5px;">
-                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        <span class="ai-skills-label">AI แนะนำ:</span>
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span class="ai-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
@@ -1865,9 +1866,6 @@
             }).join('');
             
             updateOrganizerSelectedCount();
-            } catch (error) {
-                console.error('renderOrganizerActivities error:', error);
-            }
         }
 
         // ============================================
@@ -2707,28 +2705,24 @@
         
         function clearStudentSelection() {
             selectedStudentItems.clear();
-            const el = document.getElementById('student-select-all');
-            if (el) el.checked = false;
+            document.getElementById('student-select-all').checked = false;
             updateStudentSelectedCount();
             renderStudentSubmissions();
         }
         
         function clearOrganizerSelection() {
             selectedOrganizerItems.clear();
-            const el = document.getElementById('organizer-select-all');
-            if (el) el.checked = false;
+            document.getElementById('organizer-select-all').checked = false;
             updateOrganizerSelectedCount();
             renderOrganizerActivities();
         }
         
         function updateStudentSelectedCount() {
-            const el = document.getElementById('student-selected-count');
-            if (el) el.textContent = `${selectedStudentItems.size} รายการ`;
+            document.getElementById('student-selected-count').textContent = `${selectedStudentItems.size} รายการ`;
         }
         
         function updateOrganizerSelectedCount() {
-            const el = document.getElementById('organizer-selected-count');
-            if (el) el.textContent = `${selectedOrganizerItems.size} รายการ`;
+            document.getElementById('organizer-selected-count').textContent = `${selectedOrganizerItems.size} รายการ`;
         }
 
         // ============================================
@@ -2745,12 +2739,21 @@
                 return;
             }
             
-            // Populate list
+            // Populate list with AI skills info
             const listHtml = Array.from(selectedIds).map(id => {
                 const item = items.find(i => i.id === id);
-                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+                const aiSkills = item?.aiSuggestedSkills || [];
+                const aiHtml = aiSkills.length > 0
+                    ? `<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;">
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:1px 5px;border-radius:8px;font-size:0.7em;">🤖 ${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
+                       </div>`
+                    : '';
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}${aiHtml}</div>`;
             }).join('');
-            
+
             document.getElementById('bulk-reject-list').innerHTML = listHtml;
             document.getElementById('bulk-reject-count').textContent = selectedIds.size;
             document.getElementById('bulk-reject-reason').value = '';
@@ -2838,31 +2841,84 @@
                 return;
             }
             
-            // Populate list
+            // Collect AI suggested skills across all selected items
+            const aiSkillFrequency = {};
+            const aiSkillMaxLevel = {};
+
+            // Populate list with AI skills summary per item
             const listHtml = Array.from(selectedIds).map(id => {
                 const item = items.find(i => i.id === id);
-                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+                const aiSkills = item?.aiSuggestedSkills || [];
+
+                // Aggregate AI skills frequency
+                aiSkills.forEach(s => {
+                    aiSkillFrequency[s.code] = (aiSkillFrequency[s.code] || 0) + 1;
+                    aiSkillMaxLevel[s.code] = Math.max(aiSkillMaxLevel[s.code] || 0, s.level);
+                });
+
+                const aiHtml = aiSkills.length > 0
+                    ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:1px 6px;border-radius:8px;font-size:0.7em;">🤖 ${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
+                        ${aiSkills.length > 3 ? `<span style="background:#e0e0e0;color:#666;padding:1px 6px;border-radius:8px;font-size:0.7em;">+${aiSkills.length - 3}</span>` : ''}
+                       </div>`
+                    : '';
+
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}${aiHtml}</div>`;
             }).join('');
-            
-            document.getElementById('bulk-approve-list').innerHTML = listHtml;
+
+            // Build AI summary section
+            const sortedAiSkills = Object.entries(aiSkillFrequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const aiSummaryHtml = sortedAiSkills.length > 0
+                ? `<div style="margin-top:12px;padding:10px;background:#fff8e1;border-radius:8px;border-left:3px solid #ff9800;">
+                    <strong style="font-size:0.85em;">🤖 สรุป AI แนะนำ (รวมทุกรายการ):</strong>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">
+                        ${sortedAiSkills.map(([code, count]) => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:10px;font-size:0.8em;cursor:pointer;"
+                                onclick="document.getElementById('bulk-skill-${code}').click()" title="คลิกเพื่อเลือก">
+                                🤖 ${code} ${c?.nameTh || ''} (${count}/${selectedIds.size}ครั้ง, max Lv.${aiSkillMaxLevel[code]})
+                            </span>`;
+                        }).join('')}
+                    </div>
+                   </div>`
+                : '';
+
+            document.getElementById('bulk-approve-list').innerHTML = listHtml + aiSummaryHtml;
             document.getElementById('bulk-approve-count').textContent = selectedIds.size;
-            
+
             // Populate skills grid
             const grid = document.getElementById('bulk-skills-grid');
-            grid.innerHTML = CRITERIA_LIST.map(c => `
-                <div style="display:flex; align-items:center; gap:5px; background:white; padding:8px; border-radius:6px; border:1px solid #eee;">
+            grid.innerHTML = CRITERIA_LIST.map(c => {
+                const freq = aiSkillFrequency[c.code] || 0;
+                const isAiRecommended = freq > 0;
+                const highlightStyle = isAiRecommended ? 'background:#e8f5e9;border:1px solid #a5d6a7;' : 'background:white;border:1px solid #eee;';
+                const aiLabel = isAiRecommended ? `<span style="background:#ff9800;color:white;padding:0 4px;border-radius:4px;font-size:0.65em;margin-left:3px;">AI×${freq}</span>` : '';
+                return `
+                <div style="display:flex; align-items:center; gap:5px; ${highlightStyle} padding:8px; border-radius:6px;">
                     <input type="checkbox" class="bulk-skill-cb" data-code="${c.code}" id="bulk-skill-${c.code}">
                     <label for="bulk-skill-${c.code}" style="flex:1; font-size:0.8em; cursor:pointer;">
-                        <strong>${c.code}</strong> ${c.nameTh}
+                        <strong>${c.code}</strong> ${c.nameTh}${aiLabel}
                     </label>
                     <select class="bulk-skill-level" data-code="${c.code}" disabled style="width:50px; padding:2px;">
                         <option value="1">1</option>
-                        <option value="2" selected>2</option>
+                        <option value="2" ${!isAiRecommended ? 'selected' : ''}>2</option>
                         <option value="3">3</option>
                         <option value="4">4</option>
                     </select>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+
+            // Pre-select AI recommended level for highlighted skills
+            Object.entries(aiSkillMaxLevel).forEach(([code, level]) => {
+                const sel = grid.querySelector(`.bulk-skill-level[data-code="${code}"]`);
+                if (sel) sel.value = level;
+            });
             
             // Add event listeners for checkboxes
             grid.querySelectorAll('.bulk-skill-cb').forEach(cb => {
