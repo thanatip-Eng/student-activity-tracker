@@ -1422,16 +1422,6 @@
         // ============================================
         // LOAD DATA
         // ============================================
-        // Helper function: Query with timeout
-        function queryWithTimeout(query, timeoutMs = 10000) {
-            return Promise.race([
-                query.get(),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Query timeout - กรุณาลองใหม่')), timeoutMs)
-                )
-            ]);
-        }
-
         async function loadAllData() {
             showLoading(true, 'กำลังโหลดข้อมูล...');
             
@@ -1439,10 +1429,10 @@
             clearActivitySearchCache();
             
             try {
-                // Load both collections in PARALLEL with timeout
+                // Load both collections in PARALLEL
                 const [submissionsQuery, activitiesQuery] = await Promise.all([
-                    queryWithTimeout(db.collection('submissions'), 15000),
-                    queryWithTimeout(db.collection('organizerActivities'), 15000)
+                    db.collection('submissions').get(),
+                    db.collection('organizerActivities').get()
                 ]);
                 
                 // Process submissions
@@ -1479,17 +1469,7 @@
                 
             } catch (error) {
                 console.error('Load error:', error);
-                showLoading(false);
-                
-                if (error.message.includes('timeout')) {
-                    if (confirm('⏱️ โหลดข้อมูลช้า - Network อาจมีปัญหา\n\nกด OK เพื่อลองใหม่')) {
-                        loadAllData();
-                        return;
-                    }
-                } else {
-                    alert('❌ เกิดข้อผิดพลาด: ' + error.message + '\n\nกรุณา Refresh หน้าเว็บ');
-                }
-                return;
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
             }
             
             showLoading(false);
