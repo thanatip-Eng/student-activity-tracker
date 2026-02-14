@@ -183,6 +183,137 @@
             border-bottom: 1px solid #f0f0f0;
         }
         .edit-skill-item:last-child { border-bottom: none; }
+        
+        /* Bulk Actions Styles */
+        .bulk-actions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .bulk-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+        .bulk-info input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .bulk-info label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .selected-count {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .bulk-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-bulk-approve {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-bulk-approve:hover { background: #219a52; }
+        .btn-bulk-reject {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-bulk-reject:hover { background: #c0392b; }
+        .btn-bulk-cancel {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-bulk-cancel:hover { background: rgba(255,255,255,0.3); }
+        
+        /* Checkbox in submission cards */
+        .submission-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .submission-card.selectable {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .submission-card.selectable .card-content {
+            flex: 1;
+            cursor: pointer;
+        }
+        .submission-card.selected {
+            border: 2px solid #667eea;
+            background: #f0f4ff;
+        }
+        
+        /* AI Skills Preview */
+        .ai-skills-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .ai-skill-tag {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .ai-skill-tag::before {
+            content: '🤖';
+            font-size: 0.9em;
+        }
+        
+        /* Bulk Modal Styles */
+        .bulk-modal-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        .bulk-modal-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+        .bulk-modal-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -442,6 +573,21 @@
                         <button class="filter-btn" data-filter="rejected" data-type="student">ไม่อนุมัติ</button>
                     </div>
                 </div>
+                
+                <!-- Bulk Actions -->
+                <div id="student-bulk-actions" class="bulk-actions" style="display: none;">
+                    <div class="bulk-info">
+                        <input type="checkbox" id="student-select-all" onchange="toggleSelectAllStudent()">
+                        <label for="student-select-all">เลือกทั้งหมด</label>
+                        <span id="student-selected-count" class="selected-count">0 รายการ</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-approve" onclick="openBulkApproveModal('student')">✅ อนุมัติที่เลือก</button>
+                        <button class="btn-bulk-reject" onclick="openBulkRejectModal('student')">❌ ปฏิเสธที่เลือก</button>
+                        <button class="btn-bulk-cancel" onclick="clearStudentSelection()">ยกเลิก</button>
+                    </div>
+                </div>
+                
                 <div id="student-submissions-list" class="submissions-list">
                     <div class="loading-inline">กำลังโหลด...</div>
                 </div>
@@ -460,6 +606,21 @@
                         <button class="filter-btn" data-filter="rejected" data-type="organizer">ไม่อนุมัติ</button>
                     </div>
                 </div>
+                
+                <!-- Bulk Actions -->
+                <div id="organizer-bulk-actions" class="bulk-actions" style="display: none;">
+                    <div class="bulk-info">
+                        <input type="checkbox" id="organizer-select-all" onchange="toggleSelectAllOrganizer()">
+                        <label for="organizer-select-all">เลือกทั้งหมด</label>
+                        <span id="organizer-selected-count" class="selected-count">0 รายการ</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-approve" onclick="openBulkApproveModal('organizer')">✅ อนุมัติที่เลือก</button>
+                        <button class="btn-bulk-reject" onclick="openBulkRejectModal('organizer')">❌ ปฏิเสธที่เลือก</button>
+                        <button class="btn-bulk-cancel" onclick="clearOrganizerSelection()">ยกเลิก</button>
+                    </div>
+                </div>
+                
                 <div id="organizer-activities-list" class="submissions-list">
                     <div class="loading-inline">กำลังโหลด...</div>
                 </div>
@@ -715,6 +876,51 @@
             </div>
         </div>
 
+        <!-- Bulk Reject Modal -->
+        <div id="bulk-reject-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                    <h3 style="color: white;">❌ ปฏิเสธหลายรายการ</h3>
+                    <button class="modal-close" onclick="closeBulkRejectModal()" style="color: white;">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 10px;"><strong>รายการที่จะปฏิเสธ (<span id="bulk-reject-count">0</span> รายการ):</strong></p>
+                    <div id="bulk-reject-list" class="bulk-modal-list"></div>
+                    
+                    <label style="font-weight: 600; margin-top: 15px; display: block;">เหตุผลในการปฏิเสธ (ใช้กับทุกรายการ):</label>
+                    <textarea id="bulk-reject-reason" rows="4" placeholder="กรุณาระบุเหตุผล..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeBulkRejectModal()">ยกเลิก</button>
+                    <button class="btn-danger" onclick="confirmBulkReject()">❌ ปฏิเสธทั้งหมด</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Approve Modal -->
+        <div id="bulk-approve-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 600px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #219a52);">
+                    <h3 style="color: white;">✅ อนุมัติหลายรายการ</h3>
+                    <button class="modal-close" onclick="closeBulkApproveModal()" style="color: white;">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 10px;"><strong>รายการที่จะอนุมัติ (<span id="bulk-approve-count">0</span> รายการ):</strong></p>
+                    <div id="bulk-approve-list" class="bulk-modal-list"></div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 10px;">
+                        <h4 style="margin-bottom: 10px;">🎯 เลือกทักษะ (ใช้กับทุกรายการ)</h4>
+                        <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">เลือกทักษะและระดับ (สูงสุด 3 ทักษะ)</p>
+                        <div id="bulk-skills-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeBulkApproveModal()">ยกเลิก</button>
+                    <button class="btn-success" onclick="confirmBulkApprove()">✅ อนุมัติทั้งหมด</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Activity Management Modal -->
         <div id="activity-modal" class="modal-overlay">
             <div class="modal" style="max-width: 700px;">
@@ -878,6 +1084,11 @@
         let currentType = null;
         let studentFilter = 'all';
         let organizerFilter = 'all';
+        
+        // Bulk selection state
+        let selectedStudentItems = new Set();
+        let selectedOrganizerItems = new Set();
+        let bulkType = null; // 'student' or 'organizer'
 
         // ============================================
         // INITIALIZATION
@@ -1505,6 +1716,10 @@
                 });
             }
             
+            // Show/hide bulk actions based on pending items
+            const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
+            document.getElementById('student-bulk-actions').style.display = hasPending ? 'flex' : 'none';
+            
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1519,24 +1734,41 @@
                 const statusClass = getStatusClass(item.status);
                 const statusText = getStatusText(item.status);
                 const date = item.submittedAt?.toDate?.() || new Date();
+                const isPending = item.status?.toLowerCase().includes('pending');
+                const isSelected = selectedStudentItems.has(item.id);
+                
+                // AI suggested skills preview
+                const aiSkills = item.aiSuggestedSkills || [];
+                const aiSkillsHtml = aiSkills.length > 0 
+                    ? `<div class="ai-skills-preview">
+                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
+                       </div>`
+                    : '';
                 
                 return `
-                    <div class="submission-card" onclick="showStudentDetail('${item.id}')">
-                        <div class="submission-main">
-                            <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="submission-info">
-                            <span>👤 ${item.studentName || '-'} (${item.studentId || '-'})</span>
-                            <span>📅 ${item.startDate || '-'}</span>
-                            <span>📊 Level ${item.activityLevel || '-'}</span>
-                        </div>
-                        <div class="submission-date">
-                            ส่งเมื่อ: ${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}
+                    <div class="submission-card ${isPending ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
+                        ${isPending ? `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="student" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleStudentSelection('${item.id}')">` : ''}
+                        <div class="card-content" onclick="showStudentDetail('${item.id}')">
+                            <div class="submission-main">
+                                <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="submission-info">
+                                <span>👤 ${item.studentName || '-'} (${item.studentId || '-'})</span>
+                                <span>📅 ${item.startDate || '-'}</span>
+                                <span>📊 Level ${item.activityLevel || '-'}</span>
+                            </div>
+                            ${aiSkillsHtml}
+                            <div class="submission-date">
+                                ส่งเมื่อ: ${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            updateStudentSelectedCount();
         }
 
         // ============================================
@@ -1556,6 +1788,10 @@
                 });
             }
             
+            // Show/hide bulk actions based on pending items
+            const hasPending = filtered.some(a => a.status?.toLowerCase() === 'pending');
+            document.getElementById('organizer-bulk-actions').style.display = hasPending ? 'flex' : 'none';
+            
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1569,6 +1805,8 @@
             container.innerHTML = filtered.map(item => {
                 const statusClass = getStatusClass(item.status);
                 const statusText = getStatusText(item.status);
+                const isPending = item.status?.toLowerCase() === 'pending';
+                const isSelected = selectedOrganizerItems.has(item.id);
                 
                 // Get participant count from different possible fields
                 const participantCount = item.studentCount || 
@@ -1579,26 +1817,41 @@
                 // Get date from different possible fields
                 const activityDate = item.activityDate || item.startDate || '-';
                 
+                // AI suggested skills (from organizer's AI suggestion)
+                const aiSkills = item.aiSuggestedSkills || [];
+                const aiSkillsHtml = aiSkills.length > 0 
+                    ? `<div class="ai-skills-preview" style="margin-top: 5px;">
+                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
+                       </div>`
+                    : '';
+                
                 return `
-                    <div class="submission-card organizer-card" onclick="showOrganizerDetail('${item.id}')">
-                        <div class="submission-main">
-                            <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="submission-info">
-                            <span>👨‍💼 ${item.organizerName || '-'}</span>
-                            <span>📅 ${activityDate}</span>
-                            <span>👥 ${participantCount} คน</span>
-                        </div>
-                        <div class="submission-skills">
-                            ${(item.skills || []).slice(0, 5).map(s => `
-                                <span class="skill-mini">${s.code} Lv.${s.level}</span>
-                            `).join('')}
-                            ${(item.skills || []).length > 5 ? `<span class="skill-more">+${item.skills.length - 5}</span>` : ''}
+                    <div class="submission-card organizer-card ${isPending ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
+                        ${isPending ? `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="organizer" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleOrganizerSelection('${item.id}')">` : ''}
+                        <div class="card-content" onclick="showOrganizerDetail('${item.id}')">
+                            <div class="submission-main">
+                                <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="submission-info">
+                                <span>👨‍💼 ${item.organizerName || '-'}</span>
+                                <span>📅 ${activityDate}</span>
+                                <span>👥 ${participantCount} คน</span>
+                            </div>
+                            <div class="submission-skills">
+                                ${(item.skills || []).slice(0, 5).map(s => `
+                                    <span class="skill-mini">${s.code} Lv.${s.level}</span>
+                                `).join('')}
+                                ${(item.skills || []).length > 5 ? `<span class="skill-more">+${item.skills.length - 5}</span>` : ''}
+                            </div>
+                            ${aiSkillsHtml}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            updateOrganizerSelectedCount();
         }
 
         // ============================================
@@ -2381,6 +2634,350 @@
                 
             } catch (error) {
                 console.error('Reject error:', error);
+                showLoading(false);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // BULK SELECTION FUNCTIONS
+        // ============================================
+        
+        function toggleStudentSelection(id) {
+            if (selectedStudentItems.has(id)) {
+                selectedStudentItems.delete(id);
+            } else {
+                selectedStudentItems.add(id);
+            }
+            updateStudentSelectedCount();
+            renderStudentSubmissions();
+        }
+        
+        function toggleOrganizerSelection(id) {
+            if (selectedOrganizerItems.has(id)) {
+                selectedOrganizerItems.delete(id);
+            } else {
+                selectedOrganizerItems.add(id);
+            }
+            updateOrganizerSelectedCount();
+            renderOrganizerActivities();
+        }
+        
+        function toggleSelectAllStudent() {
+            const pendingItems = studentSubmissions.filter(s => s.status?.toLowerCase().includes('pending'));
+            const allSelected = pendingItems.every(s => selectedStudentItems.has(s.id));
+            
+            if (allSelected) {
+                selectedStudentItems.clear();
+            } else {
+                pendingItems.forEach(s => selectedStudentItems.add(s.id));
+            }
+            updateStudentSelectedCount();
+            renderStudentSubmissions();
+        }
+        
+        function toggleSelectAllOrganizer() {
+            const pendingItems = organizerActivities.filter(a => a.status?.toLowerCase() === 'pending');
+            const allSelected = pendingItems.every(a => selectedOrganizerItems.has(a.id));
+            
+            if (allSelected) {
+                selectedOrganizerItems.clear();
+            } else {
+                pendingItems.forEach(a => selectedOrganizerItems.add(a.id));
+            }
+            updateOrganizerSelectedCount();
+            renderOrganizerActivities();
+        }
+        
+        function clearStudentSelection() {
+            selectedStudentItems.clear();
+            document.getElementById('student-select-all').checked = false;
+            updateStudentSelectedCount();
+            renderStudentSubmissions();
+        }
+        
+        function clearOrganizerSelection() {
+            selectedOrganizerItems.clear();
+            document.getElementById('organizer-select-all').checked = false;
+            updateOrganizerSelectedCount();
+            renderOrganizerActivities();
+        }
+        
+        function updateStudentSelectedCount() {
+            document.getElementById('student-selected-count').textContent = `${selectedStudentItems.size} รายการ`;
+        }
+        
+        function updateOrganizerSelectedCount() {
+            document.getElementById('organizer-selected-count').textContent = `${selectedOrganizerItems.size} รายการ`;
+        }
+
+        // ============================================
+        // BULK REJECT FUNCTIONS
+        // ============================================
+        
+        function openBulkRejectModal(type) {
+            bulkType = type;
+            const selectedIds = type === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const items = type === 'student' ? studentSubmissions : organizerActivities;
+            
+            if (selectedIds.size === 0) {
+                alert('⚠️ กรุณาเลือกรายการก่อน');
+                return;
+            }
+            
+            // Populate list
+            const listHtml = Array.from(selectedIds).map(id => {
+                const item = items.find(i => i.id === id);
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+            }).join('');
+            
+            document.getElementById('bulk-reject-list').innerHTML = listHtml;
+            document.getElementById('bulk-reject-count').textContent = selectedIds.size;
+            document.getElementById('bulk-reject-reason').value = '';
+            document.getElementById('bulk-reject-modal').classList.add('show');
+        }
+        
+        function closeBulkRejectModal() {
+            document.getElementById('bulk-reject-modal').classList.remove('show');
+        }
+        
+        async function confirmBulkReject() {
+            const reason = document.getElementById('bulk-reject-reason').value.trim();
+            
+            if (!reason) {
+                alert('⚠️ กรุณาระบุเหตุผล');
+                return;
+            }
+            
+            const selectedIds = bulkType === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const collection = bulkType === 'student' ? 'submissions' : 'organizerActivities';
+            
+            showLoading(true, `กำลังปฏิเสธ ${selectedIds.size} รายการ...`);
+            
+            try {
+                const batch = db.batch();
+                
+                selectedIds.forEach(id => {
+                    const ref = db.collection(collection).doc(id);
+                    batch.update(ref, {
+                        status: 'Rejected',
+                        rejectReason: reason,
+                        reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                
+                await batch.commit();
+                
+                // Update local state
+                if (bulkType === 'student') {
+                    selectedIds.forEach(id => {
+                        const index = studentSubmissions.findIndex(s => s.id === id);
+                        if (index !== -1) {
+                            studentSubmissions[index].status = 'Rejected';
+                            studentSubmissions[index].rejectReason = reason;
+                        }
+                    });
+                    clearStudentSelection();
+                    renderStudentSubmissions();
+                } else {
+                    selectedIds.forEach(id => {
+                        const index = organizerActivities.findIndex(a => a.id === id);
+                        if (index !== -1) {
+                            organizerActivities[index].status = 'Rejected';
+                            organizerActivities[index].rejectReason = reason;
+                        }
+                    });
+                    clearOrganizerSelection();
+                    renderOrganizerActivities();
+                }
+                
+                updateStats();
+                closeBulkRejectModal();
+                showLoading(false);
+                
+                alert(`❌ ปฏิเสธ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
+                
+            } catch (error) {
+                console.error('Bulk reject error:', error);
+                showLoading(false);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // BULK APPROVE FUNCTIONS
+        // ============================================
+        
+        function openBulkApproveModal(type) {
+            bulkType = type;
+            const selectedIds = type === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const items = type === 'student' ? studentSubmissions : organizerActivities;
+            
+            if (selectedIds.size === 0) {
+                alert('⚠️ กรุณาเลือกรายการก่อน');
+                return;
+            }
+            
+            // Populate list
+            const listHtml = Array.from(selectedIds).map(id => {
+                const item = items.find(i => i.id === id);
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+            }).join('');
+            
+            document.getElementById('bulk-approve-list').innerHTML = listHtml;
+            document.getElementById('bulk-approve-count').textContent = selectedIds.size;
+            
+            // Populate skills grid
+            const grid = document.getElementById('bulk-skills-grid');
+            grid.innerHTML = CRITERIA_LIST.map(c => `
+                <div style="display:flex; align-items:center; gap:5px; background:white; padding:8px; border-radius:6px; border:1px solid #eee;">
+                    <input type="checkbox" class="bulk-skill-cb" data-code="${c.code}" id="bulk-skill-${c.code}">
+                    <label for="bulk-skill-${c.code}" style="flex:1; font-size:0.8em; cursor:pointer;">
+                        <strong>${c.code}</strong> ${c.nameTh}
+                    </label>
+                    <select class="bulk-skill-level" data-code="${c.code}" disabled style="width:50px; padding:2px;">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+            `).join('');
+            
+            // Add event listeners for checkboxes
+            grid.querySelectorAll('.bulk-skill-cb').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const code = e.target.dataset.code;
+                    const levelSelect = grid.querySelector(`.bulk-skill-level[data-code="${code}"]`);
+                    levelSelect.disabled = !e.target.checked;
+                    
+                    // Check max 3 skills
+                    const checkedCount = grid.querySelectorAll('.bulk-skill-cb:checked').length;
+                    if (checkedCount > 3) {
+                        e.target.checked = false;
+                        levelSelect.disabled = true;
+                        alert('⚠️ เลือกทักษะได้ไม่เกิน 3 ทักษะ');
+                    }
+                });
+            });
+            
+            document.getElementById('bulk-approve-modal').classList.add('show');
+        }
+        
+        function closeBulkApproveModal() {
+            document.getElementById('bulk-approve-modal').classList.remove('show');
+        }
+        
+        async function confirmBulkApprove() {
+            // Get selected skills
+            const skills = [];
+            document.querySelectorAll('.bulk-skill-cb:checked').forEach(cb => {
+                const code = cb.dataset.code;
+                const levelSelect = document.querySelector(`.bulk-skill-level[data-code="${code}"]`);
+                const criteria = CRITERIA_LIST.find(c => c.code === code);
+                skills.push({
+                    code: code,
+                    level: parseInt(levelSelect.value),
+                    nameTh: criteria?.nameTh || '',
+                    nameEn: criteria?.nameEn || ''
+                });
+            });
+            
+            if (skills.length === 0) {
+                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ');
+                return;
+            }
+            
+            const selectedIds = bulkType === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const items = bulkType === 'student' ? studentSubmissions : organizerActivities;
+            const collection = bulkType === 'student' ? 'submissions' : 'organizerActivities';
+            
+            showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ...`);
+            
+            try {
+                const batch = db.batch();
+                
+                // Update each item
+                for (const id of selectedIds) {
+                    const item = items.find(i => i.id === id);
+                    if (!item) continue;
+                    
+                    // Update the submission/activity status
+                    const ref = db.collection(collection).doc(id);
+                    batch.update(ref, {
+                        status: 'Approved',
+                        approvedSkills: skills,
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // For student submissions - add to participation
+                    if (bulkType === 'student') {
+                        const participationRef = db.collection('participation').doc();
+                        batch.set(participationRef, {
+                            studentId: item.studentId,
+                            activityName: item.activityName,
+                            status: 'Approved',
+                            date: item.startDate || '',
+                            skills: skills,
+                            source: 'student-submission-bulk',
+                            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    
+                    // For organizer activities - add students to participation
+                    if (bulkType === 'organizer') {
+                        const studentIds = item.studentIds || [];
+                        for (const studentId of studentIds) {
+                            const participationRef = db.collection('participation').doc();
+                            batch.set(participationRef, {
+                                studentId: studentId,
+                                activityName: item.activityName,
+                                status: 'Approved',
+                                date: item.activityDate || item.startDate || '',
+                                skills: skills,
+                                source: 'organizer-bulk',
+                                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    }
+                }
+                
+                await batch.commit();
+                
+                // Update local state
+                selectedIds.forEach(id => {
+                    if (bulkType === 'student') {
+                        const index = studentSubmissions.findIndex(s => s.id === id);
+                        if (index !== -1) {
+                            studentSubmissions[index].status = 'Approved';
+                            studentSubmissions[index].approvedSkills = skills;
+                        }
+                    } else {
+                        const index = organizerActivities.findIndex(a => a.id === id);
+                        if (index !== -1) {
+                            organizerActivities[index].status = 'Approved';
+                            organizerActivities[index].approvedSkills = skills;
+                        }
+                    }
+                });
+                
+                // Clear selection and re-render
+                if (bulkType === 'student') {
+                    clearStudentSelection();
+                    renderStudentSubmissions();
+                } else {
+                    clearOrganizerSelection();
+                    renderOrganizerActivities();
+                }
+                
+                updateStats();
+                closeBulkApproveModal();
+                showLoading(false);
+                
+                alert(`✅ อนุมัติ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
+                
+            } catch (error) {
+                console.error('Bulk approve error:', error);
                 showLoading(false);
                 alert('เกิดข้อผิดพลาด: ' + error.message);
             }
