@@ -304,7 +304,64 @@
             font-weight: 600;
             white-space: nowrap;
         }
-        
+
+        /* Activity Name Filter */
+        .activity-name-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        .filter-input-wrap {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 0 12px;
+            transition: border-color 0.2s;
+        }
+        .filter-input-wrap:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+        .filter-icon {
+            font-size: 1em;
+            margin-right: 6px;
+        }
+        .filter-input-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 10px 0;
+            font-size: 0.92em;
+            font-family: inherit;
+            background: transparent;
+        }
+        .filter-clear-btn {
+            background: #e0e0e0;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .filter-clear-btn:hover {
+            background: #ccc;
+        }
+        .filter-result-count {
+            font-size: 0.82em;
+            color: #888;
+            white-space: nowrap;
+        }
+
         /* Bulk Modal Styles */
         .bulk-modal-list {
             max-height: 200px;
@@ -580,7 +637,17 @@
                         <button class="filter-btn" data-filter="rejected" data-type="student">ไม่อนุมัติ</button>
                     </div>
                 </div>
-                
+
+                <!-- Activity Name Search -->
+                <div class="activity-name-filter">
+                    <div class="filter-input-wrap">
+                        <span class="filter-icon">🔍</span>
+                        <input type="text" id="student-activity-search" placeholder="ค้นหาชื่อกิจกรรม..." oninput="onStudentActivitySearch()">
+                        <button id="student-activity-search-clear" class="filter-clear-btn" onclick="clearStudentActivitySearch()" style="display:none;">✕</button>
+                    </div>
+                    <span id="student-filter-count" class="filter-result-count"></span>
+                </div>
+
                 <!-- Bulk Actions -->
                 <div id="student-bulk-actions" class="bulk-actions" style="display: none;">
                     <div class="bulk-info">
@@ -613,7 +680,17 @@
                         <button class="filter-btn" data-filter="rejected" data-type="organizer">ไม่อนุมัติ</button>
                     </div>
                 </div>
-                
+
+                <!-- Activity Name Search -->
+                <div class="activity-name-filter">
+                    <div class="filter-input-wrap">
+                        <span class="filter-icon">🔍</span>
+                        <input type="text" id="organizer-activity-search" placeholder="ค้นหาชื่อกิจกรรม..." oninput="onOrganizerActivitySearch()">
+                        <button id="organizer-activity-search-clear" class="filter-clear-btn" onclick="clearOrganizerActivitySearch()" style="display:none;">✕</button>
+                    </div>
+                    <span id="organizer-filter-count" class="filter-result-count"></span>
+                </div>
+
                 <!-- Bulk Actions -->
                 <div id="organizer-bulk-actions" class="bulk-actions" style="display: none;">
                     <div class="bulk-info">
@@ -1153,6 +1230,8 @@
         let currentType = null;
         let studentFilter = 'all';
         let organizerFilter = 'all';
+        let studentActivitySearch = '';
+        let organizerActivitySearch = '';
         
         // Bulk selection state
         let selectedStudentItems = new Set();
@@ -1773,20 +1852,64 @@
         }
 
         // ============================================
+        // ACTIVITY NAME SEARCH HANDLERS
+        // ============================================
+        function onStudentActivitySearch() {
+            const input = document.getElementById('student-activity-search');
+            const clearBtn = document.getElementById('student-activity-search-clear');
+            studentActivitySearch = input.value.trim().toLowerCase();
+            clearBtn.style.display = studentActivitySearch ? 'flex' : 'none';
+            renderStudentSubmissions();
+        }
+        function clearStudentActivitySearch() {
+            document.getElementById('student-activity-search').value = '';
+            studentActivitySearch = '';
+            document.getElementById('student-activity-search-clear').style.display = 'none';
+            document.getElementById('student-filter-count').textContent = '';
+            renderStudentSubmissions();
+        }
+        function onOrganizerActivitySearch() {
+            const input = document.getElementById('organizer-activity-search');
+            const clearBtn = document.getElementById('organizer-activity-search-clear');
+            organizerActivitySearch = input.value.trim().toLowerCase();
+            clearBtn.style.display = organizerActivitySearch ? 'flex' : 'none';
+            renderOrganizerActivities();
+        }
+        function clearOrganizerActivitySearch() {
+            document.getElementById('organizer-activity-search').value = '';
+            organizerActivitySearch = '';
+            document.getElementById('organizer-activity-search-clear').style.display = 'none';
+            document.getElementById('organizer-filter-count').textContent = '';
+            renderOrganizerActivities();
+        }
+
+        // ============================================
         // RENDER STUDENT SUBMISSIONS
         // ============================================
         function renderStudentSubmissions() {
             const container = document.getElementById('student-submissions-list');
-            
+
             let filtered = studentSubmissions;
+            // Status filter
             if (studentFilter !== 'all') {
-                filtered = studentSubmissions.filter(s => {
+                filtered = filtered.filter(s => {
                     const status = s.status?.toLowerCase() || '';
                     if (studentFilter === 'pending') return status.includes('pending');
                     if (studentFilter === 'approved') return status === 'approved';
                     if (studentFilter === 'rejected') return status.includes('rejected');
                     return true;
                 });
+            }
+            // Activity name text filter
+            if (studentActivitySearch) {
+                filtered = filtered.filter(s =>
+                    (s.activityName || '').toLowerCase().includes(studentActivitySearch)
+                );
+            }
+            // Update count label
+            const countEl = document.getElementById('student-filter-count');
+            if (countEl) {
+                countEl.textContent = studentActivitySearch ? `${filtered.length} รายการ` : '';
             }
             
             // Show/hide bulk actions based on pending items
@@ -1853,16 +1976,28 @@
         // ============================================
         function renderOrganizerActivities() {
             const container = document.getElementById('organizer-activities-list');
-            
+
             let filtered = organizerActivities;
+            // Status filter
             if (organizerFilter !== 'all') {
-                filtered = organizerActivities.filter(a => {
+                filtered = filtered.filter(a => {
                     const status = a.status?.toLowerCase() || '';
                     if (organizerFilter === 'pending') return status === 'pending';
                     if (organizerFilter === 'approved') return status === 'approved';
                     if (organizerFilter === 'rejected') return status.includes('rejected');
                     return true;
                 });
+            }
+            // Activity name text filter
+            if (organizerActivitySearch) {
+                filtered = filtered.filter(a =>
+                    (a.activityName || '').toLowerCase().includes(organizerActivitySearch)
+                );
+            }
+            // Update count label
+            const countEl = document.getElementById('organizer-filter-count');
+            if (countEl) {
+                countEl.textContent = organizerActivitySearch ? `${filtered.length} รายการ` : '';
             }
             
             // Show/hide bulk actions based on pending items
