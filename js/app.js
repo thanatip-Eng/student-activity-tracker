@@ -162,29 +162,36 @@ async function loadStudentActivities() {
         for (const doc of participationQuery.docs) {
             const participation = doc.data();
             console.log('📌 Participation:', participation.activityName, participation.status);
-            
+
             // ดึงจาก cache แทน query
             const activity = getActivityFromCache(participation.activityName);
-            
+
+            // ใช้ skills จาก participation record (ที่ admin อนุมัติ) เป็นหลัก
+            let participationSkills = [];
+            if (participation.skills && Array.isArray(participation.skills) && participation.skills.length > 0) {
+                participationSkills = participation.skills;
+            }
+
             let activityData = {
                 id: doc.id,
                 name: participation.activityName,
                 status: participation.status || 'Approved',
                 date: participation.date || '',
-                skills: [],
+                skills: participationSkills,
                 level: 1
             };
-            
-            if (activity) {
-                console.log('📚 Activity from cache:', activity.name, 'skills:', activity.skills);
+
+            // ถ้า participation ไม่มี skills ให้ fallback ไปดูจาก activities cache
+            if (activityData.skills.length === 0 && activity) {
                 activityData.skills = extractSkills(activity);
-                console.log('🎯 Extracted skills:', activityData.skills);
+            }
+
+            if (activity) {
                 activityData.level = activity.level || 1;
                 activityData.description = activity.description || '';
-            } else {
-                console.warn('⚠️ Activity not found in cache:', participation.activityName);
             }
-            
+
+            console.log('🎯 Final skills for', participation.activityName, ':', activityData.skills);
             studentActivities.push(activityData);
         }
         
@@ -201,12 +208,18 @@ async function loadStudentActivities() {
             );
             
             if (!exists) {
+                // ใช้ approvedSkills (ที่ admin กำหนด) เป็นหลัก, fallback เป็น skills, แล้วค่อย aiSuggestedSkills
+                const subSkills = (submission.approvedSkills && submission.approvedSkills.length > 0)
+                    ? submission.approvedSkills
+                    : (submission.skills && submission.skills.length > 0)
+                        ? submission.skills
+                        : [];
                 studentActivities.push({
                     id: doc.id,
                     name: submission.activityName || 'ไม่ระบุชื่อ',
                     status: submission.status || 'Pending',
                     date: submission.activityDate || '',
-                    skills: submission.skills || submission.approvedSkills || [],
+                    skills: subSkills,
                     level: submission.activityLevel || 1,
                     description: submission.description || '',
                     rejectReason: submission.rejectReason || ''
