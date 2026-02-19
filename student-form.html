@@ -231,6 +231,71 @@
         .btn-secondary:hover {
             background: #d0d0d0;
         }
+        /* Activity Suggestions Dropdown */
+        .activity-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .suggestion-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+        .suggestion-item:hover {
+            background: #f0f8ff;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .suggestion-name {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #333;
+        }
+        .suggestion-name mark {
+            background: #fff3cd;
+            color: #333;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .suggestion-meta {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 2px;
+        }
+        .suggestion-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .suggestion-skill-tag {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 0.75em;
+        }
+        .suggestion-header {
+            padding: 6px 14px;
+            background: #f8f9fa;
+            font-size: 0.78em;
+            color: #888;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
     </style>
 </head>
 <body>
@@ -278,9 +343,11 @@
                 <h2>📋 แบบฟอร์มแจ้งกิจกรรม | Activity Submission Form</h2>
                 
                 <form id="activity-form" onsubmit="submitActivity(event)">
-                    <div class="form-group">
+                    <div class="form-group" style="position:relative;">
                         <label>ชื่อกิจกรรม | Activity Name <span class="required">*</span></label>
-                        <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners">
+                        <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners" autocomplete="off" oninput="filterActivitySuggestions()">
+                        <div id="activity-suggestions" class="activity-suggestions" style="display:none;"></div>
+                        <div id="activity-match-info" style="display:none;margin-top:6px;padding:8px 12px;background:#e8f5e9;border-radius:8px;border-left:3px solid #27ae60;font-size:0.85em;"></div>
                     </div>
 
                     <div class="form-group">
@@ -571,7 +638,8 @@
         let currentStudent = null;
         let pendingFormData = null;
         let aiAnalysisResult = null;
-        
+        let allActivitiesCache = []; // Cache for activity name autocomplete
+
         // === Research Logging Variables ===
         let formStartTime = null;
         let aiAnalysisStartTime = null;
@@ -591,6 +659,110 @@
                 counter.classList.add('warning');
             }
         }
+
+        // ============================================
+        // ACTIVITY NAME AUTOCOMPLETE
+        // ============================================
+        async function loadActivitiesForAutocomplete() {
+            try {
+                const query = await db.collection('activities').get();
+                allActivitiesCache = query.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        name: data.name || '',
+                        organizer: data.organizer || '',
+                        date: data.date || '',
+                        skills: data.skills || []
+                    };
+                }).filter(a => a.name);
+                console.log('Loaded', allActivitiesCache.length, 'activities for autocomplete');
+            } catch (error) {
+                console.error('Failed to load activities for autocomplete:', error);
+            }
+        }
+
+        function filterActivitySuggestions() {
+            const input = document.getElementById('activity-name');
+            const dropdown = document.getElementById('activity-suggestions');
+            const matchInfo = document.getElementById('activity-match-info');
+            const query = input.value.trim().toLowerCase();
+
+            if (query.length < 2 || allActivitiesCache.length === 0) {
+                dropdown.style.display = 'none';
+                matchInfo.style.display = 'none';
+                return;
+            }
+
+            const matches = allActivitiesCache.filter(a =>
+                a.name.toLowerCase().includes(query)
+            ).slice(0, 8);
+
+            if (matches.length === 0) {
+                dropdown.style.display = 'none';
+                matchInfo.style.display = 'none';
+                return;
+            }
+
+            dropdown.innerHTML = '<div class="suggestion-header">📋 กิจกรรมที่คล้ายกันในระบบ (' + matches.length + ' รายการ)</div>' +
+                matches.map((a, idx) => {
+                    const highlighted = a.name.replace(new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
+                    const skillTags = (a.skills || []).slice(0, 3).map(s => {
+                        const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                        return `<span class="suggestion-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                    }).join('');
+                    return `<div class="suggestion-item" onclick="selectActivitySuggestion(${idx}, '${query}')">
+                        <div class="suggestion-name">${highlighted}</div>
+                        <div class="suggestion-meta">${a.organizer ? '👨‍💼 ' + a.organizer : ''}${a.date ? ' | 📅 ' + a.date : ''}</div>
+                        ${skillTags ? '<div class="suggestion-skills">' + skillTags + '</div>' : ''}
+                    </div>`;
+                }).join('');
+
+            dropdown.style.display = 'block';
+
+            // Store matches for selection
+            dropdown._matches = matches;
+        }
+
+        function selectActivitySuggestion(index, query) {
+            const dropdown = document.getElementById('activity-suggestions');
+            const matchInfo = document.getElementById('activity-match-info');
+            const activity = dropdown._matches[index];
+
+            if (!activity) return;
+
+            document.getElementById('activity-name').value = activity.name;
+
+            // Auto-fill organizer if available and empty
+            const organizerInput = document.getElementById('activity-organizer');
+            if (activity.organizer && !organizerInput.value.trim()) {
+                organizerInput.value = activity.organizer;
+            }
+
+            dropdown.style.display = 'none';
+
+            // Show match info with skills
+            const skills = (activity.skills || []).slice(0, 3);
+            if (skills.length > 0) {
+                const skillTags = skills.map(s => {
+                    const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                    return `<span style="background:#c8e6c9;color:#1b5e20;padding:2px 8px;border-radius:10px;font-size:0.85em;">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                }).join(' ');
+                matchInfo.innerHTML = `✅ กิจกรรมนี้มีอยู่ในระบบแล้ว<br><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;">ทักษะ: ${skillTags}</div>`;
+                matchInfo.style.display = 'block';
+            } else {
+                matchInfo.innerHTML = '✅ กิจกรรมนี้มีอยู่ในระบบแล้ว';
+                matchInfo.style.display = 'block';
+            }
+        }
+
+        // Close suggestions on click outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('activity-suggestions');
+            const input = document.getElementById('activity-name');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+                dropdown.style.display = 'none';
+            }
+        });
 
         async function loginStudent() {
             const email = document.getElementById('student-email').value.trim().toLowerCase();
@@ -624,7 +796,7 @@
                 // Track form start time for research
                 formStartTime = Date.now();
                 
-                await loadMySubmissions();
+                await Promise.all([loadMySubmissions(), loadActivitiesForAutocomplete()]);
             } catch (error) {
                 errorEl.textContent = '❌ เกิดข้อผิดพลาด';
             }
@@ -1136,7 +1308,7 @@
                         document.getElementById('display-email').textContent = currentStudent.email;
                         document.getElementById('login-section').style.display = 'none';
                         document.getElementById('form-section').style.display = 'block';
-                        await loadMySubmissions();
+                        await Promise.all([loadMySubmissions(), loadActivitiesForAutocomplete()]);
                     }
                 } catch (e) { sessionStorage.removeItem('studentSession'); }
             }

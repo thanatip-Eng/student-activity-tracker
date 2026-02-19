@@ -298,6 +298,12 @@
             content: '🤖';
             font-size: 0.9em;
         }
+        .ai-skills-label {
+            font-size: 0.75em;
+            color: #888;
+            font-weight: 600;
+            white-space: nowrap;
+        }
         
         /* Bulk Modal Styles */
         .bulk-modal-list {
@@ -416,6 +422,7 @@
             <button class="tab" data-tab="organizer-activities">👨‍💼 ผู้จัด | Organizer</button>
             <button class="tab" data-tab="transfer">📤 โอนข้อมูล | Transfer</button>
             <button class="tab" data-tab="organizers">👥 ผู้จัดทะเบียน | Organizers</button>
+            <button class="tab" data-tab="merge-activities">🔀 รวมกิจกรรม | Merge</button>
             <button class="tab" data-tab="admin-manage">👤 Admin</button>
             <button class="tab" data-tab="export">📥 Export CSV</button>
         </div>
@@ -722,6 +729,45 @@
             </div>
         </div>
 
+        <!-- Tab: Merge Activities -->
+        <div id="tab-merge-activities" class="tab-content">
+            <div class="panel">
+                <h2>🔀 รวมกิจกรรมที่คล้ายกัน | Merge Similar Activities</h2>
+                <p class="panel-desc">ค้นหากิจกรรมที่ชื่อคล้ายกัน และรวมให้เป็นกิจกรรมเดียวกัน</p>
+
+                <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="findSimilarActivities()" style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                        🔍 ค้นหากิจกรรมที่คล้ายกัน
+                    </button>
+                    <span id="merge-status" style="font-size:0.9em;color:#666;"></span>
+                </div>
+
+                <div id="merge-results" style="display:none;">
+                    <div id="merge-groups-list"></div>
+                </div>
+
+                <div id="merge-empty" style="display:none;text-align:center;padding:40px;color:#999;">
+                    <span style="font-size:2em;">✅</span>
+                    <p style="margin-top:10px;">ไม่พบกิจกรรมที่ชื่อคล้ายกัน</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Merge Confirm Modal -->
+        <div id="merge-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 650px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <h3 style="color: white;">🔀 รวมกิจกรรม</h3>
+                    <button class="modal-close" onclick="closeMergeModal()" style="color: white;">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="merge-modal-content"></div>
+                </div>
+                <div class="modal-footer" id="merge-modal-footer">
+                </div>
+            </div>
+        </div>
+
         <!-- Tab: Export CSV -->
         <div id="tab-export" class="tab-content">
             <div class="panel">
@@ -899,7 +945,7 @@
 
         <!-- Bulk Approve Modal -->
         <div id="bulk-approve-modal" class="modal-overlay">
-            <div class="modal" style="max-width: 600px;">
+            <div class="modal" style="max-width: 650px;">
                 <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #219a52);">
                     <h3 style="color: white;">✅ อนุมัติหลายรายการ</h3>
                     <button class="modal-close" onclick="closeBulkApproveModal()" style="color: white;">✕</button>
@@ -907,11 +953,34 @@
                 <div class="modal-body">
                     <p style="margin-bottom: 10px;"><strong>รายการที่จะอนุมัติ (<span id="bulk-approve-count">0</span> รายการ):</strong></p>
                     <div id="bulk-approve-list" class="bulk-modal-list"></div>
-                    
-                    <div style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 10px;">
+
+                    <!-- Skill Mode Selector -->
+                    <div style="margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button id="bulk-mode-same" class="bulk-mode-btn active" onclick="setBulkApproveMode('same')" style="flex:1;min-width:180px;padding:10px;border:2px solid #27ae60;background:#e8f5e9;color:#27ae60;border-radius:8px;font-weight:600;cursor:pointer;">
+                            🎯 ทักษะเดียวกันทุกรายการ
+                        </button>
+                        <button id="bulk-mode-individual" class="bulk-mode-btn" onclick="setBulkApproveMode('individual')" style="flex:1;min-width:180px;padding:10px;border:2px solid #ddd;background:white;color:#666;border-radius:8px;font-weight:600;cursor:pointer;">
+                            🤖 ใช้ทักษะจาก AI/ผู้จัด
+                        </button>
+                    </div>
+
+                    <!-- Mode: Same skills for all -->
+                    <div id="bulk-skills-same-section" style="margin-top: 15px; padding: 15px; background: #f0f8ff; border-radius: 10px;">
                         <h4 style="margin-bottom: 10px;">🎯 เลือกทักษะ (ใช้กับทุกรายการ)</h4>
                         <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">เลือกทักษะและระดับ (สูงสุด 3 ทักษะ)</p>
                         <div id="bulk-skills-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto;"></div>
+                    </div>
+
+                    <!-- Mode: Individual AI/Organizer skills -->
+                    <div id="bulk-skills-individual-section" style="margin-top: 15px; display: none;">
+                        <div style="padding: 12px; background: #fff8e1; border-radius: 10px; border-left: 3px solid #ff9800;">
+                            <h4 style="margin-bottom: 8px;">🤖 ใช้ทักษะจาก AI/ผู้จัดเดิม</h4>
+                            <p style="font-size: 0.85em; color: #666; margin-bottom: 10px;">แต่ละกิจกรรมจะได้รับทักษะตามที่ AI วิเคราะห์ไว้ หรือที่ผู้จัดกิจกรรมเลือกไว้</p>
+                            <div id="bulk-individual-preview" style="max-height: 250px; overflow-y: auto;"></div>
+                            <div id="bulk-individual-warning" style="display:none;margin-top:10px;padding:8px;background:#ffebee;border-radius:6px;color:#c62828;font-size:0.85em;">
+                                ⚠️ มีบางรายการที่ไม่มีทักษะจาก AI/ผู้จัด จะถูกข้ามไป
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1089,6 +1158,7 @@
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
         let bulkType = null; // 'student' or 'organizer'
+        let bulkApproveMode = 'same'; // 'same' or 'individual'
 
         // ============================================
         // INITIALIZATION
@@ -1128,6 +1198,9 @@
                             loadAllActivitiesAdmin();
                         }
                     }
+
+                    // No auto-load for merge tab - user clicks button to scan
+
                 });
             });
         }
@@ -1739,9 +1812,13 @@
                 
                 // AI suggested skills preview
                 const aiSkills = item.aiSuggestedSkills || [];
-                const aiSkillsHtml = aiSkills.length > 0 
+                const aiSkillsHtml = aiSkills.length > 0
                     ? `<div class="ai-skills-preview">
-                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        <span class="ai-skills-label">AI แนะนำ:</span>
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span class="ai-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
@@ -1819,9 +1896,13 @@
                 
                 // AI suggested skills (from organizer's AI suggestion)
                 const aiSkills = item.aiSuggestedSkills || [];
-                const aiSkillsHtml = aiSkills.length > 0 
+                const aiSkillsHtml = aiSkills.length > 0
                     ? `<div class="ai-skills-preview" style="margin-top: 5px;">
-                        ${aiSkills.slice(0, 3).map(s => `<span class="ai-skill-tag">${s.code} Lv.${s.level}</span>`).join('')}
+                        <span class="ai-skills-label">AI แนะนำ:</span>
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span class="ai-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
@@ -2725,12 +2806,21 @@
                 return;
             }
             
-            // Populate list
+            // Populate list with AI skills info
             const listHtml = Array.from(selectedIds).map(id => {
                 const item = items.find(i => i.id === id);
-                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+                const aiSkills = item?.aiSuggestedSkills || [];
+                const aiHtml = aiSkills.length > 0
+                    ? `<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;">
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:1px 5px;border-radius:8px;font-size:0.7em;">🤖 ${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
+                       </div>`
+                    : '';
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}${aiHtml}</div>`;
             }).join('');
-            
+
             document.getElementById('bulk-reject-list').innerHTML = listHtml;
             document.getElementById('bulk-reject-count').textContent = selectedIds.size;
             document.getElementById('bulk-reject-reason').value = '';
@@ -2807,7 +2897,35 @@
         // ============================================
         // BULK APPROVE FUNCTIONS
         // ============================================
-        
+
+        function setBulkApproveMode(mode) {
+            bulkApproveMode = mode;
+            const sameBtn = document.getElementById('bulk-mode-same');
+            const indBtn = document.getElementById('bulk-mode-individual');
+            const sameSection = document.getElementById('bulk-skills-same-section');
+            const indSection = document.getElementById('bulk-skills-individual-section');
+
+            if (mode === 'same') {
+                sameBtn.style.border = '2px solid #27ae60';
+                sameBtn.style.background = '#e8f5e9';
+                sameBtn.style.color = '#27ae60';
+                indBtn.style.border = '2px solid #ddd';
+                indBtn.style.background = 'white';
+                indBtn.style.color = '#666';
+                sameSection.style.display = 'block';
+                indSection.style.display = 'none';
+            } else {
+                indBtn.style.border = '2px solid #ff9800';
+                indBtn.style.background = '#fff8e1';
+                indBtn.style.color = '#e65100';
+                sameBtn.style.border = '2px solid #ddd';
+                sameBtn.style.background = 'white';
+                sameBtn.style.color = '#666';
+                sameSection.style.display = 'none';
+                indSection.style.display = 'block';
+            }
+        }
+
         function openBulkApproveModal(type) {
             bulkType = type;
             const selectedIds = type === 'student' ? selectedStudentItems : selectedOrganizerItems;
@@ -2818,31 +2936,84 @@
                 return;
             }
             
-            // Populate list
+            // Collect AI suggested skills across all selected items
+            const aiSkillFrequency = {};
+            const aiSkillMaxLevel = {};
+
+            // Populate list with AI skills summary per item
             const listHtml = Array.from(selectedIds).map(id => {
                 const item = items.find(i => i.id === id);
-                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}</div>`;
+                const aiSkills = item?.aiSuggestedSkills || [];
+
+                // Aggregate AI skills frequency
+                aiSkills.forEach(s => {
+                    aiSkillFrequency[s.code] = (aiSkillFrequency[s.code] || 0) + 1;
+                    aiSkillMaxLevel[s.code] = Math.max(aiSkillMaxLevel[s.code] || 0, s.level);
+                });
+
+                const aiHtml = aiSkills.length > 0
+                    ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">
+                        ${aiSkills.slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:1px 6px;border-radius:8px;font-size:0.7em;">🤖 ${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join('')}
+                        ${aiSkills.length > 3 ? `<span style="background:#e0e0e0;color:#666;padding:1px 6px;border-radius:8px;font-size:0.7em;">+${aiSkills.length - 3}</span>` : ''}
+                       </div>`
+                    : '';
+
+                return `<div class="bulk-modal-item">📝 ${item?.activityName || 'ไม่ระบุชื่อ'}${aiHtml}</div>`;
             }).join('');
-            
-            document.getElementById('bulk-approve-list').innerHTML = listHtml;
+
+            // Build AI summary section
+            const sortedAiSkills = Object.entries(aiSkillFrequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const aiSummaryHtml = sortedAiSkills.length > 0
+                ? `<div style="margin-top:12px;padding:10px;background:#fff8e1;border-radius:8px;border-left:3px solid #ff9800;">
+                    <strong style="font-size:0.85em;">🤖 สรุป AI แนะนำ (รวมทุกรายการ):</strong>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">
+                        ${sortedAiSkills.map(([code, count]) => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === code);
+                            return `<span style="background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:10px;font-size:0.8em;cursor:pointer;"
+                                onclick="document.getElementById('bulk-skill-${code}').click()" title="คลิกเพื่อเลือก">
+                                🤖 ${code} ${c?.nameTh || ''} (${count}/${selectedIds.size}ครั้ง, max Lv.${aiSkillMaxLevel[code]})
+                            </span>`;
+                        }).join('')}
+                    </div>
+                   </div>`
+                : '';
+
+            document.getElementById('bulk-approve-list').innerHTML = listHtml + aiSummaryHtml;
             document.getElementById('bulk-approve-count').textContent = selectedIds.size;
-            
+
             // Populate skills grid
             const grid = document.getElementById('bulk-skills-grid');
-            grid.innerHTML = CRITERIA_LIST.map(c => `
-                <div style="display:flex; align-items:center; gap:5px; background:white; padding:8px; border-radius:6px; border:1px solid #eee;">
+            grid.innerHTML = CRITERIA_LIST.map(c => {
+                const freq = aiSkillFrequency[c.code] || 0;
+                const isAiRecommended = freq > 0;
+                const highlightStyle = isAiRecommended ? 'background:#e8f5e9;border:1px solid #a5d6a7;' : 'background:white;border:1px solid #eee;';
+                const aiLabel = isAiRecommended ? `<span style="background:#ff9800;color:white;padding:0 4px;border-radius:4px;font-size:0.65em;margin-left:3px;">AI×${freq}</span>` : '';
+                return `
+                <div style="display:flex; align-items:center; gap:5px; ${highlightStyle} padding:8px; border-radius:6px;">
                     <input type="checkbox" class="bulk-skill-cb" data-code="${c.code}" id="bulk-skill-${c.code}">
                     <label for="bulk-skill-${c.code}" style="flex:1; font-size:0.8em; cursor:pointer;">
-                        <strong>${c.code}</strong> ${c.nameTh}
+                        <strong>${c.code}</strong> ${c.nameTh}${aiLabel}
                     </label>
                     <select class="bulk-skill-level" data-code="${c.code}" disabled style="width:50px; padding:2px;">
                         <option value="1">1</option>
-                        <option value="2" selected>2</option>
+                        <option value="2" ${!isAiRecommended ? 'selected' : ''}>2</option>
                         <option value="3">3</option>
                         <option value="4">4</option>
                     </select>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+
+            // Pre-select AI recommended level for highlighted skills
+            Object.entries(aiSkillMaxLevel).forEach(([code, level]) => {
+                const sel = grid.querySelector(`.bulk-skill-level[data-code="${code}"]`);
+                if (sel) sel.value = level;
+            });
             
             // Add event listeners for checkboxes
             grid.querySelectorAll('.bulk-skill-cb').forEach(cb => {
@@ -2861,125 +3032,262 @@
                 });
             });
             
+            // Populate individual preview
+            let hasItemWithoutSkills = false;
+            const individualPreview = document.getElementById('bulk-individual-preview');
+            individualPreview.innerHTML = Array.from(selectedIds).map(id => {
+                const item = items.find(i => i.id === id);
+                // For student: use aiSuggestedSkills; for organizer: prefer skills (organizer-set), fallback to aiSuggestedSkills
+                const itemSkills = type === 'student'
+                    ? (item?.aiSuggestedSkills || [])
+                    : (item?.skills?.length > 0 ? item.skills : (item?.aiSuggestedSkills || []));
+                const source = type === 'student'
+                    ? 'AI'
+                    : (item?.skills?.length > 0 ? 'ผู้จัด' : (item?.aiSuggestedSkills?.length > 0 ? 'AI' : ''));
+
+                if (itemSkills.length === 0) hasItemWithoutSkills = true;
+
+                const skillTags = itemSkills.slice(0, 3).map(s => {
+                    const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                    return `<span style="background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:8px;font-size:0.75em;">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                }).join(' ');
+
+                const noSkillMsg = itemSkills.length === 0
+                    ? '<span style="color:#e74c3c;font-size:0.8em;">⚠️ ไม่มีทักษะ - จะถูกข้าม</span>'
+                    : '';
+                const sourceTag = source ? `<span style="background:#e3f2fd;color:#1565c0;padding:1px 5px;border-radius:6px;font-size:0.7em;">${source}</span>` : '';
+
+                return `<div style="padding:8px;border-bottom:1px solid #eee;display:flex;flex-direction:column;gap:4px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <strong style="font-size:0.85em;">${item?.activityName || 'ไม่ระบุ'}</strong>
+                        ${sourceTag}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;">${skillTags || noSkillMsg}</div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('bulk-individual-warning').style.display = hasItemWithoutSkills ? 'block' : 'none';
+
+            // Reset mode to 'same'
+            bulkApproveMode = 'same';
+            setBulkApproveMode('same');
+
             document.getElementById('bulk-approve-modal').classList.add('show');
         }
-        
+
         function closeBulkApproveModal() {
             document.getElementById('bulk-approve-modal').classList.remove('show');
         }
         
         async function confirmBulkApprove() {
-            // Get selected skills
-            const skills = [];
-            document.querySelectorAll('.bulk-skill-cb:checked').forEach(cb => {
-                const code = cb.dataset.code;
-                const levelSelect = document.querySelector(`.bulk-skill-level[data-code="${code}"]`);
-                const criteria = CRITERIA_LIST.find(c => c.code === code);
-                skills.push({
-                    code: code,
-                    level: parseInt(levelSelect.value),
-                    nameTh: criteria?.nameTh || '',
-                    nameEn: criteria?.nameEn || ''
-                });
-            });
-            
-            if (skills.length === 0) {
-                alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ');
-                return;
-            }
-            
             const selectedIds = bulkType === 'student' ? selectedStudentItems : selectedOrganizerItems;
             const items = bulkType === 'student' ? studentSubmissions : organizerActivities;
             const collection = bulkType === 'student' ? 'submissions' : 'organizerActivities';
-            
-            showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ...`);
-            
-            try {
-                const batch = db.batch();
-                
-                // Update each item
-                for (const id of selectedIds) {
-                    const item = items.find(i => i.id === id);
-                    if (!item) continue;
-                    
-                    // Update the submission/activity status
-                    const ref = db.collection(collection).doc(id);
-                    batch.update(ref, {
-                        status: 'Approved',
-                        approvedSkills: skills,
-                        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+
+            if (bulkApproveMode === 'same') {
+                // === Mode: Same skills for all ===
+                const skills = [];
+                document.querySelectorAll('.bulk-skill-cb:checked').forEach(cb => {
+                    const code = cb.dataset.code;
+                    const levelSelect = document.querySelector(`.bulk-skill-level[data-code="${code}"]`);
+                    const criteria = CRITERIA_LIST.find(c => c.code === code);
+                    skills.push({
+                        code: code,
+                        level: parseInt(levelSelect.value),
+                        nameTh: criteria?.nameTh || '',
+                        nameEn: criteria?.nameEn || ''
                     });
-                    
-                    // For student submissions - add to participation
-                    if (bulkType === 'student') {
-                        const participationRef = db.collection('participation').doc();
-                        batch.set(participationRef, {
-                            studentId: item.studentId,
-                            activityName: item.activityName,
+                });
+
+                if (skills.length === 0) {
+                    alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ทักษะ');
+                    return;
+                }
+
+                showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ...`);
+
+                try {
+                    const batch = db.batch();
+
+                    for (const id of selectedIds) {
+                        const item = items.find(i => i.id === id);
+                        if (!item) continue;
+
+                        const ref = db.collection(collection).doc(id);
+                        batch.update(ref, {
                             status: 'Approved',
-                            date: item.startDate || '',
-                            skills: skills,
-                            source: 'student-submission-bulk',
-                            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            approvedSkills: skills,
+                            approvedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                    }
-                    
-                    // For organizer activities - add students to participation
-                    if (bulkType === 'organizer') {
-                        const studentIds = item.studentIds || [];
-                        for (const studentId of studentIds) {
+
+                        if (bulkType === 'student') {
                             const participationRef = db.collection('participation').doc();
                             batch.set(participationRef, {
-                                studentId: studentId,
+                                studentId: item.studentId,
                                 activityName: item.activityName,
                                 status: 'Approved',
-                                date: item.activityDate || item.startDate || '',
+                                date: item.startDate || '',
                                 skills: skills,
-                                source: 'organizer-bulk',
+                                source: 'student-submission-bulk',
                                 addedAt: firebase.firestore.FieldValue.serverTimestamp()
                             });
                         }
-                    }
-                }
-                
-                await batch.commit();
-                
-                // Update local state
-                selectedIds.forEach(id => {
-                    if (bulkType === 'student') {
-                        const index = studentSubmissions.findIndex(s => s.id === id);
-                        if (index !== -1) {
-                            studentSubmissions[index].status = 'Approved';
-                            studentSubmissions[index].approvedSkills = skills;
-                        }
-                    } else {
-                        const index = organizerActivities.findIndex(a => a.id === id);
-                        if (index !== -1) {
-                            organizerActivities[index].status = 'Approved';
-                            organizerActivities[index].approvedSkills = skills;
+
+                        if (bulkType === 'organizer') {
+                            const studentIds = item.studentIds || [];
+                            for (const studentId of studentIds) {
+                                const participationRef = db.collection('participation').doc();
+                                batch.set(participationRef, {
+                                    studentId: studentId,
+                                    activityName: item.activityName,
+                                    status: 'Approved',
+                                    date: item.activityDate || item.startDate || '',
+                                    skills: skills,
+                                    source: 'organizer-bulk',
+                                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
                         }
                     }
-                });
-                
-                // Clear selection and re-render
-                if (bulkType === 'student') {
-                    clearStudentSelection();
-                    renderStudentSubmissions();
-                } else {
-                    clearOrganizerSelection();
-                    renderOrganizerActivities();
+
+                    await batch.commit();
+
+                    selectedIds.forEach(id => {
+                        if (bulkType === 'student') {
+                            const index = studentSubmissions.findIndex(s => s.id === id);
+                            if (index !== -1) {
+                                studentSubmissions[index].status = 'Approved';
+                                studentSubmissions[index].approvedSkills = skills;
+                            }
+                        } else {
+                            const index = organizerActivities.findIndex(a => a.id === id);
+                            if (index !== -1) {
+                                organizerActivities[index].status = 'Approved';
+                                organizerActivities[index].approvedSkills = skills;
+                            }
+                        }
+                    });
+
+                    if (bulkType === 'student') { clearStudentSelection(); renderStudentSubmissions(); }
+                    else { clearOrganizerSelection(); renderOrganizerActivities(); }
+
+                    updateStats();
+                    closeBulkApproveModal();
+                    showLoading(false);
+                    alert(`✅ อนุมัติ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
+
+                } catch (error) {
+                    console.error('Bulk approve error:', error);
+                    showLoading(false);
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
                 }
-                
-                updateStats();
-                closeBulkApproveModal();
-                showLoading(false);
-                
-                alert(`✅ อนุมัติ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
-                
-            } catch (error) {
-                console.error('Bulk approve error:', error);
-                showLoading(false);
-                alert('เกิดข้อผิดพลาด: ' + error.message);
+
+            } else {
+                // === Mode: Individual AI/Organizer skills ===
+                showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ (ทักษะจาก AI/ผู้จัด)...`);
+
+                try {
+                    const batch = db.batch();
+                    let approvedCount = 0;
+                    let skippedCount = 0;
+
+                    for (const id of selectedIds) {
+                        const item = items.find(i => i.id === id);
+                        if (!item) continue;
+
+                        // Determine skills for this item
+                        let itemSkills;
+                        if (bulkType === 'student') {
+                            itemSkills = (item.aiSuggestedSkills || []).slice(0, 3);
+                        } else {
+                            itemSkills = (item.skills?.length > 0 ? item.skills : (item.aiSuggestedSkills || [])).slice(0, 3);
+                        }
+
+                        // Normalize skills format
+                        itemSkills = itemSkills.map(s => ({
+                            code: s.code,
+                            level: s.level || 2,
+                            nameTh: s.nameTh || CRITERIA_LIST.find(c => c.code === s.code)?.nameTh || '',
+                            nameEn: s.nameEn || CRITERIA_LIST.find(c => c.code === s.code)?.nameEn || ''
+                        }));
+
+                        if (itemSkills.length === 0) {
+                            skippedCount++;
+                            continue;
+                        }
+
+                        const ref = db.collection(collection).doc(id);
+                        batch.update(ref, {
+                            status: 'Approved',
+                            approvedSkills: itemSkills,
+                            approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        if (bulkType === 'student') {
+                            const participationRef = db.collection('participation').doc();
+                            batch.set(participationRef, {
+                                studentId: item.studentId,
+                                activityName: item.activityName,
+                                status: 'Approved',
+                                date: item.startDate || '',
+                                skills: itemSkills,
+                                source: 'student-submission-bulk',
+                                addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+
+                        if (bulkType === 'organizer') {
+                            const studentIds = item.studentIds || [];
+                            for (const studentId of studentIds) {
+                                const participationRef = db.collection('participation').doc();
+                                batch.set(participationRef, {
+                                    studentId: studentId,
+                                    activityName: item.activityName,
+                                    status: 'Approved',
+                                    date: item.activityDate || item.startDate || '',
+                                    skills: itemSkills,
+                                    source: 'organizer-bulk',
+                                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        }
+
+                        approvedCount++;
+
+                        // Update local state
+                        if (bulkType === 'student') {
+                            const index = studentSubmissions.findIndex(s => s.id === id);
+                            if (index !== -1) {
+                                studentSubmissions[index].status = 'Approved';
+                                studentSubmissions[index].approvedSkills = itemSkills;
+                            }
+                        } else {
+                            const index = organizerActivities.findIndex(a => a.id === id);
+                            if (index !== -1) {
+                                organizerActivities[index].status = 'Approved';
+                                organizerActivities[index].approvedSkills = itemSkills;
+                            }
+                        }
+                    }
+
+                    await batch.commit();
+
+                    if (bulkType === 'student') { clearStudentSelection(); renderStudentSubmissions(); }
+                    else { clearOrganizerSelection(); renderOrganizerActivities(); }
+
+                    updateStats();
+                    closeBulkApproveModal();
+                    showLoading(false);
+
+                    let msg = `✅ อนุมัติ ${approvedCount} รายการเรียบร้อย (ใช้ทักษะจาก AI/ผู้จัด)`;
+                    if (skippedCount > 0) msg += `\n⚠️ ข้าม ${skippedCount} รายการที่ไม่มีทักษะ`;
+                    alert(msg);
+
+                } catch (error) {
+                    console.error('Bulk approve (individual) error:', error);
+                    showLoading(false);
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                }
             }
         }
 
@@ -3048,6 +3356,336 @@
             }
             
             showLoading(false);
+        }
+
+        // ============================================
+        // MERGE ACTIVITIES
+        // ============================================
+
+        function normalizeForCompare(str) {
+            return str.toLowerCase()
+                .replace(/\s+/g, ' ')
+                .replace(/["""'']/g, '')
+                .replace(/\(.*?\)/g, '')
+                .trim();
+        }
+
+        function areSimilar(a, b) {
+            const na = normalizeForCompare(a);
+            const nb = normalizeForCompare(b);
+            if (na === nb) return true;
+            if (na.includes(nb) || nb.includes(na)) return true;
+
+            // Token overlap check
+            const tokensA = na.split(/\s+/).filter(t => t.length > 1);
+            const tokensB = nb.split(/\s+/).filter(t => t.length > 1);
+            if (tokensA.length === 0 || tokensB.length === 0) return false;
+            const overlap = tokensA.filter(t => tokensB.includes(t)).length;
+            const minLen = Math.min(tokensA.length, tokensB.length);
+            return minLen >= 2 && overlap / minLen >= 0.6;
+        }
+
+        async function findSimilarActivities() {
+            const statusEl = document.getElementById('merge-status');
+            statusEl.textContent = 'กำลังค้นหา...';
+
+            showLoading(true, 'กำลังค้นหากิจกรรมที่คล้ายกัน...');
+
+            try {
+                // Load all activities
+                const query = await db.collection('activities').get();
+                const activities = query.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Group similar activities
+                const groups = [];
+                const used = new Set();
+
+                for (let i = 0; i < activities.length; i++) {
+                    if (used.has(i)) continue;
+                    const group = [activities[i]];
+                    used.add(i);
+
+                    for (let j = i + 1; j < activities.length; j++) {
+                        if (used.has(j)) continue;
+                        if (areSimilar(activities[i].name, activities[j].name)) {
+                            group.push(activities[j]);
+                            used.add(j);
+                        }
+                    }
+
+                    if (group.length > 1) {
+                        groups.push(group);
+                    }
+                }
+
+                showLoading(false);
+
+                if (groups.length === 0) {
+                    document.getElementById('merge-results').style.display = 'none';
+                    document.getElementById('merge-empty').style.display = 'block';
+                    statusEl.textContent = `ตรวจสอบ ${activities.length} กิจกรรม - ไม่พบรายการที่คล้ายกัน`;
+                    return;
+                }
+
+                document.getElementById('merge-empty').style.display = 'none';
+                document.getElementById('merge-results').style.display = 'block';
+                statusEl.textContent = `พบ ${groups.length} กลุ่มที่คล้ายกัน (จาก ${activities.length} กิจกรรม)`;
+
+                const container = document.getElementById('merge-groups-list');
+                container.innerHTML = groups.map((group, gIdx) => {
+                    const itemsHtml = group.map(a => {
+                        const skills = (a.skills || []).slice(0, 3).map(s => {
+                            const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                            return `<span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;font-size:0.75em;">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                        }).join(' ');
+                        return `<div style="padding:8px 12px;background:white;border-radius:6px;border:1px solid #eee;margin-bottom:4px;">
+                            <div style="font-weight:600;font-size:0.9em;">${a.name}</div>
+                            <div style="font-size:0.8em;color:#888;margin-top:2px;">${a.organizer ? '👨‍💼 ' + a.organizer : ''}${a.date ? ' | 📅 ' + a.date : ''}</div>
+                            ${skills ? '<div style="margin-top:4px;">' + skills + '</div>' : ''}
+                        </div>`;
+                    }).join('');
+
+                    return `<div style="margin-bottom:20px;padding:15px;background:#f8f9fa;border-radius:10px;border-left:3px solid #667eea;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h4 style="margin:0;font-size:1em;">กลุ่มที่ ${gIdx + 1} (${group.length} กิจกรรม)</h4>
+                            <button onclick="openMergeModal(${gIdx})" style="padding:6px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;font-weight:600;">🔀 รวม</button>
+                        </div>
+                        ${itemsHtml}
+                    </div>`;
+                }).join('');
+
+                // Store groups for modal use
+                window._mergeGroups = groups;
+
+            } catch (error) {
+                showLoading(false);
+                console.error('Find similar error:', error);
+                statusEl.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+            }
+        }
+
+        function openMergeModal(groupIndex) {
+            const group = window._mergeGroups[groupIndex];
+            if (!group) return;
+
+            const namesHtml = group.map((a, i) => `
+                <label style="display:flex;align-items:center;gap:8px;padding:8px;background:${i === 0 ? '#e8f5e9' : 'white'};border-radius:6px;cursor:pointer;border:1px solid #eee;">
+                    <input type="radio" name="merge-source-name" value="${i}" ${i === 0 ? 'checked' : ''}>
+                    <span style="font-size:0.9em;">${a.name}</span>
+                </label>
+            `).join('');
+
+            const content = document.getElementById('merge-modal-content');
+            content.innerHTML = `
+                <div style="margin-bottom:15px;">
+                    <h4 style="margin-bottom:8px;">📋 กิจกรรมที่จะรวม:</h4>
+                    ${group.map(a => `<div style="padding:4px 0;font-size:0.9em;">• ${a.name}</div>`).join('')}
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <h4 style="margin-bottom:8px;">✏️ เลือกชื่อกิจกรรมหลัก หรือตั้งชื่อใหม่:</h4>
+                    ${namesHtml}
+                    <label style="display:flex;align-items:center;gap:8px;padding:8px;background:white;border-radius:6px;cursor:pointer;border:1px solid #eee;margin-top:4px;">
+                        <input type="radio" name="merge-source-name" value="custom">
+                        <span style="font-size:0.9em;">ตั้งชื่อใหม่:</span>
+                    </label>
+                    <input type="text" id="merge-custom-name" placeholder="พิมพ์ชื่อใหม่..." style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;margin-top:6px;font-size:0.9em;">
+                </div>
+
+                <div id="merge-affected-students" style="display:none;margin-top:15px;">
+                    <div style="padding:10px;background:#fff8e1;border-radius:8px;border-left:3px solid #ff9800;">
+                        <strong>👥 นักศึกษาที่จะได้รับผลกระทบ:</strong>
+                        <div id="merge-students-info" style="margin-top:6px;font-size:0.85em;"></div>
+                    </div>
+                </div>
+            `;
+
+            window._currentMergeGroup = group;
+
+            document.getElementById('merge-modal-footer').innerHTML = `
+                <button class="btn-secondary" onclick="closeMergeModal()">ยกเลิก</button>
+                <button class="btn-primary" onclick="previewMerge()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;">
+                    🔍 ตรวจสอบ & ดำเนินการ
+                </button>
+            `;
+
+            document.getElementById('merge-modal').classList.add('show');
+        }
+
+        function closeMergeModal() {
+            document.getElementById('merge-modal').classList.remove('show');
+        }
+
+        async function previewMerge() {
+            const group = window._currentMergeGroup;
+            if (!group) return;
+
+            // Get target name
+            const selectedRadio = document.querySelector('input[name="merge-source-name"]:checked');
+            let targetName;
+            if (selectedRadio.value === 'custom') {
+                targetName = document.getElementById('merge-custom-name').value.trim();
+                if (!targetName) {
+                    alert('⚠️ กรุณาระบุชื่อกิจกรรมใหม่');
+                    return;
+                }
+            } else {
+                targetName = group[parseInt(selectedRadio.value)].name;
+            }
+
+            showLoading(true, 'กำลังตรวจสอบข้อมูลนักศึกษาที่เกี่ยวข้อง...');
+
+            try {
+                // Find all participation records with these activity names
+                const activityNames = group.map(a => a.name);
+                let affectedStudents = new Map(); // studentId -> [activityName, ...]
+
+                for (const name of activityNames) {
+                    if (name === targetName) continue;
+                    const query = await db.collection('participation')
+                        .where('activityName', '==', name)
+                        .get();
+                    query.docs.forEach(doc => {
+                        const data = doc.data();
+                        const key = data.studentId;
+                        if (!affectedStudents.has(key)) {
+                            affectedStudents.set(key, []);
+                        }
+                        affectedStudents.get(key).push({ docId: doc.id, activityName: name });
+                    });
+                }
+
+                // Also check submissions and organizerActivities
+                let affectedSubmissions = [];
+                for (const name of activityNames) {
+                    if (name === targetName) continue;
+                    const subQuery = await db.collection('submissions')
+                        .where('activityName', '==', name)
+                        .get();
+                    subQuery.docs.forEach(doc => {
+                        affectedSubmissions.push({ docId: doc.id, name: name, collection: 'submissions' });
+                    });
+
+                    const orgQuery = await db.collection('organizerActivities')
+                        .where('activityName', '==', name)
+                        .get();
+                    orgQuery.docs.forEach(doc => {
+                        affectedSubmissions.push({ docId: doc.id, name: name, collection: 'organizerActivities' });
+                    });
+                }
+
+                showLoading(false);
+
+                const infoEl = document.getElementById('merge-students-info');
+                const totalParticipation = Array.from(affectedStudents.values()).reduce((sum, arr) => sum + arr.length, 0);
+
+                infoEl.innerHTML = `
+                    <div>📊 ${affectedStudents.size} นักศึกษา (${totalParticipation} participation records)</div>
+                    <div>📝 ${affectedSubmissions.length} submissions/organizer records</div>
+                    <div style="margin-top:6px;color:#e65100;"><strong>จะเปลี่ยนชื่อเป็น: "${targetName}"</strong></div>
+                `;
+                document.getElementById('merge-affected-students').style.display = 'block';
+
+                // Store for execution
+                window._mergeData = {
+                    targetName,
+                    group,
+                    affectedStudents,
+                    affectedSubmissions,
+                    activityNames
+                };
+
+                // Update footer with confirm button
+                document.getElementById('merge-modal-footer').innerHTML = `
+                    <button class="btn-secondary" onclick="closeMergeModal()">ยกเลิก</button>
+                    <button onclick="executeMerge(false)" style="padding:10px 16px;background:#ff9800;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                        🔀 รวมกิจกรรม (สร้างใหม่อย่างเดียว)
+                    </button>
+                    ${(affectedStudents.size > 0 || affectedSubmissions.length > 0) ? `
+                    <button onclick="executeMerge(true)" style="padding:10px 16px;background:linear-gradient(135deg,#27ae60,#219a52);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                        ✅ รวม & ปรับชื่อนศ.ด้วย
+                    </button>` : ''}
+                `;
+
+            } catch (error) {
+                showLoading(false);
+                console.error('Preview merge error:', error);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        async function executeMerge(updateStudents) {
+            const data = window._mergeData;
+            if (!data) return;
+
+            showLoading(true, 'กำลังรวมกิจกรรม...');
+
+            try {
+                const batch = db.batch();
+
+                // 1. Create new activity with target name (or update existing)
+                const existingQuery = await db.collection('activities')
+                    .where('name', '==', data.targetName)
+                    .limit(1)
+                    .get();
+
+                if (existingQuery.empty) {
+                    // Create new activity using first group item's data as base
+                    const base = data.group[0];
+                    const newRef = db.collection('activities').doc();
+                    batch.set(newRef, {
+                        name: data.targetName,
+                        organizer: base.organizer || '',
+                        date: base.date || '',
+                        level: base.level || 2,
+                        description: base.description || '',
+                        skills: base.skills || [],
+                        mergedFrom: data.activityNames,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                // 2. Optionally update student records
+                if (updateStudents) {
+                    // Update participation records
+                    for (const [studentId, records] of data.affectedStudents) {
+                        for (const rec of records) {
+                            const ref = db.collection('participation').doc(rec.docId);
+                            batch.update(ref, { activityName: data.targetName });
+                        }
+                    }
+
+                    // Update submissions and organizer activities
+                    for (const sub of data.affectedSubmissions) {
+                        const ref = db.collection(sub.collection).doc(sub.docId);
+                        batch.update(ref, { activityName: data.targetName });
+                    }
+                }
+
+                await batch.commit();
+
+                showLoading(false);
+                closeMergeModal();
+
+                let msg = `✅ สร้างกิจกรรม "${data.targetName}" เรียบร้อย\n(รวมจาก ${data.activityNames.length} กิจกรรม)`;
+                if (updateStudents) {
+                    const totalUpdated = Array.from(data.affectedStudents.values()).reduce((s, a) => s + a.length, 0) + data.affectedSubmissions.length;
+                    msg += `\n📝 ปรับชื่อกิจกรรมให้ ${totalUpdated} records`;
+                }
+                alert(msg);
+
+                // Reload data
+                await loadAllData();
+                findSimilarActivities();
+
+            } catch (error) {
+                showLoading(false);
+                console.error('Execute merge error:', error);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
         }
 
         // ============================================
