@@ -2374,22 +2374,21 @@
         }
 
         function renderSkillsEditor(item) {
-            const maxLevel = item.activityLevel || 4;
             const aiSkills = item.aiSuggestedSkills || [];
-            
+
             // Create a map of AI suggested skills for easy lookup
             const aiSkillMap = {};
             aiSkills.forEach(s => { aiSkillMap[s.code] = s.level; });
-            
+
             // Schedule initialization after DOM update
             setTimeout(() => {
                 updateAdminSkillCounter();
                 initSkillCheckboxListeners();
             }, 100);
-            
+
             return `
                 <div class="skill-limit-note" style="background:#fff3cd;padding:10px;border-radius:8px;margin-bottom:15px;font-size:0.9em;">
-                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับไม่เกิน Level ${maxLevel}
+                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับ 1-4 (Admin ปรับได้)
                     <span id="admin-skill-counter" style="float:right;background:#667eea;color:white;padding:2px 10px;border-radius:15px;">0/3</span>
                 </div>
                 <div class="skill-editor-list">
@@ -2399,14 +2398,14 @@
                         return `
                         <div class="skill-editor-item ${isAISuggested ? 'ai-suggested' : ''}" style="${isAISuggested ? 'background:#e8f5e9;border-left:3px solid #27ae60;' : ''}">
                             <label>
-                                <input type="checkbox" class="skill-checkbox" data-code="${c.code}" 
+                                <input type="checkbox" class="skill-checkbox" data-code="${c.code}"
                                     ${isAISuggested ? 'checked' : ''} onchange="updateAdminSkillCounter()">
                                 <span>${c.code} ${c.nameTh}</span>
                                 ${isAISuggested ? '<span style="background:#27ae60;color:white;padding:1px 6px;border-radius:10px;font-size:0.7em;margin-left:5px;">AI</span>' : ''}
                             </label>
                             <select class="skill-level-select" data-code="${c.code}" ${isAISuggested ? '' : 'disabled'}>
                                 ${[1,2,3,4].map(l => `
-                                    <option value="${l}" ${l > maxLevel ? 'disabled' : ''} ${l === aiLevel && isAISuggested ? 'selected' : ''}>Lv.${l}</option>
+                                    <option value="${l}" ${l === aiLevel && isAISuggested ? 'selected' : ''}>Lv.${l}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -2417,22 +2416,21 @@
         
         // Render skills editor for organizer activities (uses organizer's skills as default)
         function renderOrganizerSkillsEditor(item) {
-            const maxLevel = item.activityLevel || 4;
             const organizerSkills = item.skills || [];
-            
+
             // Create a map of organizer suggested skills for easy lookup
             const organizerSkillMap = {};
             organizerSkills.forEach(s => { organizerSkillMap[s.code] = s.level; });
-            
+
             // Schedule initialization after DOM update
             setTimeout(() => {
                 updateOrganizerSkillCounter();
                 initOrganizerSkillCheckboxListeners();
             }, 100);
-            
+
             return `
                 <div class="skill-limit-note" style="background:#e8f4fd;padding:10px;border-radius:8px;margin-bottom:15px;font-size:0.9em;">
-                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับไม่เกิน Level ${maxLevel}
+                    <strong>📌 เลือกได้สูงสุด 3 ทักษะ</strong> | ระดับ 1-4 (Admin ปรับได้)
                     <span id="organizer-skill-counter" style="float:right;background:#667eea;color:white;padding:2px 10px;border-radius:15px;">0/3</span>
                 </div>
                 <div class="skill-editor-list">
@@ -2442,14 +2440,14 @@
                         return `
                         <div class="skill-editor-item organizer-skill-item ${isOrganizerSuggested ? 'organizer-suggested' : ''}" style="${isOrganizerSuggested ? 'background:#e3f2fd;border-left:3px solid #2196f3;' : ''}">
                             <label>
-                                <input type="checkbox" class="organizer-skill-checkbox" data-code="${c.code}" 
+                                <input type="checkbox" class="organizer-skill-checkbox" data-code="${c.code}"
                                     ${isOrganizerSuggested ? 'checked' : ''} onchange="updateOrganizerSkillCounter()">
                                 <span>${c.code} ${c.nameTh}</span>
                                 ${isOrganizerSuggested ? '<span style="background:#2196f3;color:white;padding:1px 6px;border-radius:10px;font-size:0.7em;margin-left:5px;">ผู้จัด</span>' : ''}
                             </label>
                             <select class="organizer-skill-level-select" data-code="${c.code}" ${isOrganizerSuggested ? '' : 'disabled'}>
                                 ${[1,2,3,4].map(l => `
-                                    <option value="${l}" ${l > maxLevel ? 'disabled' : ''} ${l === suggestedLevel && isOrganizerSuggested ? 'selected' : ''}>Lv.${l}</option>
+                                    <option value="${l}" ${l === suggestedLevel && isOrganizerSuggested ? 'selected' : ''}>Lv.${l}</option>
                                 `).join('')}
                             </select>
                         </div>
