@@ -2966,16 +2966,17 @@
         
         async function confirmBulkReject() {
             const reason = document.getElementById('bulk-reject-reason').value.trim();
-            
+
             if (!reason) {
                 alert('⚠️ กรุณาระบุเหตุผล');
                 return;
             }
-            
+
             const selectedIds = bulkType === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const totalCount = selectedIds.size; // บันทึกจำนวนก่อน clear
             const collection = bulkType === 'student' ? 'submissions' : 'organizerActivities';
-            
-            showLoading(true, `กำลังปฏิเสธ ${selectedIds.size} รายการ...`);
+
+            showLoading(true, `กำลังปฏิเสธ ${totalCount} รายการ...`);
             
             try {
                 const batch = db.batch();
@@ -3018,7 +3019,7 @@
                 closeBulkRejectModal();
                 showLoading(false);
                 
-                alert(`❌ ปฏิเสธ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
+                alert(`❌ ปฏิเสธ ${totalCount} รายการเรียบร้อยแล้ว`);
                 
             } catch (error) {
                 console.error('Bulk reject error:', error);
@@ -3214,6 +3215,7 @@
         
         async function confirmBulkApprove() {
             const selectedIds = bulkType === 'student' ? selectedStudentItems : selectedOrganizerItems;
+            const totalCount = selectedIds.size; // บันทึกจำนวนก่อน clear
             const items = bulkType === 'student' ? studentSubmissions : organizerActivities;
             const collection = bulkType === 'student' ? 'submissions' : 'organizerActivities';
 
@@ -3237,7 +3239,7 @@
                     return;
                 }
 
-                showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ...`);
+                showLoading(true, `กำลังอนุมัติ ${totalCount} รายการ...`);
 
                 try {
                     const batch = db.batch();
@@ -3307,7 +3309,7 @@
                     updateStats();
                     closeBulkApproveModal();
                     showLoading(false);
-                    alert(`✅ อนุมัติ ${selectedIds.size} รายการเรียบร้อยแล้ว`);
+                    alert(`✅ อนุมัติ ${totalCount} รายการเรียบร้อยแล้ว`);
 
                 } catch (error) {
                     console.error('Bulk approve error:', error);
@@ -3317,7 +3319,7 @@
 
             } else {
                 // === Mode: Individual AI/Organizer skills ===
-                showLoading(true, `กำลังอนุมัติ ${selectedIds.size} รายการ (ทักษะจาก AI/ผู้จัด)...`);
+                showLoading(true, `กำลังอนุมัติ ${totalCount} รายการ (ทักษะจาก AI/ผู้จัด)...`);
 
                 try {
                     const batch = db.batch();
