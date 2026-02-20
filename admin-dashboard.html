@@ -648,7 +648,17 @@
                     <span id="student-filter-count" class="filter-result-count"></span>
                 </div>
 
-                <!-- Bulk Actions -->
+                <!-- Reject Reason Search (visible when filtered to rejected) -->
+                <div id="student-reject-reason-filter" class="activity-name-filter" style="display:none;">
+                    <div class="filter-input-wrap">
+                        <span class="filter-icon">📝</span>
+                        <input type="text" id="student-reject-reason-search" placeholder="ค้นหาเหตุผลที่ปฏิเสธ..." oninput="onStudentRejectReasonSearch()">
+                        <button id="student-reject-reason-search-clear" class="filter-clear-btn" onclick="clearStudentRejectReasonSearch()" style="display:none;">✕</button>
+                    </div>
+                    <span id="student-reject-reason-count" class="filter-result-count"></span>
+                </div>
+
+                <!-- Bulk Actions for Pending -->
                 <div id="student-bulk-actions" class="bulk-actions" style="display: none;">
                     <div class="bulk-info">
                         <input type="checkbox" id="student-select-all" onchange="toggleSelectAllStudent()">
@@ -661,7 +671,20 @@
                         <button class="btn-bulk-cancel" onclick="clearStudentSelection()">ยกเลิก</button>
                     </div>
                 </div>
-                
+
+                <!-- Bulk Actions for Rejected (Revert) -->
+                <div id="student-bulk-revert-actions" class="bulk-actions" style="display: none; background: linear-gradient(135deg, #fff3e0, #ffe0b2);">
+                    <div class="bulk-info">
+                        <input type="checkbox" id="student-revert-select-all" onchange="toggleSelectAllStudentRevert()">
+                        <label for="student-revert-select-all">เลือกทั้งหมด</label>
+                        <span id="student-revert-selected-count" class="selected-count">0 รายการ</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-approve" onclick="bulkRevertToPending('student')" style="background:linear-gradient(135deg,#f39c12,#e67e22);">🔄 Revert เป็นรออนุมัติ</button>
+                        <button class="btn-bulk-cancel" onclick="clearStudentRevertSelection()">ยกเลิก</button>
+                    </div>
+                </div>
+
                 <div id="student-submissions-list" class="submissions-list">
                     <div class="loading-inline">กำลังโหลด...</div>
                 </div>
@@ -691,7 +714,17 @@
                     <span id="organizer-filter-count" class="filter-result-count"></span>
                 </div>
 
-                <!-- Bulk Actions -->
+                <!-- Reject Reason Search (visible when filtered to rejected) -->
+                <div id="organizer-reject-reason-filter" class="activity-name-filter" style="display:none;">
+                    <div class="filter-input-wrap">
+                        <span class="filter-icon">📝</span>
+                        <input type="text" id="organizer-reject-reason-search" placeholder="ค้นหาเหตุผลที่ปฏิเสธ..." oninput="onOrganizerRejectReasonSearch()">
+                        <button id="organizer-reject-reason-search-clear" class="filter-clear-btn" onclick="clearOrganizerRejectReasonSearch()" style="display:none;">✕</button>
+                    </div>
+                    <span id="organizer-reject-reason-count" class="filter-result-count"></span>
+                </div>
+
+                <!-- Bulk Actions for Pending -->
                 <div id="organizer-bulk-actions" class="bulk-actions" style="display: none;">
                     <div class="bulk-info">
                         <input type="checkbox" id="organizer-select-all" onchange="toggleSelectAllOrganizer()">
@@ -704,7 +737,20 @@
                         <button class="btn-bulk-cancel" onclick="clearOrganizerSelection()">ยกเลิก</button>
                     </div>
                 </div>
-                
+
+                <!-- Bulk Actions for Rejected (Revert) -->
+                <div id="organizer-bulk-revert-actions" class="bulk-actions" style="display: none; background: linear-gradient(135deg, #fff3e0, #ffe0b2);">
+                    <div class="bulk-info">
+                        <input type="checkbox" id="organizer-revert-select-all" onchange="toggleSelectAllOrganizerRevert()">
+                        <label for="organizer-revert-select-all">เลือกทั้งหมด</label>
+                        <span id="organizer-revert-selected-count" class="selected-count">0 รายการ</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-approve" onclick="bulkRevertToPending('organizer')" style="background:linear-gradient(135deg,#f39c12,#e67e22);">🔄 Revert เป็นรออนุมัติ</button>
+                        <button class="btn-bulk-cancel" onclick="clearOrganizerRevertSelection()">ยกเลิก</button>
+                    </div>
+                </div>
+
                 <div id="organizer-activities-list" class="submissions-list">
                     <div class="loading-inline">กำลังโหลด...</div>
                 </div>
@@ -1232,10 +1278,14 @@
         let organizerFilter = 'all';
         let studentActivitySearch = '';
         let organizerActivitySearch = '';
-        
+        let studentRejectReasonSearch = '';
+        let organizerRejectReasonSearch = '';
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
+        let selectedStudentRevertItems = new Set();
+        let selectedOrganizerRevertItems = new Set();
         let bulkType = null; // 'student' or 'organizer'
         let bulkApproveMode = 'same'; // 'same' or 'individual'
 
@@ -1884,6 +1934,219 @@
         }
 
         // ============================================
+        // REJECT REASON SEARCH FUNCTIONS
+        // ============================================
+        function onStudentRejectReasonSearch() {
+            const input = document.getElementById('student-reject-reason-search');
+            const clearBtn = document.getElementById('student-reject-reason-search-clear');
+            studentRejectReasonSearch = input.value.trim().toLowerCase();
+            clearBtn.style.display = studentRejectReasonSearch ? 'flex' : 'none';
+            renderStudentSubmissions();
+        }
+        function clearStudentRejectReasonSearch() {
+            document.getElementById('student-reject-reason-search').value = '';
+            studentRejectReasonSearch = '';
+            document.getElementById('student-reject-reason-search-clear').style.display = 'none';
+            document.getElementById('student-reject-reason-count').textContent = '';
+            renderStudentSubmissions();
+        }
+        function onOrganizerRejectReasonSearch() {
+            const input = document.getElementById('organizer-reject-reason-search');
+            const clearBtn = document.getElementById('organizer-reject-reason-search-clear');
+            organizerRejectReasonSearch = input.value.trim().toLowerCase();
+            clearBtn.style.display = organizerRejectReasonSearch ? 'flex' : 'none';
+            renderOrganizerActivities();
+        }
+        function clearOrganizerRejectReasonSearch() {
+            document.getElementById('organizer-reject-reason-search').value = '';
+            organizerRejectReasonSearch = '';
+            document.getElementById('organizer-reject-reason-search-clear').style.display = 'none';
+            document.getElementById('organizer-reject-reason-count').textContent = '';
+            renderOrganizerActivities();
+        }
+
+        // ============================================
+        // REVERT SELECTION FUNCTIONS
+        // ============================================
+        function toggleStudentRevertSelection(id) {
+            if (selectedStudentRevertItems.has(id)) {
+                selectedStudentRevertItems.delete(id);
+            } else {
+                selectedStudentRevertItems.add(id);
+            }
+            updateStudentRevertSelectedCount();
+            renderStudentSubmissions();
+        }
+        function toggleOrganizerRevertSelection(id) {
+            if (selectedOrganizerRevertItems.has(id)) {
+                selectedOrganizerRevertItems.delete(id);
+            } else {
+                selectedOrganizerRevertItems.add(id);
+            }
+            updateOrganizerRevertSelectedCount();
+            renderOrganizerActivities();
+        }
+        function toggleSelectAllStudentRevert() {
+            const allChecked = document.getElementById('student-revert-select-all').checked;
+            const rejectedItems = studentSubmissions.filter(s => s.status?.toLowerCase().includes('rejected'));
+            // Apply text filters too
+            let filtered = rejectedItems;
+            if (studentActivitySearch) {
+                filtered = filtered.filter(s => (s.activityName || '').toLowerCase().includes(studentActivitySearch));
+            }
+            if (studentRejectReasonSearch) {
+                filtered = filtered.filter(s => (s.rejectReason || '').toLowerCase().includes(studentRejectReasonSearch));
+            }
+            if (allChecked) {
+                filtered.forEach(s => selectedStudentRevertItems.add(s.id));
+            } else {
+                selectedStudentRevertItems.clear();
+            }
+            updateStudentRevertSelectedCount();
+            renderStudentSubmissions();
+        }
+        function toggleSelectAllOrganizerRevert() {
+            const allChecked = document.getElementById('organizer-revert-select-all').checked;
+            const rejectedItems = organizerActivities.filter(a => a.status?.toLowerCase().includes('rejected'));
+            let filtered = rejectedItems;
+            if (organizerActivitySearch) {
+                filtered = filtered.filter(a => (a.activityName || '').toLowerCase().includes(organizerActivitySearch));
+            }
+            if (organizerRejectReasonSearch) {
+                filtered = filtered.filter(a => (a.rejectReason || '').toLowerCase().includes(organizerRejectReasonSearch));
+            }
+            if (allChecked) {
+                filtered.forEach(a => selectedOrganizerRevertItems.add(a.id));
+            } else {
+                selectedOrganizerRevertItems.clear();
+            }
+            updateOrganizerRevertSelectedCount();
+            renderOrganizerActivities();
+        }
+        function updateStudentRevertSelectedCount() {
+            const el = document.getElementById('student-revert-selected-count');
+            if (el) el.textContent = `${selectedStudentRevertItems.size} รายการ`;
+        }
+        function updateOrganizerRevertSelectedCount() {
+            const el = document.getElementById('organizer-revert-selected-count');
+            if (el) el.textContent = `${selectedOrganizerRevertItems.size} รายการ`;
+        }
+        function clearStudentRevertSelection() {
+            selectedStudentRevertItems.clear();
+            const selectAllEl = document.getElementById('student-revert-select-all');
+            if (selectAllEl) selectAllEl.checked = false;
+            updateStudentRevertSelectedCount();
+            renderStudentSubmissions();
+        }
+        function clearOrganizerRevertSelection() {
+            selectedOrganizerRevertItems.clear();
+            const selectAllEl = document.getElementById('organizer-revert-select-all');
+            if (selectAllEl) selectAllEl.checked = false;
+            updateOrganizerRevertSelectedCount();
+            renderOrganizerActivities();
+        }
+
+        // ============================================
+        // REVERT TO PENDING FUNCTIONS
+        // ============================================
+        async function revertToPending(id, type) {
+            if (!confirm('🔄 ต้องการ Revert รายการนี้เป็น "รออนุมัติ" ใช่หรือไม่?')) return;
+
+            const collection = type === 'student' ? 'submissions' : 'organizerActivities';
+            showLoading(true, 'กำลัง Revert...');
+
+            try {
+                await db.collection(collection).doc(id).update({
+                    status: 'Pending',
+                    rejectReason: firebase.firestore.FieldValue.delete(),
+                    reviewedAt: firebase.firestore.FieldValue.delete()
+                });
+
+                // Update local state
+                const items = type === 'student' ? studentSubmissions : organizerActivities;
+                const index = items.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    items[index].status = 'Pending';
+                    delete items[index].rejectReason;
+                    delete items[index].reviewedAt;
+                }
+
+                closeDetailModal();
+                showLoading(false);
+
+                if (type === 'student') renderStudentSubmissions();
+                else renderOrganizerActivities();
+
+                updateStats();
+                alert('🔄 Revert เป็นรออนุมัติเรียบร้อยแล้ว');
+            } catch (error) {
+                console.error('Revert error:', error);
+                showLoading(false);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        async function bulkRevertToPending(type) {
+            const selectedIds = type === 'student' ? selectedStudentRevertItems : selectedOrganizerRevertItems;
+            const totalCount = selectedIds.size;
+
+            if (totalCount === 0) {
+                alert('⚠️ กรุณาเลือกรายการก่อน');
+                return;
+            }
+
+            if (!confirm(`🔄 ต้องการ Revert ${totalCount} รายการเป็น "รออนุมัติ" ใช่หรือไม่?`)) return;
+
+            const collection = type === 'student' ? 'submissions' : 'organizerActivities';
+            const items = type === 'student' ? studentSubmissions : organizerActivities;
+
+            showLoading(true, `กำลัง Revert ${totalCount} รายการ...`);
+
+            try {
+                const batch = db.batch();
+
+                selectedIds.forEach(id => {
+                    const ref = db.collection(collection).doc(id);
+                    batch.update(ref, {
+                        status: 'Pending',
+                        rejectReason: firebase.firestore.FieldValue.delete(),
+                        reviewedAt: firebase.firestore.FieldValue.delete()
+                    });
+                });
+
+                await batch.commit();
+
+                // Update local state
+                selectedIds.forEach(id => {
+                    const index = items.findIndex(i => i.id === id);
+                    if (index !== -1) {
+                        items[index].status = 'Pending';
+                        delete items[index].rejectReason;
+                        delete items[index].reviewedAt;
+                    }
+                });
+
+                // Clear selection
+                if (type === 'student') {
+                    clearStudentRevertSelection();
+                    renderStudentSubmissions();
+                } else {
+                    clearOrganizerRevertSelection();
+                    renderOrganizerActivities();
+                }
+
+                updateStats();
+                showLoading(false);
+                alert(`🔄 Revert ${totalCount} รายการเป็นรออนุมัติเรียบร้อยแล้ว`);
+
+            } catch (error) {
+                console.error('Bulk revert error:', error);
+                showLoading(false);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        // ============================================
         // RENDER STUDENT SUBMISSIONS
         // ============================================
         function renderStudentSubmissions() {
@@ -1906,16 +2169,35 @@
                     (s.activityName || '').toLowerCase().includes(studentActivitySearch)
                 );
             }
+            // Reject reason text filter
+            if (studentRejectReasonSearch) {
+                filtered = filtered.filter(s =>
+                    (s.rejectReason || '').toLowerCase().includes(studentRejectReasonSearch)
+                );
+            }
             // Update count label
             const countEl = document.getElementById('student-filter-count');
             if (countEl) {
-                countEl.textContent = studentActivitySearch ? `${filtered.length} รายการ` : '';
+                countEl.textContent = (studentActivitySearch || studentRejectReasonSearch) ? `${filtered.length} รายการ` : '';
             }
-            
+            // Update reject reason count
+            const rejectCountEl = document.getElementById('student-reject-reason-count');
+            if (rejectCountEl) {
+                rejectCountEl.textContent = studentRejectReasonSearch ? `${filtered.length} รายการ` : '';
+            }
+
+            // Show/hide reject reason search bar
+            const isRejectedFilter = studentFilter === 'rejected';
+            document.getElementById('student-reject-reason-filter').style.display = isRejectedFilter ? 'flex' : 'none';
+
             // Show/hide bulk actions based on pending items
             const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
             document.getElementById('student-bulk-actions').style.display = hasPending ? 'flex' : 'none';
-            
+
+            // Show/hide bulk revert actions based on rejected items
+            const hasRejected = filtered.some(s => s.status?.toLowerCase().includes('rejected'));
+            document.getElementById('student-bulk-revert-actions').style.display = (isRejectedFilter && hasRejected) ? 'flex' : 'none';
+
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1925,14 +2207,16 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = filtered.map(item => {
                 const statusClass = getStatusClass(item.status);
                 const statusText = getStatusText(item.status);
                 const date = item.submittedAt?.toDate?.() || new Date();
                 const isPending = item.status?.toLowerCase().includes('pending');
-                const isSelected = selectedStudentItems.has(item.id);
-                
+                const isRejected = item.status?.toLowerCase().includes('rejected');
+                const isSelected = isPending ? selectedStudentItems.has(item.id) : (isRejected ? selectedStudentRevertItems.has(item.id) : false);
+                const isSelectable = isPending || isRejected;
+
                 // AI suggested skills preview
                 const aiSkills = item.aiSuggestedSkills || [];
                 const aiSkillsHtml = aiSkills.length > 0
@@ -1945,10 +2229,25 @@
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
-                
+
+                // Reject reason preview
+                const rejectReasonHtml = isRejected && item.rejectReason
+                    ? `<div class="reject-reason-preview" style="margin-top:4px;font-size:0.85em;color:#e74c3c;background:#ffeaea;padding:4px 8px;border-radius:6px;border-left:3px solid #e74c3c;">
+                        📝 ${item.rejectReason}
+                       </div>`
+                    : '';
+
+                // Checkbox logic
+                let checkboxHtml = '';
+                if (isPending) {
+                    checkboxHtml = `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="student" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleStudentSelection('${item.id}')">`;
+                } else if (isRejected && isRejectedFilter) {
+                    checkboxHtml = `<input type="checkbox" class="submission-checkbox revert-checkbox" data-id="${item.id}" data-type="student-revert" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleStudentRevertSelection('${item.id}')">`;
+                }
+
                 return `
-                    <div class="submission-card ${isPending ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
-                        ${isPending ? `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="student" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleStudentSelection('${item.id}')">` : ''}
+                    <div class="submission-card ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
+                        ${checkboxHtml}
                         <div class="card-content" onclick="showStudentDetail('${item.id}')">
                             <div class="submission-main">
                                 <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
@@ -1960,6 +2259,7 @@
                                 <span>📊 Level ${item.activityLevel || '-'}</span>
                             </div>
                             ${aiSkillsHtml}
+                            ${rejectReasonHtml}
                             <div class="submission-date">
                                 ส่งเมื่อ: ${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}
                             </div>
@@ -1967,7 +2267,7 @@
                     </div>
                 `;
             }).join('');
-            
+
             updateStudentSelectedCount();
         }
 
@@ -1994,16 +2294,35 @@
                     (a.activityName || '').toLowerCase().includes(organizerActivitySearch)
                 );
             }
+            // Reject reason text filter
+            if (organizerRejectReasonSearch) {
+                filtered = filtered.filter(a =>
+                    (a.rejectReason || '').toLowerCase().includes(organizerRejectReasonSearch)
+                );
+            }
             // Update count label
             const countEl = document.getElementById('organizer-filter-count');
             if (countEl) {
-                countEl.textContent = organizerActivitySearch ? `${filtered.length} รายการ` : '';
+                countEl.textContent = (organizerActivitySearch || organizerRejectReasonSearch) ? `${filtered.length} รายการ` : '';
             }
-            
+            // Update reject reason count
+            const rejectCountEl2 = document.getElementById('organizer-reject-reason-count');
+            if (rejectCountEl2) {
+                rejectCountEl2.textContent = organizerRejectReasonSearch ? `${filtered.length} รายการ` : '';
+            }
+
+            // Show/hide reject reason search bar
+            const isOrgRejectedFilter = organizerFilter === 'rejected';
+            document.getElementById('organizer-reject-reason-filter').style.display = isOrgRejectedFilter ? 'flex' : 'none';
+
             // Show/hide bulk actions based on pending items
             const hasPending = filtered.some(a => a.status?.toLowerCase() === 'pending');
             document.getElementById('organizer-bulk-actions').style.display = hasPending ? 'flex' : 'none';
-            
+
+            // Show/hide bulk revert actions based on rejected items
+            const hasRejected = filtered.some(a => a.status?.toLowerCase().includes('rejected'));
+            document.getElementById('organizer-bulk-revert-actions').style.display = (isOrgRejectedFilter && hasRejected) ? 'flex' : 'none';
+
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -2013,22 +2332,24 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = filtered.map(item => {
                 const statusClass = getStatusClass(item.status);
                 const statusText = getStatusText(item.status);
                 const isPending = item.status?.toLowerCase() === 'pending';
-                const isSelected = selectedOrganizerItems.has(item.id);
-                
+                const isRejected = item.status?.toLowerCase().includes('rejected');
+                const isSelected = isPending ? selectedOrganizerItems.has(item.id) : (isRejected ? selectedOrganizerRevertItems.has(item.id) : false);
+                const isSelectable = isPending || isRejected;
+
                 // Get participant count from different possible fields
-                const participantCount = item.studentCount || 
-                                        (item.studentIds?.length) || 
-                                        (item.studentEmails?.length) || 
+                const participantCount = item.studentCount ||
+                                        (item.studentIds?.length) ||
+                                        (item.studentEmails?.length) ||
                                         (item.participants?.length) || 0;
-                
+
                 // Get date from different possible fields
                 const activityDate = item.activityDate || item.startDate || '-';
-                
+
                 // AI suggested skills (from organizer's AI suggestion)
                 const aiSkills = item.aiSuggestedSkills || [];
                 const aiSkillsHtml = aiSkills.length > 0
@@ -2041,10 +2362,25 @@
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
                        </div>`
                     : '';
-                
+
+                // Reject reason preview
+                const rejectReasonHtml = isRejected && item.rejectReason
+                    ? `<div class="reject-reason-preview" style="margin-top:4px;font-size:0.85em;color:#e74c3c;background:#ffeaea;padding:4px 8px;border-radius:6px;border-left:3px solid #e74c3c;">
+                        📝 ${item.rejectReason}
+                       </div>`
+                    : '';
+
+                // Checkbox logic
+                let checkboxHtml = '';
+                if (isPending) {
+                    checkboxHtml = `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="organizer" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleOrganizerSelection('${item.id}')">`;
+                } else if (isRejected && isOrgRejectedFilter) {
+                    checkboxHtml = `<input type="checkbox" class="submission-checkbox revert-checkbox" data-id="${item.id}" data-type="organizer-revert" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleOrganizerRevertSelection('${item.id}')">`;
+                }
+
                 return `
-                    <div class="submission-card organizer-card ${isPending ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
-                        ${isPending ? `<input type="checkbox" class="submission-checkbox" data-id="${item.id}" data-type="organizer" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleOrganizerSelection('${item.id}')">` : ''}
+                    <div class="submission-card organizer-card ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}">
+                        ${checkboxHtml}
                         <div class="card-content" onclick="showOrganizerDetail('${item.id}')">
                             <div class="submission-main">
                                 <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
@@ -2062,11 +2398,12 @@
                                 ${(item.skills || []).length > 5 ? `<span class="skill-more">+${item.skills.length - 5}</span>` : ''}
                             </div>
                             ${aiSkillsHtml}
+                            ${rejectReasonHtml}
                         </div>
                     </div>
                 `;
             }).join('');
-            
+
             updateOrganizerSelectedCount();
         }
 
@@ -2228,6 +2565,13 @@
                     <button class="btn-danger" onclick="rejectItem()">❌ ปฏิเสธ</button>
                     <button class="btn-success" onclick="approveStudentSubmission()">✅ อนุมัติ</button>
                 `;
+            } else if (item.status?.toLowerCase().includes('rejected')) {
+                footerHtml = `
+                    <span class="status-badge ${getStatusClass(item.status)}">${getStatusText(item.status)}</span>
+                    ${item.rejectReason ? `<span style="font-size:0.85em;color:#e74c3c;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.rejectReason}">📝 ${item.rejectReason}</span>` : ''}
+                    <button class="btn-warning" onclick="revertToPending('${item.id}', 'student')" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">🔄 Revert เป็นรออนุมัติ</button>
+                    <button class="btn-secondary" onclick="closeDetailModal()">ปิด</button>
+                `;
             } else {
                 footerHtml = `
                     <span class="status-badge ${getStatusClass(item.status)}">${getStatusText(item.status)}</span>
@@ -2235,7 +2579,7 @@
                 `;
             }
             document.getElementById('modal-footer').innerHTML = footerHtml;
-            
+
             document.getElementById('detail-modal').classList.add('show');
         }
 
@@ -2362,6 +2706,13 @@
                     <button class="btn-danger" onclick="rejectItem()">❌ ปฏิเสธ</button>
                     <button class="btn-success" onclick="approveOrganizerActivity()">✅ อนุมัติ</button>
                 `;
+            } else if (item.status?.toLowerCase().includes('rejected')) {
+                footerHtml = `
+                    <span class="status-badge ${getStatusClass(item.status)}">${getStatusText(item.status)}</span>
+                    ${item.rejectReason ? `<span style="font-size:0.85em;color:#e74c3c;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.rejectReason}">📝 ${item.rejectReason}</span>` : ''}
+                    <button class="btn-warning" onclick="revertToPending('${item.id}', 'organizer')" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">🔄 Revert เป็นรออนุมัติ</button>
+                    <button class="btn-secondary" onclick="closeDetailModal()">ปิด</button>
+                `;
             } else {
                 footerHtml = `
                     <span class="status-badge ${getStatusClass(item.status)}">${getStatusText(item.status)}</span>
@@ -2369,7 +2720,7 @@
                 `;
             }
             document.getElementById('modal-footer').innerHTML = footerHtml;
-            
+
             document.getElementById('detail-modal').classList.add('show');
         }
 
