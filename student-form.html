@@ -345,7 +345,7 @@
                 <form id="activity-form" onsubmit="submitActivity(event)">
                     <div class="form-group" style="position:relative;">
                         <label>ชื่อกิจกรรม | Activity Name <span class="required">*</span></label>
-                        <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners" autocomplete="off" oninput="filterActivitySuggestions()">
+                        <input type="text" id="activity-name" required placeholder="เช่น Workshop AI for Beginners" autocomplete="off" oninput="filterActivitySuggestions(); detectLinkedInLearning()">
                         <div id="activity-suggestions" class="activity-suggestions" style="display:none;"></div>
                         <div id="activity-match-info" style="display:none;margin-top:6px;padding:8px 12px;background:#e8f5e9;border-radius:8px;border-left:3px solid #27ae60;font-size:0.85em;"></div>
                     </div>
@@ -416,6 +416,20 @@
                                     <span class="level-desc">ผู้จัด/สอนผู้อื่น</span>
                                 </div>
                             </label>
+                        </div>
+                    </div>
+
+                    <!-- LinkedIn Learning / Online Course Checkbox -->
+                    <div class="form-group" id="linkedin-checkbox-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 16px;background:#e3f2fd;border:2px solid #bbdefb;border-radius:10px;transition:all 0.3s;">
+                            <input type="checkbox" id="is-linkedin-learning" style="width:20px;height:20px;cursor:pointer;" onchange="onLinkedInCheckboxChange()">
+                            <div>
+                                <span style="font-weight:600;color:#0077b5;">🔗 เป็นคอร์สจาก LinkedIn Learning / Online Course</span>
+                                <div style="font-size:0.82em;color:#666;margin-top:2px;">เช่น คอร์สจาก LinkedIn Learning, Coursera, Udemy หรือแพลตฟอร์มเรียนออนไลน์อื่นๆ</div>
+                            </div>
+                        </label>
+                        <div id="linkedin-auto-detect" style="display:none;margin-top:6px;padding:8px 12px;background:#fff3e0;border-radius:8px;border-left:3px solid #ff9800;font-size:0.85em;color:#e65100;">
+                            💡 ระบบตรวจพบว่าชื่อกิจกรรมน่าจะเป็นคอร์สออนไลน์ ถ้าใช่กรุณาติ๊กเพื่อให้ระบบให้คะแนนถูกต้อง
                         </div>
                     </div>
 
@@ -755,6 +769,49 @@
             }
         }
 
+        // LinkedIn Learning auto-detect
+        function detectLinkedInLearning() {
+            const name = (document.getElementById('activity-name').value || '').trim();
+            const hint = document.getElementById('linkedin-auto-detect');
+            const checkbox = document.getElementById('is-linkedin-learning');
+
+            if (!name || name.length < 5) {
+                hint.style.display = 'none';
+                return;
+            }
+
+            const lower = name.toLowerCase();
+            const hasLinkedIn = lower.includes('linkedin');
+            const hasThai = /[\u0E00-\u0E7F]/.test(name);
+            const looksLikeCourse = /^[a-z0-9\s:,\-\.\(\)&\/\+\'\"]+$/i.test(name);
+            const hasColon = lower.includes(':');
+            const wordCount = name.split(/\s+/).length;
+
+            const isLikely = hasLinkedIn || (!hasThai && looksLikeCourse && (hasColon || wordCount >= 3));
+
+            if (isLikely && !checkbox.checked) {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+
+        function onLinkedInCheckboxChange() {
+            const checkbox = document.getElementById('is-linkedin-learning');
+            const hint = document.getElementById('linkedin-auto-detect');
+            const group = document.getElementById('linkedin-checkbox-group').querySelector('label');
+
+            if (checkbox.checked) {
+                hint.style.display = 'none';
+                group.style.background = '#c8e6c9';
+                group.style.borderColor = '#4caf50';
+            } else {
+                group.style.background = '#e3f2fd';
+                group.style.borderColor = '#bbdefb';
+                detectLinkedInLearning();
+            }
+        }
+
         // Close suggestions on click outside
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('activity-suggestions');
@@ -1050,7 +1107,8 @@
                     // Combined description for backward compatibility
                     description: `บทบาท: ${role}\nสิ่งที่ทำ: ${activities}\nสิ่งที่เรียนรู้: ${learnings}`,
                     evidenceLink: document.getElementById('evidence-link').value.trim(),
-                    evidenceDescription: document.getElementById('evidence-desc').value.trim()
+                    evidenceDescription: document.getElementById('evidence-desc').value.trim(),
+                    isLinkedInLearning: document.getElementById('is-linkedin-learning').checked
                 };
                 
                 // Check for duplicate
@@ -1155,6 +1213,10 @@
                 
                 // Reset form
                 document.getElementById('activity-form').reset();
+                // Reset LinkedIn checkbox visual
+                const linkedInGroup = document.getElementById('linkedin-checkbox-group')?.querySelector('label');
+                if (linkedInGroup) { linkedInGroup.style.background = '#e3f2fd'; linkedInGroup.style.borderColor = '#bbdefb'; }
+                document.getElementById('linkedin-auto-detect').style.display = 'none';
                 const savedFormData = {...pendingFormData};
                 pendingFormData = null;
                 aiAnalysisResult = null;

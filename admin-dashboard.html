@@ -633,6 +633,8 @@
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-filter="all" data-type="student">ทั้งหมด</button>
                         <button class="filter-btn" data-filter="pending" data-type="student">รอตรวจสอบ</button>
+                        <button class="filter-btn" data-filter="duplicate" data-type="student" style="color:#e67e22;">🔄 ซ้ำกับผู้จัด</button>
+                        <button class="filter-btn" data-filter="linkedin" data-type="student" style="color:#0077b5;">🔗 LinkedIn</button>
                         <button class="filter-btn" data-filter="approved" data-type="student">อนุมัติแล้ว</button>
                         <button class="filter-btn" data-filter="rejected" data-type="student">ไม่อนุมัติ</button>
                     </div>
@@ -656,6 +658,26 @@
                         <button id="student-reject-reason-search-clear" class="filter-clear-btn" onclick="clearStudentRejectReasonSearch()" style="display:none;">✕</button>
                     </div>
                     <span id="student-reject-reason-count" class="filter-result-count"></span>
+                </div>
+
+                <!-- Bulk Actions: Reject Duplicates -->
+                <div id="student-duplicate-actions" class="bulk-actions" style="display:none; background:linear-gradient(135deg,#fff3e0,#ffe0b2);">
+                    <div class="bulk-info">
+                        <span id="student-duplicate-count" style="font-weight:600;color:#e67e22;">0 รายการที่ซ้ำ</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-reject" onclick="confirmRejectDuplicates()" style="background:linear-gradient(135deg,#e67e22,#d35400);">🔄 ปฏิเสธทั้งหมดที่ซ้ำ</button>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions: LinkedIn Learning -->
+                <div id="student-linkedin-actions" class="bulk-actions" style="display:none; background:linear-gradient(135deg,#e3f2fd,#bbdefb);">
+                    <div class="bulk-info">
+                        <span id="student-linkedin-count" style="font-weight:600;color:#0077b5;">0 รายการ LinkedIn Learning</span>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-bulk-approve" onclick="confirmBulkApproveLinkedIn()" style="background:linear-gradient(135deg,#0077b5,#005582);">🔗 อนุมัติทั้งหมด (4.1 Lv.1)</button>
+                    </div>
                 </div>
 
                 <!-- Bulk Actions for Pending -->
@@ -1281,6 +1303,9 @@
         let studentRejectReasonSearch = '';
         let organizerRejectReasonSearch = '';
 
+        // Participation cross-reference index: studentId → [{activityName (normalized), activityNameOriginal, skills, source}]
+        let participationIndex = {};
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
@@ -1837,17 +1862,35 @@
         // ============================================
         async function loadAllData() {
             showLoading(true, 'กำลังโหลดข้อมูล...');
-            
+
             // Clear activity search cache
             clearActivitySearchCache();
-            
+
             try {
-                // Load both collections in PARALLEL
-                const [submissionsQuery, activitiesQuery] = await Promise.all([
+                // Load all three collections in PARALLEL
+                const [submissionsQuery, activitiesQuery, participationQuery] = await Promise.all([
                     db.collection('submissions').get(),
-                    db.collection('organizerActivities').get()
+                    db.collection('organizerActivities').get(),
+                    db.collection('participation').get()
                 ]);
-                
+
+                // Build participation index: studentId → [{activityName, skills, source}]
+                participationIndex = {};
+                participationQuery.docs.forEach(doc => {
+                    const p = doc.data();
+                    if (!p.studentId || !p.activityName) return;
+                    const sid = p.studentId.trim();
+                    if (!participationIndex[sid]) participationIndex[sid] = [];
+                    participationIndex[sid].push({
+                        activityName: p.activityName,
+                        activityNameNorm: normalizeForCompare(p.activityName),
+                        skills: p.skills || [],
+                        source: p.source || '',
+                        status: p.status || ''
+                    });
+                });
+                console.log('📊 Participation index built:', Object.keys(participationIndex).length, 'students');
+
                 // Process submissions
                 studentSubmissions = submissionsQuery.docs.map(doc => ({
                     id: doc.id,
@@ -1858,7 +1901,10 @@
                     const timeB = b.submittedAt?.toMillis?.() || b.submittedAt || 0;
                     return timeB - timeA;
                 });
-                
+
+                // Tag submissions: cross-reference with participation
+                tagSubmissionsWithParticipation();
+
                 // Process organizer activities
                 organizerActivities = activitiesQuery.docs.map(doc => ({
                     id: doc.id,
@@ -1869,23 +1915,64 @@
                     const timeB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
                     return timeB - timeA;
                 });
-                
+
                 // Update stats
                 updateStats();
-                
+
                 // Render lists
                 renderStudentSubmissions();
                 renderOrganizerActivities();
                 updateTransferStats();
-                
+
                 console.log('✅ Data loaded:', studentSubmissions.length, 'submissions,', organizerActivities.length, 'activities');
-                
+
             } catch (error) {
                 console.error('Load error:', error);
                 alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
             }
-            
+
             showLoading(false);
+        }
+
+        // Tag each pending student submission if student already has participation for similar activity
+        function tagSubmissionsWithParticipation() {
+            let taggedCount = 0;
+            studentSubmissions.forEach(sub => {
+                sub._alreadyInParticipation = false;
+                sub._matchedParticipation = null;
+
+                if (!sub.status?.toLowerCase().includes('pending')) return;
+
+                const sid = (sub.studentId || '').trim();
+                const records = participationIndex[sid];
+                if (!records || records.length === 0) return;
+
+                const subNameNorm = normalizeForCompare(sub.activityName || '');
+                for (const rec of records) {
+                    if (areSimilar(sub.activityName || '', rec.activityName)) {
+                        sub._alreadyInParticipation = true;
+                        sub._matchedParticipation = rec;
+                        taggedCount++;
+                        break;
+                    }
+                }
+            });
+            console.log('🏷️ Tagged', taggedCount, 'submissions as already in participation');
+        }
+
+        // Detect LinkedIn Learning from activity name or flag
+        function isLikelyLinkedInLearning(item) {
+            if (item.isLinkedInLearning) return true;
+            const name = (item.activityName || '').toLowerCase();
+            if (name.includes('linkedin')) return true;
+            // Pattern: all English name, no Thai chars, typical course name patterns
+            const hasThai = /[\u0E00-\u0E7F]/.test(item.activityName || '');
+            const hasColon = name.includes(':');
+            const looksLikeCourse = /^[a-z0-9\s:,\-\.\(\)&\/\+]+$/i.test((item.activityName || '').trim());
+            if (!hasThai && looksLikeCourse && (hasColon || name.split(' ').length >= 3)) {
+                return true;
+            }
+            return false;
         }
 
         function updateStats() {
@@ -2147,6 +2234,156 @@
         }
 
         // ============================================
+        // REJECT DUPLICATES (with confirmation)
+        // ============================================
+        async function confirmRejectDuplicates() {
+            const duplicates = studentSubmissions.filter(s =>
+                s.status?.toLowerCase().includes('pending') && s._alreadyInParticipation
+            );
+
+            if (duplicates.length === 0) {
+                alert('⚠️ ไม่มีรายการที่ซ้ำ');
+                return;
+            }
+
+            // Build summary for confirmation
+            const summary = duplicates.slice(0, 10).map(d =>
+                `• ${d.studentName || d.studentId} → "${d.activityName}" (ตรงกับ: "${d._matchedParticipation?.activityName || '-'}")`
+            ).join('\n');
+            const moreText = duplicates.length > 10 ? `\n... และอีก ${duplicates.length - 10} รายการ` : '';
+
+            const confirmed = confirm(
+                `🔄 พบ ${duplicates.length} รายการที่ซ้ำกับผู้จัด\n\n` +
+                `รายการที่จะปฏิเสธ:\n${summary}${moreText}\n\n` +
+                `เหตุผล: "ผู้จัดกิจกรรมแจ้งรายชื่อผู้ผ่านกิจกรรมมาให้แล้ว"\n\n` +
+                `กด OK เพื่อยืนยันปฏิเสธทั้งหมด`
+            );
+
+            if (!confirmed) return;
+
+            const reason = 'ผู้จัดกิจกรรมแจ้งรายชื่อผู้ผ่านกิจกรรมมาให้แล้ว';
+            const totalCount = duplicates.length;
+            showLoading(true, `กำลังปฏิเสธ ${totalCount} รายการที่ซ้ำ...`);
+
+            try {
+                const batch = db.batch();
+                duplicates.forEach(d => {
+                    const ref = db.collection('submissions').doc(d.id);
+                    batch.update(ref, {
+                        status: 'Rejected',
+                        rejectReason: reason,
+                        reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                await batch.commit();
+
+                // Update local state
+                duplicates.forEach(d => {
+                    const index = studentSubmissions.findIndex(s => s.id === d.id);
+                    if (index !== -1) {
+                        studentSubmissions[index].status = 'Rejected';
+                        studentSubmissions[index].rejectReason = reason;
+                        studentSubmissions[index]._alreadyInParticipation = false;
+                    }
+                });
+
+                updateStats();
+                renderStudentSubmissions();
+                showLoading(false);
+                alert(`❌ ปฏิเสธ ${totalCount} รายการที่ซ้ำกับผู้จัดเรียบร้อยแล้ว`);
+            } catch (error) {
+                console.error('Reject duplicates error:', error);
+                showLoading(false);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // BULK APPROVE LINKEDIN LEARNING
+        // ============================================
+        async function confirmBulkApproveLinkedIn() {
+            const linkedInItems = studentSubmissions.filter(s =>
+                s.status?.toLowerCase().includes('pending') && isLikelyLinkedInLearning(s)
+            );
+
+            if (linkedInItems.length === 0) {
+                alert('⚠️ ไม่มีรายการ LinkedIn Learning');
+                return;
+            }
+
+            const summary = linkedInItems.slice(0, 10).map(d =>
+                `• ${d.studentName || d.studentId} → "${d.activityName}"`
+            ).join('\n');
+            const moreText = linkedInItems.length > 10 ? `\n... และอีก ${linkedInItems.length - 10} รายการ` : '';
+
+            const confirmed = confirm(
+                `🔗 พบ ${linkedInItems.length} รายการ LinkedIn Learning\n\n` +
+                `รายการที่จะอนุมัติ:\n${summary}${moreText}\n\n` +
+                `ทักษะ: 4.1 ความคล่องตัวในการเรียนรู้ (Learning Agility) Lv.1\n\n` +
+                `กด OK เพื่อยืนยันอนุมัติทั้งหมด`
+            );
+
+            if (!confirmed) return;
+
+            const skills = [{
+                code: '4.1',
+                level: 1,
+                nameTh: 'ความคล่องตัวในการเรียนรู้',
+                nameEn: 'Learning Agility'
+            }];
+
+            const totalCount = linkedInItems.length;
+            showLoading(true, `กำลังอนุมัติ ${totalCount} รายการ LinkedIn Learning...`);
+
+            try {
+                const batch = db.batch();
+
+                for (const item of linkedInItems) {
+                    const ref = db.collection('submissions').doc(item.id);
+                    batch.update(ref, {
+                        status: 'Approved',
+                        approvedSkills: skills,
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Create participation record
+                    if (item.studentId) {
+                        const participationRef = db.collection('participation').doc();
+                        batch.set(participationRef, {
+                            studentId: item.studentId,
+                            activityName: item.activityName,
+                            status: 'Approved',
+                            date: item.startDate || '',
+                            skills: skills,
+                            source: 'student-submission-linkedin-bulk',
+                            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
+
+                await batch.commit();
+
+                // Update local state
+                linkedInItems.forEach(item => {
+                    const index = studentSubmissions.findIndex(s => s.id === item.id);
+                    if (index !== -1) {
+                        studentSubmissions[index].status = 'Approved';
+                        studentSubmissions[index].approvedSkills = skills;
+                    }
+                });
+
+                updateStats();
+                renderStudentSubmissions();
+                showLoading(false);
+                alert(`✅ อนุมัติ ${totalCount} รายการ LinkedIn Learning เรียบร้อย (4.1 Lv.1)`);
+            } catch (error) {
+                console.error('Bulk approve LinkedIn error:', error);
+                showLoading(false);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+
+        // ============================================
         // RENDER STUDENT SUBMISSIONS
         // ============================================
         function renderStudentSubmissions() {
@@ -2160,6 +2397,8 @@
                     if (studentFilter === 'pending') return status.includes('pending');
                     if (studentFilter === 'approved') return status === 'approved';
                     if (studentFilter === 'rejected') return status.includes('rejected');
+                    if (studentFilter === 'duplicate') return status.includes('pending') && s._alreadyInParticipation;
+                    if (studentFilter === 'linkedin') return status.includes('pending') && isLikelyLinkedInLearning(s);
                     return true;
                 });
             }
@@ -2191,8 +2430,22 @@
             document.getElementById('student-reject-reason-filter').style.display = isRejectedFilter ? 'flex' : 'none';
 
             // Show/hide bulk actions based on pending items
+            const isDuplicateFilter = studentFilter === 'duplicate';
+            const isLinkedInFilter = studentFilter === 'linkedin';
             const hasPending = filtered.some(s => s.status?.toLowerCase().includes('pending'));
-            document.getElementById('student-bulk-actions').style.display = hasPending ? 'flex' : 'none';
+            document.getElementById('student-bulk-actions').style.display = (hasPending && !isDuplicateFilter && !isLinkedInFilter) ? 'flex' : 'none';
+
+            // Show/hide duplicate actions
+            document.getElementById('student-duplicate-actions').style.display = isDuplicateFilter ? 'flex' : 'none';
+            if (isDuplicateFilter) {
+                document.getElementById('student-duplicate-count').textContent = `${filtered.length} รายการที่ซ้ำกับผู้จัด`;
+            }
+
+            // Show/hide LinkedIn actions
+            document.getElementById('student-linkedin-actions').style.display = isLinkedInFilter ? 'flex' : 'none';
+            if (isLinkedInFilter) {
+                document.getElementById('student-linkedin-count').textContent = `${filtered.length} รายการ LinkedIn Learning`;
+            }
 
             // Show/hide bulk revert actions based on rejected items
             const hasRejected = filtered.some(s => s.status?.toLowerCase().includes('rejected'));
@@ -2217,6 +2470,18 @@
                 const isSelected = isPending ? selectedStudentItems.has(item.id) : (isRejected ? selectedStudentRevertItems.has(item.id) : false);
                 const isSelectable = isPending || isRejected;
 
+                // Duplicate badge
+                const isDuplicate = item._alreadyInParticipation;
+                const duplicateBadgeHtml = isDuplicate
+                    ? `<span style="display:inline-block;background:#e67e22;color:white;font-size:0.7em;padding:2px 8px;border-radius:10px;margin-left:6px;">🔄 ผู้จัดแจ้งแล้ว</span>`
+                    : '';
+
+                // LinkedIn Learning badge
+                const isLinkedIn = isLikelyLinkedInLearning(item);
+                const linkedInBadgeHtml = isLinkedIn
+                    ? `<span style="display:inline-block;background:#0077b5;color:white;font-size:0.7em;padding:2px 8px;border-radius:10px;margin-left:6px;">🔗 LinkedIn Learning</span>`
+                    : '';
+
                 // AI suggested skills preview
                 const aiSkills = item.aiSuggestedSkills || [];
                 const aiSkillsHtml = aiSkills.length > 0
@@ -2227,6 +2492,13 @@
                             return `<span class="ai-skill-tag">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
                         }).join('')}
                         ${aiSkills.length > 3 ? `<span class="ai-skill-tag" style="background:#e0e0e0;color:#666;">+${aiSkills.length - 3}</span>` : ''}
+                       </div>`
+                    : '';
+
+                // Matched participation info
+                const matchInfoHtml = isDuplicate && item._matchedParticipation
+                    ? `<div style="margin-top:4px;font-size:0.82em;color:#e67e22;background:#fff3e0;padding:4px 8px;border-radius:6px;border-left:3px solid #e67e22;">
+                        🔄 ตรงกับ: "${item._matchedParticipation.activityName}" (${item._matchedParticipation.source || 'organizer'})
                        </div>`
                     : '';
 
@@ -2250,7 +2522,7 @@
                         ${checkboxHtml}
                         <div class="card-content" onclick="showStudentDetail('${item.id}')">
                             <div class="submission-main">
-                                <h4>${item.activityName || 'ไม่ระบุชื่อ'}</h4>
+                                <h4>${item.activityName || 'ไม่ระบุชื่อ'}${duplicateBadgeHtml}${linkedInBadgeHtml}</h4>
                                 <span class="status-badge ${statusClass}">${statusText}</span>
                             </div>
                             <div class="submission-info">
@@ -2259,6 +2531,7 @@
                                 <span>📊 Level ${item.activityLevel || '-'}</span>
                             </div>
                             ${aiSkillsHtml}
+                            ${matchInfoHtml}
                             ${rejectReasonHtml}
                             <div class="submission-date">
                                 ส่งเมื่อ: ${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}
@@ -2421,7 +2694,46 @@
             
             // AI suggested skills
             const aiSkills = item.aiSuggestedSkills || [];
-            
+
+            // Cross-reference section: show if organizer already submitted
+            let crossRefHtml = '';
+            if (item._alreadyInParticipation && item._matchedParticipation) {
+                const mp = item._matchedParticipation;
+                const mpSkillsHtml = (mp.skills || []).map(s => {
+                    const c = CRITERIA_LIST.find(cr => cr.code === s.code);
+                    return `<span style="display:inline-block;background:#27ae60;color:white;padding:2px 8px;border-radius:10px;font-size:0.8em;margin:2px;">${s.code} ${c?.nameTh || ''} Lv.${s.level}</span>`;
+                }).join('') || '<span style="color:#999;">ไม่มีทักษะ</span>';
+                crossRefHtml = `
+                <div class="detail-section" style="background:#fff3e0;border:2px solid #e67e22;border-radius:12px;padding:15px;">
+                    <h4 style="color:#e67e22;">🔄 พบข้อมูลซ้ำจากผู้จัด</h4>
+                    <div style="margin-top:8px;">
+                        <div><strong>ชื่อกิจกรรมที่ตรง:</strong> ${mp.activityName}</div>
+                        <div><strong>แหล่งที่มา:</strong> ${mp.source || 'organizer'}</div>
+                        <div style="margin-top:6px;"><strong>ทักษะที่ได้:</strong> ${mpSkillsHtml}</div>
+                    </div>
+                    <p style="margin-top:10px;font-size:0.85em;color:#e67e22;">
+                        ⚠️ นักศึกษาอาจได้รับกิจกรรมนี้แล้วผ่านทางผู้จัด สามารถปฏิเสธได้
+                    </p>
+                </div>
+                `;
+            }
+
+            // LinkedIn Learning section
+            let linkedInHtml = '';
+            if (isLikelyLinkedInLearning(item)) {
+                linkedInHtml = `
+                <div class="detail-section" style="background:#e3f2fd;border:2px solid #0077b5;border-radius:12px;padding:15px;">
+                    <h4 style="color:#0077b5;">🔗 LinkedIn Learning / Online Course</h4>
+                    <p style="font-size:0.9em;margin-top:6px;">
+                        ${item.isLinkedInLearning ? 'นักศึกษาระบุว่าเป็นคอร์ส LinkedIn Learning' : 'ระบบตรวจพบว่าน่าจะเป็นคอร์สออนไลน์ (ชื่อภาษาอังกฤษ)'}
+                    </p>
+                    <p style="font-size:0.85em;color:#0077b5;margin-top:6px;">
+                        💡 แนะนำ: ทักษะ 4.1 ความคล่องตัวในการเรียนรู้ (Learning Agility) Lv.1
+                    </p>
+                </div>
+                `;
+            }
+
             // Reflection section HTML
             const reflectionHtml = (item.role || item.activities || item.learnings) ? `
                 <div class="detail-section">
@@ -2514,9 +2826,12 @@
                         </div>
                     </div>
                 </div>
-                
+
+                ${crossRefHtml}
+                ${linkedInHtml}
+
                 ${reflectionHtml}
-                
+
                 ${item.evidenceLink ? `
                 <div class="detail-section">
                     <h4>📎 หลักฐาน</h4>
