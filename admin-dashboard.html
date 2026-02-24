@@ -482,6 +482,7 @@
             <button class="tab" data-tab="merge-activities">🔀 รวมกิจกรรม | Merge</button>
             <button class="tab" data-tab="admin-manage">👤 Admin</button>
             <button class="tab" data-tab="export">📥 Export CSV</button>
+            <button class="tab" data-tab="skills-summary">📊 สรุปทักษะ | Skills Summary</button>
         </div>
 
         <!-- Tab: Student Search -->
@@ -973,8 +974,16 @@
                             📥 Export Organizers
                         </button>
                     </div>
+                    <div class="export-card" style="border:2px solid #667eea;background:linear-gradient(135deg,#f0f4ff 0%,#e8ecff 100%);">
+                        <div class="export-icon">📊</div>
+                        <h4>สรุปคะแนนทักษะ | Score Summary</h4>
+                        <p>คะแนนทักษะ 18 ตัว + 6 ด้าน ต่อนักศึกษา (สำหรับตัดเกรด/Radar Chart)</p>
+                        <button class="btn-export" onclick="exportStudentScoreSummaryCSV()" style="background:#667eea;">
+                            📊 Export Score Summary
+                        </button>
+                    </div>
                 </div>
-                
+
                 <div class="export-all">
                     <button class="btn-export-all" onclick="exportAllCSV()">
                         📦 Export ทั้งหมด | Export All Data
@@ -996,6 +1005,134 @@
                     </div>
                     
                     <div id="repair-result" class="repair-result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Skills Summary Dashboard -->
+        <div id="tab-skills-summary" class="tab-content">
+            <div class="panel">
+                <h2>📊 สรุปทักษะนักศึกษา | Student Skills Summary</h2>
+                <p class="panel-desc">ดูภาพรวมทักษะรายบุคคลหรือตามกลุ่ม เพื่อติดตาม journey การเติบโตของนักศึกษา</p>
+
+                <!-- Filter Bar -->
+                <div class="skills-filter-bar">
+                    <div class="skills-filter-group">
+                        <label>ชั้นปี | Year</label>
+                        <select id="skills-year-filter" onchange="applySkillsFilter()">
+                            <option value="all">ทั้งหมด | All</option>
+                            <option value="1">ปี 1 | Year 1</option>
+                            <option value="2">ปี 2 | Year 2</option>
+                            <option value="3">ปี 3 | Year 3</option>
+                            <option value="4">ปี 4 | Year 4</option>
+                        </select>
+                    </div>
+                    <div class="skills-filter-group">
+                        <label>เมเจอร์ | Department</label>
+                        <select id="skills-dept-filter" onchange="applySkillsFilter()">
+                            <option value="all">ทั้งหมด | All</option>
+                        </select>
+                    </div>
+                    <div class="skills-filter-group" style="flex:1;min-width:200px;">
+                        <label>ค้นหานักศึกษา | Search Student</label>
+                        <input type="text" id="skills-student-search" placeholder="ชื่อ หรือ รหัสนศ."
+                            oninput="applySkillsFilter()">
+                    </div>
+                    <div class="skills-filter-group" style="justify-content:flex-end;">
+                        <label>&nbsp;</label>
+                        <button class="btn-search" onclick="loadSkillsSummary()" style="padding:10px 20px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.95em;">
+                            🔄 โหลดข้อมูล | Load Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="skills-summary-stats" id="skills-summary-stats" style="display:none;">
+                    <div class="skills-stat-card">
+                        <span class="skills-stat-num" id="skills-total-students">0</span>
+                        <span class="skills-stat-label">นักศึกษา | Students</span>
+                    </div>
+                    <div class="skills-stat-card">
+                        <span class="skills-stat-num" id="skills-avg-score">0</span>
+                        <span class="skills-stat-label">คะแนนเฉลี่ย | Avg Score</span>
+                    </div>
+                    <div class="skills-stat-card">
+                        <span class="skills-stat-num" id="skills-passed-count">0</span>
+                        <span class="skills-stat-label">ผ่านเกณฑ์ทุกด้าน | All Passed</span>
+                    </div>
+                    <div class="skills-stat-card">
+                        <span class="skills-stat-num" id="skills-avg-activities">0</span>
+                        <span class="skills-stat-label">กิจกรรมเฉลี่ย | Avg Activities</span>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="skills-chart-section" id="skills-chart-section" style="display:none;">
+                    <h3 id="skills-chart-title">ภาพรวมทักษะ | Skills Overview</h3>
+                    <div class="skills-chart-container">
+                        <canvas id="skillsSummaryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Domain Detail Table -->
+                <div class="skills-table-section" id="skills-table-section" style="display:none;">
+                    <h3>รายละเอียดทักษะ | Skills Detail</h3>
+                    <div class="skills-table-wrapper">
+                        <table class="skills-detail-table" id="skills-detail-table">
+                            <thead>
+                                <tr>
+                                    <th>ด้าน | Domain</th>
+                                    <th>ทักษะ | Skill</th>
+                                    <th>ระดับเฉลี่ย | Avg Level</th>
+                                    <th>ระดับสูงสุด | Max Level</th>
+                                    <th>สถานะ | Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="skills-detail-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Student List Table -->
+                <div class="skills-students-section" id="skills-students-section" style="display:none;">
+                    <h3>รายชื่อนักศึกษา | Student List <span id="skills-student-count-label" style="font-size:0.8em;color:#666;"></span></h3>
+                    <div class="skills-table-wrapper">
+                        <table class="skills-student-table" id="skills-student-table">
+                            <thead>
+                                <tr>
+                                    <th>รหัส | ID</th>
+                                    <th>ชื่อ | Name</th>
+                                    <th>เมเจอร์ | Dept</th>
+                                    <th>ปี | Year</th>
+                                    <th>กิจกรรม | Act.</th>
+                                    <th>คะแนนรวม | Total</th>
+                                    <th>ผ่าน | Domains</th>
+                                    <th>ดู | View</th>
+                                </tr>
+                            </thead>
+                            <tbody id="skills-student-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Student Skills Modal -->
+        <div id="student-skills-modal" class="modal-overlay">
+            <div class="modal" style="max-width: 850px;">
+                <div class="modal-header">
+                    <h3 id="modal-student-skills-title">📊 ทักษะนักศึกษา</h3>
+                    <button class="modal-close" onclick="closeStudentSkillsModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-student-info"></div>
+                    <div class="modal-chart-container">
+                        <canvas id="modalSkillsChart"></canvas>
+                    </div>
+                    <div id="modal-skills-table"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeStudentSkillsModal()">ปิด | Close</button>
                 </div>
             </div>
         </div>
@@ -1254,7 +1391,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         // ============================================
         // CRITERIA DEFINITIONS
@@ -1306,6 +1444,12 @@
         // Participation cross-reference index: studentId → [{activityName (normalized), activityNameOriginal, skills, source}]
         let participationIndex = {};
 
+        // Skills Summary Dashboard state
+        let skillsSummaryData = null;   // cached results from computeAllStudentScores()
+        let skillsSummaryLoaded = false;
+        let skillsSummaryChart = null;  // Chart.js instance (main radar)
+        let modalSkillsChart = null;    // Chart.js instance (modal radar)
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
@@ -1354,6 +1498,13 @@
                     }
 
                     // No auto-load for merge tab - user clicks button to scan
+
+                    // Lazy load skills summary when tab is clicked
+                    if (tab.dataset.tab === 'skills-summary') {
+                        if (!skillsSummaryLoaded) {
+                            loadSkillsSummary();
+                        }
+                    }
 
                 });
             });
@@ -4900,6 +5051,543 @@
             }
             
             showLoading(false);
+        }
+
+        // ============================================
+        // SKILLS SUMMARY DASHBOARD + SCORE EXPORT
+        // ============================================
+
+        async function computeAllStudentScores() {
+            // Load all 4 collections in parallel for bulk computation
+            const [studentsSnap, participationSnap, submissionsSnap, activitiesSnap] = await Promise.all([
+                db.collection('students').get(),
+                db.collection('participation').get(),
+                db.collection('submissions').get(),
+                db.collection('activities').get()
+            ]);
+
+            // Build activity name → skills map (fallback when participation has no skills)
+            const activitySkillsMap = {};
+            activitiesSnap.docs.forEach(doc => {
+                const data = doc.data();
+                if (!data.name) return;
+                const skills = [];
+                if (data.skills && Array.isArray(data.skills)) {
+                    skills.push(...data.skills);
+                } else {
+                    // Try reading skill codes from fields like "1.1", "1_1", etc.
+                    CRITERIA_LIST.forEach(c => {
+                        const val = data[c.code] || data[c.code.replace('.', '_')];
+                        if (val && val > 0) skills.push({ code: c.code, level: parseInt(val) });
+                    });
+                }
+                activitySkillsMap[data.name.toLowerCase().trim()] = skills;
+            });
+
+            // Build studentId → activities array from participation + submissions
+            const studentActivitiesMap = {};
+
+            // 1. Participation records (primary source — already approved by admin/organizer)
+            participationSnap.docs.forEach(doc => {
+                const p = doc.data();
+                if (!p.studentId) return;
+                const sid = p.studentId.trim();
+                if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
+
+                let skills = p.skills || [];
+                // Fallback: look up skills from activity definition
+                if (skills.length === 0 && p.activityName) {
+                    skills = activitySkillsMap[p.activityName.toLowerCase().trim()] || [];
+                }
+
+                studentActivitiesMap[sid].push({
+                    name: p.activityName || '',
+                    status: p.status || 'Approved',
+                    skills: skills,
+                    source: 'participation'
+                });
+            });
+
+            // 2. Approved submissions (secondary source — use approvedSkills field)
+            submissionsSnap.docs.forEach(doc => {
+                const s = doc.data();
+                if (!s.status?.toLowerCase().includes('approved')) return;
+                const sid = (s.studentId || '').trim();
+                if (!sid) return;
+                if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
+
+                // Dedup: skip if participation already has this activity
+                const nameNorm = (s.activityName || '').toLowerCase().trim();
+                const exists = studentActivitiesMap[sid].some(a =>
+                    a.name && a.name.toLowerCase().trim() === nameNorm
+                );
+
+                if (!exists) {
+                    studentActivitiesMap[sid].push({
+                        name: s.activityName || '',
+                        status: s.status || '',
+                        skills: s.approvedSkills || s.skills || [],
+                        source: 'submission'
+                    });
+                }
+            });
+
+            // 3. Compute scores per student
+            const results = [];
+            studentsSnap.docs.forEach(doc => {
+                const student = doc.data();
+                const sid = (student.studentId || '').trim();
+                const activities = studentActivitiesMap[sid] || [];
+
+                // Per-criterion max level and frequency
+                const scores = {};
+                const frequency = {};
+                CRITERIA_LIST.forEach(c => {
+                    scores[c.code] = 0;
+                    frequency[c.code] = 0;
+                });
+
+                const approved = activities.filter(a =>
+                    a.status?.toLowerCase().includes('approved')
+                );
+
+                approved.forEach(activity => {
+                    if (activity.skills && Array.isArray(activity.skills)) {
+                        activity.skills.forEach(skill => {
+                            if (skill.code && skill.level) {
+                                scores[skill.code] = Math.max(scores[skill.code], parseInt(skill.level) || 0);
+                                frequency[skill.code]++;
+                            }
+                        });
+                    }
+                });
+
+                const domainScores = calculateDomainScoresAdmin(scores);
+                const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+
+                results.push({
+                    student,
+                    scores,
+                    frequency,
+                    domainScores,
+                    totalScore,
+                    activityCount: activities.length,
+                    approvedCount: approved.length
+                });
+            });
+
+            return results;
+        }
+
+        // --- CSV Export: Score Summary ---
+        async function exportStudentScoreSummaryCSV() {
+            showLoading(true, '📊 กำลังคำนวณคะแนนนักศึกษาทั้งหมด...');
+
+            try {
+                const results = await computeAllStudentScores();
+
+                const data = results.map(r => {
+                    const row = {
+                        studentId: r.student.studentId || '',
+                        name: r.student.name || '',
+                        email: r.student.email || '',
+                        department: r.student.department || '',
+                        year: r.student.year || '',
+                        activityCount: r.activityCount,
+                        approvedCount: r.approvedCount
+                    };
+
+                    // 18 criteria: maxLevel + frequency
+                    CRITERIA_LIST.forEach(c => {
+                        row[`skill_${c.code}_maxLevel`] = r.scores[c.code] || 0;
+                        row[`skill_${c.code}_freq`] = r.frequency[c.code] || 0;
+                    });
+
+                    // 6 domain averages
+                    DOMAINS.forEach(d => {
+                        row[`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`] = r.domainScores[d.name]?.avg || 0;
+                    });
+
+                    row.totalScore = r.totalScore;
+                    return row;
+                });
+
+                // Build headers
+                const headers = ['studentId', 'name', 'email', 'department', 'year', 'activityCount', 'approvedCount'];
+                CRITERIA_LIST.forEach(c => {
+                    headers.push(`skill_${c.code}_maxLevel`);
+                    headers.push(`skill_${c.code}_freq`);
+                });
+                DOMAINS.forEach(d => {
+                    headers.push(`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`);
+                });
+                headers.push('totalScore');
+
+                const csv = convertToCSV(data, headers);
+                downloadCSV(csv, `student_score_summary_${new Date().toISOString().slice(0, 10)}.csv`);
+
+                alert(`✅ Export สำเร็จ! ${data.length} นักศึกษา`);
+            } catch (error) {
+                console.error('Export score summary error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+
+            showLoading(false);
+        }
+
+        // --- Skills Summary Dashboard Functions ---
+        async function loadSkillsSummary() {
+            showLoading(true, '📊 กำลังโหลดสรุปทักษะ...');
+
+            try {
+                skillsSummaryData = await computeAllStudentScores();
+                skillsSummaryLoaded = true;
+
+                // Populate department dropdown from actual data
+                populateDeptFilter(skillsSummaryData);
+
+                // Apply initial filter and render
+                applySkillsFilter();
+            } catch (error) {
+                console.error('Load skills summary error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+
+            showLoading(false);
+        }
+
+        function populateDeptFilter(data) {
+            const depts = new Set();
+            data.forEach(r => {
+                if (r.student.department) depts.add(r.student.department);
+            });
+
+            const select = document.getElementById('skills-dept-filter');
+            select.innerHTML = '<option value="all">ทั้งหมด | All</option>';
+            [...depts].sort().forEach(dept => {
+                const opt = document.createElement('option');
+                opt.value = dept;
+                opt.textContent = dept;
+                select.appendChild(opt);
+            });
+        }
+
+        function applySkillsFilter() {
+            if (!skillsSummaryData) return;
+
+            const yearFilter = document.getElementById('skills-year-filter').value;
+            const deptFilter = document.getElementById('skills-dept-filter').value;
+            const searchTerm = document.getElementById('skills-student-search').value.trim().toLowerCase();
+
+            let filtered = skillsSummaryData;
+            if (yearFilter !== 'all') {
+                filtered = filtered.filter(r => String(r.student.year) === yearFilter);
+            }
+            if (deptFilter !== 'all') {
+                filtered = filtered.filter(r => r.student.department === deptFilter);
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(r =>
+                    (r.student.name || '').toLowerCase().includes(searchTerm) ||
+                    (r.student.studentId || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderSkillsSummary(filtered);
+        }
+
+        function renderSkillsSummary(filteredData) {
+            // Show sections
+            document.getElementById('skills-summary-stats').style.display = 'grid';
+            document.getElementById('skills-chart-section').style.display = 'block';
+            document.getElementById('skills-table-section').style.display = 'block';
+            document.getElementById('skills-students-section').style.display = 'block';
+
+            const count = filteredData.length;
+
+            if (count === 0) {
+                document.getElementById('skills-total-students').textContent = '0';
+                document.getElementById('skills-avg-score').textContent = '0';
+                document.getElementById('skills-passed-count').textContent = '0';
+                document.getElementById('skills-avg-activities').textContent = '0';
+                document.getElementById('skills-detail-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">ไม่พบข้อมูล</td></tr>';
+                document.getElementById('skills-student-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">ไม่พบนักศึกษา</td></tr>';
+                if (skillsSummaryChart) { skillsSummaryChart.destroy(); skillsSummaryChart = null; }
+                return;
+            }
+
+            // Aggregate domain averages across all filtered students
+            const aggDomainTotals = {};
+            const aggCriteriaTotals = {};
+            const aggCriteriaMax = {};
+            DOMAINS.forEach(d => aggDomainTotals[d.name] = 0);
+            CRITERIA_LIST.forEach(c => {
+                aggCriteriaTotals[c.code] = 0;
+                aggCriteriaMax[c.code] = 0;
+            });
+
+            let totalScoreSum = 0;
+            let totalActivitiesSum = 0;
+            let passedCount = 0;
+
+            filteredData.forEach(r => {
+                totalScoreSum += r.totalScore;
+                totalActivitiesSum += r.approvedCount;
+
+                CRITERIA_LIST.forEach(c => {
+                    aggCriteriaTotals[c.code] += r.scores[c.code] || 0;
+                    aggCriteriaMax[c.code] = Math.max(aggCriteriaMax[c.code], r.scores[c.code] || 0);
+                });
+
+                DOMAINS.forEach(d => {
+                    aggDomainTotals[d.name] += r.domainScores[d.name]?.avg || 0;
+                });
+
+                // Check if all 6 domains >= 2 avg (passed criteria)
+                const allPassed = DOMAINS.every(d => (r.domainScores[d.name]?.avg || 0) >= 2);
+                if (allPassed) passedCount++;
+            });
+
+            // Summary stats
+            const avgScore = Math.round((totalScoreSum / count) * 10) / 10;
+            const avgActivities = Math.round((totalActivitiesSum / count) * 10) / 10;
+            document.getElementById('skills-total-students').textContent = count;
+            document.getElementById('skills-avg-score').textContent = avgScore;
+            document.getElementById('skills-passed-count').textContent = passedCount;
+            document.getElementById('skills-avg-activities').textContent = avgActivities;
+
+            // Radar chart: aggregated domain averages
+            const radarLabels = DOMAINS.map(d => d.nameTh);
+            const radarData = DOMAINS.map(d =>
+                Math.round((aggDomainTotals[d.name] / count) * 100) / 100
+            );
+
+            const titleSuffix = count === 1 ? filteredData[0].student.name : `${count} นักศึกษา`;
+            renderSkillsRadarChart(radarLabels, radarData, `ภาพรวมทักษะ — ${titleSuffix}`);
+
+            // Skills detail table
+            renderSkillsDetailTable(aggCriteriaTotals, aggCriteriaMax, count);
+
+            // Student list
+            document.getElementById('skills-student-count-label').textContent = `(${count} คน)`;
+            renderSkillsStudentTable(filteredData);
+        }
+
+        function renderSkillsRadarChart(labels, data, title) {
+            document.getElementById('skills-chart-title').textContent = title;
+            const ctx = document.getElementById('skillsSummaryChart').getContext('2d');
+
+            if (skillsSummaryChart) {
+                skillsSummaryChart.destroy();
+            }
+
+            skillsSummaryChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ระดับเฉลี่ย | Avg Level',
+                        data: data,
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        pointBackgroundColor: DOMAINS.map(d => d.color),
+                        pointBorderColor: '#fff',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                stepSize: 1,
+                                font: { size: 11 },
+                                backdropColor: 'transparent'
+                            },
+                            pointLabels: {
+                                font: { size: 13, family: 'Sarabun' },
+                                color: '#333'
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' },
+                            angleLines: { color: 'rgba(0, 0, 0, 0.08)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Level: ${context.parsed.r.toFixed(2)} / 4`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSkillsDetailTable(aggTotals, aggMax, count) {
+            const tbody = document.getElementById('skills-detail-tbody');
+            let html = '';
+
+            CRITERIA_LIST.forEach(c => {
+                const avgLevel = count > 0 ? Math.round((aggTotals[c.code] / count) * 100) / 100 : 0;
+                const maxLevel = aggMax[c.code] || 0;
+                const statusClass = avgLevel >= 3 ? 'excellent' : avgLevel >= 2 ? 'good' : avgLevel >= 1 ? 'developing' : 'none';
+                const statusText = avgLevel >= 3 ? '⭐ Excellent' : avgLevel >= 2 ? '✅ Passed' : avgLevel >= 1 ? '📈 Developing' : '—';
+                const domainColor = DOMAINS.find(d => d.name === c.domain)?.color || '#333';
+
+                html += `
+                    <tr>
+                        <td style="font-weight:600;color:${domainColor};">${c.domain}</td>
+                        <td>${c.code} ${c.nameTh}<br><small style="color:#666;">${c.name}</small></td>
+                        <td><strong>${avgLevel.toFixed(2)}</strong></td>
+                        <td>${maxLevel}</td>
+                        <td><span class="skills-status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function renderSkillsStudentTable(filteredData) {
+            const tbody = document.getElementById('skills-student-tbody');
+            const sorted = [...filteredData].sort((a, b) => b.totalScore - a.totalScore);
+
+            tbody.innerHTML = sorted.map((r, idx) => {
+                const passedDomains = DOMAINS.filter(d => (r.domainScores[d.name]?.avg || 0) >= 2).length;
+                const passedClass = passedDomains === 6 ? 'excellent' : passedDomains >= 3 ? 'good' : passedDomains >= 1 ? 'developing' : 'none';
+
+                return `
+                    <tr>
+                        <td>${r.student.studentId || '-'}</td>
+                        <td>${r.student.name || '-'}</td>
+                        <td>${r.student.department || '-'}</td>
+                        <td>${r.student.year || '-'}</td>
+                        <td>${r.approvedCount}</td>
+                        <td><strong>${r.totalScore}</strong></td>
+                        <td><span class="skills-status-badge ${passedClass}">${passedDomains}/6</span></td>
+                        <td>
+                            <button class="btn-mini-chart" onclick="showStudentSkillsModal('${(r.student.studentId || '').replace(/'/g, "\\'")}')">
+                                📊 ดู
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showStudentSkillsModal(studentId) {
+            const r = skillsSummaryData.find(x => x.student.studentId === studentId);
+            if (!r) return;
+
+            document.getElementById('modal-student-skills-title').textContent =
+                `📊 ${r.student.name || studentId}`;
+
+            // Student info
+            document.getElementById('modal-student-info').innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px;padding:15px;background:#f8f9ff;border-radius:10px;">
+                    <div><strong>รหัส:</strong> ${r.student.studentId || '-'}</div>
+                    <div><strong>ชื่อ:</strong> ${r.student.name || '-'}</div>
+                    <div><strong>เมเจอร์:</strong> ${r.student.department || '-'}</div>
+                    <div><strong>ชั้นปี:</strong> ${r.student.year || '-'}</div>
+                    <div><strong>คะแนนรวม:</strong> <span style="color:#667eea;font-weight:700;font-size:1.1em;">${r.totalScore}</span></div>
+                    <div><strong>กิจกรรม:</strong> ${r.approvedCount} approved / ${r.activityCount} total</div>
+                </div>
+            `;
+
+            // Modal radar chart
+            const ctx = document.getElementById('modalSkillsChart').getContext('2d');
+            if (modalSkillsChart) modalSkillsChart.destroy();
+
+            const radarLabels = DOMAINS.map(d => d.nameTh);
+            const radarData = DOMAINS.map(d => r.domainScores[d.name]?.avg || 0);
+
+            modalSkillsChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: [{
+                        label: r.student.name || studentId,
+                        data: radarData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        pointBackgroundColor: DOMAINS.map(d => d.color),
+                        pointBorderColor: '#fff',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: { stepSize: 1, font: { size: 11 }, backdropColor: 'transparent' },
+                            pointLabels: { font: { size: 13, family: 'Sarabun' }, color: '#333' },
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' },
+                            angleLines: { color: 'rgba(0, 0, 0, 0.08)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Level: ${context.parsed.r.toFixed(2)} / 4`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Skills breakdown table
+            document.getElementById('modal-skills-table').innerHTML = `
+                <table class="skills-detail-table" style="margin-top:20px;">
+                    <thead>
+                        <tr>
+                            <th>ด้าน | Domain</th>
+                            <th>ทักษะ | Skill</th>
+                            <th>ระดับ | Level</th>
+                            <th>จำนวนกิจกรรม | Activities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${CRITERIA_LIST.map(c => {
+                            const level = r.scores[c.code] || 0;
+                            const freq = r.frequency[c.code] || 0;
+                            const domainColor = DOMAINS.find(d => d.name === c.domain)?.color || '#333';
+                            return `
+                                <tr>
+                                    <td style="color:${domainColor};font-weight:600;">${c.domain}</td>
+                                    <td>${c.code} ${c.nameTh}</td>
+                                    <td><span class="level-badge level-${level}">Lv.${level}</span></td>
+                                    <td>${freq}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('student-skills-modal').classList.add('show');
+        }
+
+        function closeStudentSkillsModal() {
+            document.getElementById('student-skills-modal').classList.remove('show');
+            if (modalSkillsChart) {
+                modalSkillsChart.destroy();
+                modalSkillsChart = null;
+            }
         }
 
         // ============================================
