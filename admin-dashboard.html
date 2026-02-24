@@ -1021,10 +1021,6 @@
                         <label>ชั้นปี | Year</label>
                         <select id="skills-year-filter" onchange="applySkillsFilter()">
                             <option value="all">ทั้งหมด | All</option>
-                            <option value="1">ปี 1 | Year 1</option>
-                            <option value="2">ปี 2 | Year 2</option>
-                            <option value="3">ปี 3 | Year 3</option>
-                            <option value="4">ปี 4 | Year 4</option>
                         </select>
                     </div>
                     <div class="skills-filter-group">
@@ -5066,6 +5062,8 @@
                 db.collection('activities').get()
             ]);
 
+            console.log(`[Skills Summary] Loaded: ${studentsSnap.size} students, ${participationSnap.size} participation, ${submissionsSnap.size} submissions, ${activitiesSnap.size} activities`);
+
             // Build activity name → skills map (fallback when participation has no skills)
             const activitySkillsMap = {};
             activitiesSnap.docs.forEach(doc => {
@@ -5075,7 +5073,6 @@
                 if (data.skills && Array.isArray(data.skills)) {
                     skills.push(...data.skills);
                 } else {
-                    // Try reading skill codes from fields like "1.1", "1_1", etc.
                     CRITERIA_LIST.forEach(c => {
                         const val = data[c.code] || data[c.code.replace('.', '_')];
                         if (val && val > 0) skills.push({ code: c.code, level: parseInt(val) });
@@ -5084,14 +5081,23 @@
                 activitySkillsMap[data.name.toLowerCase().trim()] = skills;
             });
 
+            // Build email→studentId map for fallback matching
+            const emailToSid = {};
+            studentsSnap.docs.forEach(doc => {
+                const s = doc.data();
+                if (s.email && s.studentId) {
+                    emailToSid[s.email.toLowerCase().trim()] = s.studentId.trim();
+                }
+            });
+
             // Build studentId → activities array from participation + submissions
             const studentActivitiesMap = {};
 
-            // 1. Participation records (primary source — already approved by admin/organizer)
+            // 1. Participation records (primary source)
             participationSnap.docs.forEach(doc => {
                 const p = doc.data();
-                if (!p.studentId) return;
-                const sid = p.studentId.trim();
+                const sid = (p.studentId || '').trim();
+                if (!sid) return;
                 if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
 
                 let skills = p.skills || [];
@@ -5112,8 +5118,14 @@
             submissionsSnap.docs.forEach(doc => {
                 const s = doc.data();
                 if (!s.status?.toLowerCase().includes('approved')) return;
-                const sid = (s.studentId || '').trim();
+
+                // Try studentId first, then fallback to email→studentId mapping
+                let sid = (s.studentId || '').trim();
+                if (!sid && s.studentEmail) {
+                    sid = emailToSid[s.studentEmail.toLowerCase().trim()] || '';
+                }
                 if (!sid) return;
+
                 if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
 
                 // Dedup: skip if participation already has this activity
@@ -5134,12 +5146,14 @@
 
             // 3. Compute scores per student
             const results = [];
+            let matchedCount = 0;
             studentsSnap.docs.forEach(doc => {
                 const student = doc.data();
                 const sid = (student.studentId || '').trim();
                 const activities = studentActivitiesMap[sid] || [];
 
-                // Per-criterion max level and frequency
+                if (activities.length > 0) matchedCount++;
+
                 const scores = {};
                 const frequency = {};
                 CRITERIA_LIST.forEach(c => {
@@ -5175,6 +5189,8 @@
                     approvedCount: approved.length
                 });
             });
+
+            console.log(`[Skills Summary] ${matchedCount}/${results.length} students have activities. Activities map has ${Object.keys(studentActivitiesMap).length} entries.`);
 
             return results;
         }
@@ -5246,11 +5262,22 @@
                 // Populate department dropdown from actual data
                 populateDeptFilter(skillsSummaryData);
 
+                // Show load status
+                const withActivities = skillsSummaryData.filter(r => r.activityCount > 0).length;
+                const withScores = skillsSummaryData.filter(r => r.totalScore > 0).length;
+                console.log(`[Skills Summary] Render: ${skillsSummaryData.length} students, ${withActivities} with activities, ${withScores} with scores > 0`);
+
                 // Apply initial filter and render
                 applySkillsFilter();
             } catch (error) {
                 console.error('Load skills summary error:', error);
-                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+                alert('❌ โหลดข้อมูลไม่สำเร็จ: ' + error.message);
+                // Show sections with error message so user knows something happened
+                document.getElementById('skills-summary-stats').style.display = 'grid';
+                document.getElementById('skills-total-students').textContent = '❌';
+                document.getElementById('skills-avg-score').textContent = '0';
+                document.getElementById('skills-passed-count').textContent = '0';
+                document.getElementById('skills-avg-activities').textContent = '0';
             }
 
             showLoading(false);
@@ -5258,32 +5285,74 @@
 
         function populateDeptFilter(data) {
             const depts = new Set();
+            const years = new Set();
+            let hasEmptyDept = false;
+            let hasEmptyYear = false;
+
             data.forEach(r => {
                 if (r.student.department) depts.add(r.student.department);
+                else hasEmptyDept = true;
+                if (r.student.year) years.add(String(r.student.year));
+                else hasEmptyYear = true;
             });
 
-            const select = document.getElementById('skills-dept-filter');
-            select.innerHTML = '<option value="all">ทั้งหมด | All</option>';
+            // Populate department dropdown
+            const deptSelect = document.getElementById('skills-dept-filter');
+            deptSelect.innerHTML = '<option value="all">ทั้งหมด | All</option>';
             [...depts].sort().forEach(dept => {
                 const opt = document.createElement('option');
                 opt.value = dept;
                 opt.textContent = dept;
-                select.appendChild(opt);
+                deptSelect.appendChild(opt);
             });
+            if (hasEmptyDept) {
+                const opt = document.createElement('option');
+                opt.value = '_empty_';
+                opt.textContent = 'ไม่ระบุ | N/A';
+                deptSelect.appendChild(opt);
+            }
+
+            // Populate year dropdown from actual data
+            const yearSelect = document.getElementById('skills-year-filter');
+            yearSelect.innerHTML = '<option value="all">ทั้งหมด | All</option>';
+            [...years].sort().forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = `ปี ${y} | Year ${y}`;
+                yearSelect.appendChild(opt);
+            });
+            if (hasEmptyYear) {
+                const opt = document.createElement('option');
+                opt.value = '_empty_';
+                opt.textContent = 'ไม่ระบุ | N/A';
+                yearSelect.appendChild(opt);
+            }
         }
 
         function applySkillsFilter() {
-            if (!skillsSummaryData) return;
+            if (!skillsSummaryData) {
+                // Data not loaded yet — show helpful message
+                document.getElementById('skills-summary-stats').style.display = 'grid';
+                document.getElementById('skills-total-students').textContent = '-';
+                document.getElementById('skills-avg-score').textContent = '-';
+                document.getElementById('skills-passed-count').textContent = '-';
+                document.getElementById('skills-avg-activities').textContent = '-';
+                return;
+            }
 
             const yearFilter = document.getElementById('skills-year-filter').value;
             const deptFilter = document.getElementById('skills-dept-filter').value;
             const searchTerm = document.getElementById('skills-student-search').value.trim().toLowerCase();
 
             let filtered = skillsSummaryData;
-            if (yearFilter !== 'all') {
+            if (yearFilter === '_empty_') {
+                filtered = filtered.filter(r => !r.student.year);
+            } else if (yearFilter !== 'all') {
                 filtered = filtered.filter(r => String(r.student.year) === yearFilter);
             }
-            if (deptFilter !== 'all') {
+            if (deptFilter === '_empty_') {
+                filtered = filtered.filter(r => !r.student.department);
+            } else if (deptFilter !== 'all') {
                 filtered = filtered.filter(r => r.student.department === deptFilter);
             }
             if (searchTerm) {
@@ -5363,7 +5432,12 @@
             );
 
             const titleSuffix = count === 1 ? filteredData[0].student.name : `${count} นักศึกษา`;
-            renderSkillsRadarChart(radarLabels, radarData, `ภาพรวมทักษะ — ${titleSuffix}`);
+            try {
+                renderSkillsRadarChart(radarLabels, radarData, `ภาพรวมทักษะ — ${titleSuffix}`);
+            } catch (chartErr) {
+                console.error('[Skills Summary] Chart render error:', chartErr);
+                document.getElementById('skills-chart-title').textContent = '⚠️ ไม่สามารถแสดงกราฟได้';
+            }
 
             // Skills detail table
             renderSkillsDetailTable(aggCriteriaTotals, aggCriteriaMax, count);
