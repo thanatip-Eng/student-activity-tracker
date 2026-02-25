@@ -1046,7 +1046,7 @@
                 <div class="skills-summary-stats" id="skills-summary-stats" style="display:none;">
                     <div class="skills-stat-card">
                         <span class="skills-stat-num" id="skills-total-students">0</span>
-                        <span class="skills-stat-label">นักศึกษา | Students</span>
+                        <span class="skills-stat-label">มีกิจกรรม / ทั้งหมด | Active / Total</span>
                     </div>
                     <div class="skills-stat-card">
                         <span class="skills-stat-num" id="skills-avg-score">0</span>
@@ -1423,7 +1423,8 @@
         function getYearLevelFromId(studentId) {
             if (!studentId || studentId.length < 2) return null;
             const prefix = parseInt(studentId.substring(0, 2), 10);
-            if (isNaN(prefix)) return null;
+            // BE year prefixes are typically 50+ (2507 BE = 1964 CE onwards)
+            if (isNaN(prefix) || prefix < 50) return null;
             // Buddhist year: Gregorian + 543. e.g. 2026 → 2569 → last 2 digits = 69
             const currentBELast2 = (new Date().getFullYear() + 543) % 100;
             const yearLevel = currentBELast2 - prefix;
@@ -5158,7 +5159,12 @@
             studentsSnap.docs.forEach(doc => {
                 const student = doc.data();
                 // Compute year level from student ID prefix (65=ปี4, 66=ปี3, etc.)
+                const originalYear = student.year;
                 student.year = getYearLevelFromId(student.studentId) || student.year || '';
+                // Log first 3 students for debugging
+                if (results.length < 3) {
+                    console.log(`[Skills Summary] Student ID: "${student.studentId}" → computed: ${getYearLevelFromId(student.studentId)}, stored: "${originalYear}", final: "${student.year}"`);
+                }
                 const sid = (student.studentId || '').trim();
                 const activities = studentActivitiesMap[sid] || [];
 
@@ -5383,9 +5389,12 @@
             document.getElementById('skills-students-section').style.display = 'block';
 
             const count = filteredData.length;
+            // Only include students with approved activities for aggregation
+            const activeData = filteredData.filter(r => r.approvedCount > 0);
+            const activeCount = activeData.length;
 
             if (count === 0) {
-                document.getElementById('skills-total-students').textContent = '0';
+                document.getElementById('skills-total-students').textContent = '0 / 0';
                 document.getElementById('skills-avg-score').textContent = '0';
                 document.getElementById('skills-passed-count').textContent = '0';
                 document.getElementById('skills-avg-activities').textContent = '0';
@@ -5396,7 +5405,7 @@
                 return;
             }
 
-            // Aggregate domain averages across all filtered students
+            // Aggregate domain averages across ACTIVE students only
             const aggDomainTotals = {};
             const aggCriteriaTotals = {};
             const aggCriteriaMax = {};
@@ -5410,7 +5419,7 @@
             let totalActivitiesSum = 0;
             let passedCount = 0;
 
-            filteredData.forEach(r => {
+            activeData.forEach(r => {
                 totalScoreSum += r.totalScore;
                 totalActivitiesSum += r.approvedCount;
 
@@ -5428,11 +5437,11 @@
                 if (allPassed) passedCount++;
             });
 
-            // Per-year-level aggregation for comparison table
+            // Per-year-level aggregation — only active students
             const yearLevels = new Set();
             const yearAgg = {}; // { yearLevel: { code: { sum, count, min, max } } }
 
-            filteredData.forEach(r => {
+            activeData.forEach(r => {
                 const yl = r.student.year ? String(r.student.year) : null;
                 if (!yl) return;
                 yearLevels.add(yl);
@@ -5453,23 +5462,33 @@
                 });
             });
 
+            // Also collect year levels from ALL students for the dropdown
+            filteredData.forEach(r => {
+                const yl = r.student.year ? String(r.student.year) : null;
+                if (yl) yearLevels.add(yl);
+            });
+
             const sortedYears = [...yearLevels].sort((a, b) => parseInt(a) - parseInt(b));
 
-            // Summary stats
-            const avgScore = Math.round((totalScoreSum / count) * 10) / 10;
-            const avgActivities = Math.round((totalActivitiesSum / count) * 10) / 10;
-            document.getElementById('skills-total-students').textContent = count;
+            // Summary stats (averages use activeCount)
+            const avgScore = activeCount > 0 ? Math.round((totalScoreSum / activeCount) * 10) / 10 : 0;
+            const avgActivities = activeCount > 0 ? Math.round((totalActivitiesSum / activeCount) * 10) / 10 : 0;
+            document.getElementById('skills-total-students').textContent = `${activeCount} / ${count}`;
             document.getElementById('skills-avg-score').textContent = avgScore;
             document.getElementById('skills-passed-count').textContent = passedCount;
             document.getElementById('skills-avg-activities').textContent = avgActivities;
 
-            // Radar chart: aggregated domain averages
+            // Radar chart: aggregated domain averages (active students only)
             const radarLabels = DOMAINS.map(d => d.nameTh);
             const radarData = DOMAINS.map(d =>
-                Math.round((aggDomainTotals[d.name] / count) * 100) / 100
+                activeCount > 0
+                    ? Math.round((aggDomainTotals[d.name] / activeCount) * 100) / 100
+                    : 0
             );
 
-            const titleSuffix = count === 1 ? filteredData[0].student.name : `${count} นักศึกษา`;
+            const titleSuffix = activeCount === 1
+                ? activeData[0].student.name
+                : `${activeCount} นักศึกษา (มีกิจกรรม)`;
             try {
                 renderSkillsRadarChart(radarLabels, radarData, `ภาพรวมทักษะ — ${titleSuffix}`);
             } catch (chartErr) {
@@ -5477,11 +5496,11 @@
                 document.getElementById('skills-chart-title').textContent = '⚠️ ไม่สามารถแสดงกราฟได้';
             }
 
-            // Skills detail table (year comparison)
-            renderSkillsDetailTable(aggCriteriaTotals, aggCriteriaMax, count, yearAgg, sortedYears);
+            // Skills detail table (year comparison) — uses activeCount
+            renderSkillsDetailTable(aggCriteriaTotals, aggCriteriaMax, activeCount, yearAgg, sortedYears);
 
-            // Student list
-            document.getElementById('skills-student-count-label').textContent = `(${count} คน)`;
+            // Student list shows ALL students (active + inactive)
+            document.getElementById('skills-student-count-label').textContent = `(${count} คน, มีกิจกรรม ${activeCount} คน)`;
             renderSkillsStudentTable(filteredData);
         }
 
