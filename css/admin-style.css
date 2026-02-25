@@ -2042,4 +2042,97 @@ body {
     .skills-student-table td {
         padding: 8px 6px;
     }
+
+    .skills-year-compare-table .num-cell {
+        min-width: 36px;
+        padding: 6px 2px;
+        font-size: 0.75em;
+    }
+
+    .skills-year-compare-table th.sub-header {
+        font-size: 0.65em;
+        min-width: 36px;
+    }
+}
+
+/* ============================================
+   SKILLS YEAR COMPARISON TABLE
+   ============================================ */
+
+.skills-year-compare-table {
+    min-width: 100%;
+}
+
+.skills-year-compare-table th.year-group-header {
+    text-align: center;
+    background: #f0f4ff;
+    border-bottom: 2px solid #667eea;
+    font-weight: 700;
+    color: #333;
+    padding: 10px 8px;
+    white-space: nowrap;
+}
+
+.skills-year-compare-table th.overall-header {
+    background: #e8f5e9;
+    border-bottom-color: #27ae60;
+}
+
+.skills-year-compare-table th.year-1-header { background: #e3f2fd; border-bottom-color: #1976d2; }
+.skills-year-compare-table th.year-2-header { background: #fff8e1; border-bottom-color: #f57c00; }
+.skills-year-compare-table th.year-3-header { background: #fce4ec; border-bottom-color: #c62828; }
+.skills-year-compare-table th.year-4-header { background: #f3e5f5; border-bottom-color: #7b1fa2; }
+
+.skills-year-compare-table th.sub-header {
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #666;
+    padding: 6px 4px;
+    background: #f8f9ff;
+    min-width: 48px;
+}
+
+.skills-year-compare-table .num-cell {
+    text-align: center;
+    font-size: 0.9em;
+    padding: 8px 4px;
+    min-width: 48px;
+}
+
+.skills-year-compare-table .num-cell.dim {
+    color: #ccc;
+}
+
+.skills-year-compare-table .num-cell.level-high {
+    background: rgba(39, 174, 96, 0.12);
+    color: #155724;
+}
+
+.skills-year-compare-table .num-cell.level-mid {
+    background: rgba(102, 126, 234, 0.12);
+    color: #004085;
+}
+
+.skills-year-compare-table .num-cell.level-low {
+    background: rgba(243, 156, 18, 0.12);
+    color: #856404;
+}
+
+.skills-year-compare-table .num-cell.level-none {
+    color: #999;
+}
+
+.skills-year-compare-table .sticky-col {
+    position: sticky;
+    left: 0;
+    background: #f8f9ff;
+    z-index: 2;
+}
+
+.skills-year-compare-table .sticky-col-2 {
+    position: sticky;
+    left: 100px;
+    background: #f8f9ff;
+    z-index: 2;
 }

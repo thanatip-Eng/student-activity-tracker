@@ -385,6 +385,11 @@
                 </div>
                 <div id="student-errors" class="error-list" style="display: none;"></div>
                 <div class="import-actions">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:#fff3e0;border-radius:8px;border:1px solid #ffcc80;">
+                        <input type="checkbox" id="student-update-mode" style="width:18px;height:18px;">
+                        <span style="font-weight:600;">🔄 โหมดอัปเดต | Update Mode</span>
+                        <small style="color:#666;">(อัปเดต department/faculty/name ของนักศึกษาที่มีอยู่แล้ว โดยไม่กระทบ email/studentId)</small>
+                    </label>
                     <button class="btn-import" id="btn-import-students" onclick="importStudents()">
                         ✅ นำเข้าข้อมูล | Import
                     </button>
@@ -716,8 +721,9 @@ Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิด
                 const text = e.target.result;
                 const { headers, data } = parseCSV(text);
 
-                // Validate required columns
-                const required = ['studentId', 'name', 'email'];
+                // Validate required columns (update mode only needs studentId)
+                const updateMode = document.getElementById('student-update-mode')?.checked;
+                const required = updateMode ? ['studentId'] : ['studentId', 'name', 'email'];
                 const missing = required.filter(col => !headers.includes(col));
 
                 if (missing.length > 0) {
@@ -731,10 +737,12 @@ Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิด
 
                 data.forEach((row, index) => {
                     const rowErrors = [];
-                    
+
                     if (!row.studentId) rowErrors.push('ไม่มีรหัสนักศึกษา');
-                    if (!row.name) rowErrors.push('ไม่มีชื่อ');
-                    if (!row.email) rowErrors.push('ไม่มี email');
+                    if (!updateMode) {
+                        if (!row.name) rowErrors.push('ไม่มีชื่อ');
+                        if (!row.email) rowErrors.push('ไม่มี email');
+                    }
                     if (row.email && !row.email.includes('@')) rowErrors.push('email ไม่ถูกต้อง');
 
                     if (rowErrors.length > 0) {
@@ -1104,13 +1112,18 @@ Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิด
             logEl.innerHTML = '';
             logEl.classList.add('show');
 
-            showLoading(true, 'กำลังนำเข้าข้อมูลนักศึกษา...');
+            const updateMode = document.getElementById('student-update-mode')?.checked;
+
+            showLoading(true, updateMode
+                ? 'กำลังอัปเดตข้อมูลนักศึกษา...'
+                : 'กำลังนำเข้าข้อมูลนักศึกษา...');
 
             let successCount = 0;
+            let updateCount = 0;
             let skipCount = 0;
             let errorCount = 0;
 
-            log(logEl, `🚀 เริ่มนำเข้า ${studentData.length} รายการ...`, 'info');
+            log(logEl, `🚀 เริ่ม${updateMode ? 'อัปเดต' : 'นำเข้า'} ${studentData.length} รายการ...`, 'info');
 
             for (const student of studentData) {
                 try {
@@ -1120,12 +1133,40 @@ Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิด
                         .get();
 
                     if (!existing.empty) {
-                        log(logEl, `⏭️ ${student.studentId} - มีอยู่แล้ว (ข้าม)`, 'warning');
+                        if (updateMode) {
+                            // Update safe fields only — NEVER touch studentId, email, createdAt
+                            const docRef = existing.docs[0].ref;
+                            const updateData = {};
+
+                            if (student.department) updateData.department = student.department;
+                            if (student.faculty) updateData.faculty = student.faculty;
+                            if (student.name) updateData.name = student.name;
+                            if (student.year) updateData.year = student.year;
+
+                            if (Object.keys(updateData).length > 0) {
+                                updateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                                await docRef.update(updateData);
+                                const fields = Object.keys(updateData).filter(k => k !== 'updatedAt').join(', ');
+                                log(logEl, `🔄 ${student.studentId} - อัปเดตแล้ว (${fields})`, 'success');
+                                updateCount++;
+                            } else {
+                                log(logEl, `⏭️ ${student.studentId} - ไม่มีข้อมูลให้อัปเดต`, 'warning');
+                                skipCount++;
+                            }
+                        } else {
+                            log(logEl, `⏭️ ${student.studentId} - มีอยู่แล้ว (ข้าม)`, 'warning');
+                            skipCount++;
+                        }
+                        continue;
+                    }
+
+                    // Add new student — require name and email
+                    if (!student.name || !student.email) {
+                        log(logEl, `⚠️ ${student.studentId} - ขาด name/email สำหรับนศ.ใหม่ (ข้าม)`, 'warning');
                         skipCount++;
                         continue;
                     }
 
-                    // Add student
                     await db.collection('students').add({
                         studentId: student.studentId,
                         name: student.name,
@@ -1145,7 +1186,10 @@ Design Thinking Workshop,Innovation Hub,2024-04-05,2,Workshop การคิด
                 }
             }
 
-            log(logEl, `🎉 เสร็จสิ้น: นำเข้า ${successCount}, ข้าม ${skipCount}, ผิดพลาด ${errorCount}`, 'complete');
+            const summary = updateMode
+                ? `🎉 เสร็จสิ้น: นำเข้าใหม่ ${successCount}, อัปเดต ${updateCount}, ข้าม ${skipCount}, ผิดพลาด ${errorCount}`
+                : `🎉 เสร็จสิ้น: นำเข้า ${successCount}, ข้าม ${skipCount}, ผิดพลาด ${errorCount}`;
+            log(logEl, summary, 'complete');
 
             showLoading(false);
             loadDataSummary();
