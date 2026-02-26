@@ -1890,8 +1890,11 @@
             approved.forEach(activity => {
                 if (activity.skills) {
                     activity.skills.forEach(skill => {
-                        if (skill.code && skill.level) {
-                            scores[skill.code] = Math.max(scores[skill.code], skill.level);
+                        if (skill.code) {
+                            const lvl = parseInt(skill.level);
+                            if (!isNaN(lvl) && lvl >= 0) {
+                                scores[skill.code] = Math.max(scores[skill.code], lvl);
+                            }
                         }
                     });
                 }
@@ -5090,6 +5093,10 @@
                 activitySkillsMap[data.name.toLowerCase().trim()] = skills;
             });
 
+            // Diagnostic: activitySkillsMap stats
+            const mapWithSkills = Object.values(activitySkillsMap).filter(s => s.length > 0).length;
+            console.log(`[Skills Summary] activitySkillsMap: ${Object.keys(activitySkillsMap).length} activities, ${mapWithSkills} with skills`);
+
             // Build email→studentId map for fallback matching
             const emailToSid = {};
             studentsSnap.docs.forEach(doc => {
@@ -5103,6 +5110,8 @@
             const studentActivitiesMap = {};
 
             // 1. Participation records (primary source)
+            let partWithSkills = 0, partWithoutSkills = 0, partFallbackCount = 0;
+            let samplePartSkills = [];
             participationSnap.docs.forEach(doc => {
                 const p = doc.data();
                 const sid = (p.studentId || '').trim();
@@ -5110,9 +5119,20 @@
                 if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
 
                 let skills = p.skills || [];
+                const hadOriginalSkills = skills.length > 0;
                 // Fallback: look up skills from activity definition
                 if (skills.length === 0 && p.activityName) {
                     skills = activitySkillsMap[p.activityName.toLowerCase().trim()] || [];
+                    if (skills.length > 0) partFallbackCount++;
+                }
+
+                if (skills.length > 0) {
+                    partWithSkills++;
+                    if (samplePartSkills.length < 3) {
+                        samplePartSkills.push({ sid, activity: p.activityName, hadOriginal: hadOriginalSkills, skills: skills.map(s => ({ code: s.code, level: s.level, levelType: typeof s.level })) });
+                    }
+                } else {
+                    partWithoutSkills++;
                 }
 
                 studentActivitiesMap[sid].push({
@@ -5122,6 +5142,8 @@
                     source: 'participation'
                 });
             });
+            console.log(`[Skills Summary] Participation: ${partWithSkills} with skills, ${partWithoutSkills} without skills, ${partFallbackCount} used activity fallback`);
+            if (samplePartSkills.length > 0) console.log('[Skills Summary] Sample participation skills:', JSON.stringify(samplePartSkills, null, 2));
 
             // 2. Approved submissions (secondary source — use approvedSkills field)
             submissionsSnap.docs.forEach(doc => {
@@ -5139,18 +5161,32 @@
 
                 // Dedup: skip if participation already has this activity
                 const nameNorm = (s.activityName || '').toLowerCase().trim();
-                const exists = studentActivitiesMap[sid].some(a =>
+                const existingEntry = studentActivitiesMap[sid].find(a =>
                     a.name && a.name.toLowerCase().trim() === nameNorm
                 );
 
-                if (!exists) {
+                if (!existingEntry) {
                     studentActivitiesMap[sid].push({
                         name: s.activityName || '',
                         status: s.status || '',
                         skills: s.approvedSkills || s.skills || [],
                         source: 'submission'
                     });
+                } else if ((!existingEntry.skills || existingEntry.skills.length === 0) && (s.approvedSkills?.length > 0 || s.skills?.length > 0)) {
+                    // Participation record has empty skills — merge from submission's approvedSkills
+                    existingEntry.skills = s.approvedSkills || s.skills || [];
                 }
+            });
+
+            // Diagnostic: submissions stats
+            const approvedSubCount = submissionsSnap.docs.filter(d => d.data().status?.toLowerCase().includes('approved')).length;
+            const subWithApprovedSkills = submissionsSnap.docs.filter(d => { const s = d.data(); return s.status?.toLowerCase().includes('approved') && s.approvedSkills?.length > 0; }).length;
+            console.log(`[Skills Summary] Submissions: ${approvedSubCount} approved, ${subWithApprovedSkills} with approvedSkills`);
+
+            // Diagnostic: show first 3 students with activities and their skills detail
+            const sampleStudents = Object.entries(studentActivitiesMap).slice(0, 3);
+            sampleStudents.forEach(([sid, acts]) => {
+                console.log(`[Skills Summary] Student ${sid}: ${acts.length} activities → ${acts.map(a => `"${a.name}" (${a.source}, skills:${a.skills?.length || 0}, status:${a.status})`).join(', ')}`);
             });
 
             // 3. Compute scores per student
@@ -5184,9 +5220,12 @@
                 approved.forEach(activity => {
                     if (activity.skills && Array.isArray(activity.skills)) {
                         activity.skills.forEach(skill => {
-                            if (skill.code && skill.level) {
-                                scores[skill.code] = Math.max(scores[skill.code], parseInt(skill.level) || 0);
-                                frequency[skill.code]++;
+                            if (skill.code) {
+                                const lvl = parseInt(skill.level);
+                                if (!isNaN(lvl) && lvl >= 0) {
+                                    scores[skill.code] = Math.max(scores[skill.code], lvl);
+                                    frequency[skill.code]++;
+                                }
                             }
                         });
                     }
@@ -5207,6 +5246,18 @@
             });
 
             console.log(`[Skills Summary] ${matchedCount}/${results.length} students have activities. Activities map has ${Object.keys(studentActivitiesMap).length} entries.`);
+
+            // Diagnostic: count students with approved activities but zero total score
+            const activeWithZero = results.filter(r => r.approvedCount > 0 && r.totalScore === 0);
+            const activeWithScore = results.filter(r => r.approvedCount > 0 && r.totalScore > 0);
+            console.log(`[Skills Summary] Active students: ${activeWithScore.length} with scores, ${activeWithZero.length} with approved but ZERO score`);
+            if (activeWithZero.length > 0 && activeWithZero.length <= 5) {
+                activeWithZero.forEach(r => {
+                    const acts = studentActivitiesMap[(r.student.studentId || '').trim()] || [];
+                    const approvedActs = acts.filter(a => a.status?.toLowerCase().includes('approved'));
+                    console.log(`[Skills Summary] ZERO-SCORE student ${r.student.studentId}: ${r.approvedCount} approved, skills per activity: [${approvedActs.map(a => a.skills?.length || 0).join(',')}]`);
+                });
+            }
 
             return results;
         }
@@ -5235,13 +5286,13 @@
 
                     // 18 criteria: maxLevel + frequency
                     CRITERIA_LIST.forEach(c => {
-                        row[`skill_${c.code}_maxLevel`] = r.scores[c.code] || 0;
-                        row[`skill_${c.code}_freq`] = r.frequency[c.code] || 0;
+                        row[`skill_${c.code}_maxLevel`] = r.scores[c.code] ?? 0;
+                        row[`skill_${c.code}_freq`] = r.frequency[c.code] ?? 0;
                     });
 
                     // 6 domain averages
                     DOMAINS.forEach(d => {
-                        row[`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`] = r.domainScores[d.name]?.avg || 0;
+                        row[`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`] = r.domainScores[d.name]?.avg ?? 0;
                     });
 
                     row.totalScore = r.totalScore;
