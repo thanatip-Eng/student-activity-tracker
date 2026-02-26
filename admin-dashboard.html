@@ -5125,6 +5125,56 @@
                 }
             });
 
+            // ========== Student View Map: replicates student portal loading logic ==========
+            // Difference from admin path: (1) immediate fallback for empty skills,
+            // (2) submissions only ADD new entries, never merge into existing ones.
+            const studentViewMap = {};
+
+            // Step A: Participation with IMMEDIATE fallback (matching student portal app.js:185-187)
+            participationSnap.docs.forEach(doc => {
+                const p = doc.data();
+                const sid = (p.studentId || '').trim();
+                if (!sid) return;
+                if (!studentViewMap[sid]) studentViewMap[sid] = [];
+
+                let skills = p.skills || [];
+                // Student portal does immediate fallback if no skills
+                if (skills.length === 0 && p.activityName) {
+                    skills = activitySkillsMap[p.activityName.toLowerCase().trim()] || [];
+                }
+
+                studentViewMap[sid].push({
+                    name: p.activityName || '',
+                    status: p.status || 'Approved',
+                    skills: skills
+                });
+            });
+
+            // Step B: Add submissions NOT already in participation (no merge — matching student portal app.js:206-227)
+            submissionsSnap.docs.forEach(doc => {
+                const s = doc.data();
+                let sid = (s.studentId || '').trim();
+                if (!sid && s.studentEmail) {
+                    sid = emailToSid[s.studentEmail.toLowerCase().trim()] || '';
+                }
+                if (!sid) return;
+                if (!studentViewMap[sid]) studentViewMap[sid] = [];
+
+                const nameNorm = (s.activityName || '').toLowerCase().trim();
+                const exists = studentViewMap[sid].find(a =>
+                    (a.name || '').toLowerCase().trim() === nameNorm
+                );
+                if (!exists) {
+                    studentViewMap[sid].push({
+                        name: s.activityName || '',
+                        status: s.status || 'Pending',
+                        skills: s.approvedSkills?.length > 0 ? s.approvedSkills : (s.skills || [])
+                    });
+                }
+            });
+
+            console.log(`[Skills Summary] studentViewMap: ${Object.keys(studentViewMap).length} students for student-dashboard-score replication`);
+
             // Build studentId → activities array from participation + submissions
             const studentActivitiesMap = {};
 
@@ -5277,12 +5327,28 @@
                 const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
                 const notes = (studentNotesMap[sid] || []).join('; ');
 
+                // Student dashboard score: SUM ALL skill levels (duplicates counted)
+                // Replicates student portal app.js:371-378
+                const studentViewActivities = studentViewMap[sid] || [];
+                const studentViewApproved = studentViewActivities.filter(a =>
+                    a.status?.toLowerCase().includes('approved')
+                );
+                let studentDashboardScore = 0;
+                studentViewApproved.forEach(activity => {
+                    if (activity.skills && Array.isArray(activity.skills)) {
+                        activity.skills.forEach(skill => {
+                            studentDashboardScore += (skill.level || 0);
+                        });
+                    }
+                });
+
                 results.push({
                     student,
                     scores,
                     frequency,
                     domainScores,
                     totalScore,
+                    studentDashboardScore,
                     activityCount: activities.length,
                     approvedCount: approved.length,
                     notes: notes
@@ -5361,6 +5427,7 @@
                     });
 
                     row.totalScore = r.totalScore;
+                    row.studentDashboardScore = r.studentDashboardScore;
                     row.notes = r.notes || '';
                     return row;
                 });
@@ -5375,6 +5442,7 @@
                     headers.push(`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`);
                 });
                 headers.push('totalScore');
+                headers.push('studentDashboardScore');
                 headers.push('notes');
 
                 const csv = convertToCSV(data, headers);
