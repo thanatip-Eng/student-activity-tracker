@@ -1831,51 +1831,59 @@
             
             for (const doc of participationQuery.docs) {
                 const participation = doc.data();
-                
-                // Get activity details
-                const activityQuery = await db.collection('activities')
-                    .where('name', '==', participation.activityName)
-                    .limit(1)
-                    .get();
-                
+
+                // Use skills from participation record first (set during approval)
+                let participationSkills = participation.skills || [];
+
+                // Fallback: query activity doc if participation has no skills
+                if (participationSkills.length === 0) {
+                    const activityQuery = await db.collection('activities')
+                        .where('name', '==', participation.activityName)
+                        .limit(1)
+                        .get();
+
+                    if (!activityQuery.empty) {
+                        const activity = activityQuery.docs[0].data();
+                        participationSkills = extractSkillsAdmin(activity);
+                    }
+                }
+
                 let activityData = {
                     id: doc.id,
                     name: participation.activityName,
                     status: participation.status || 'Approved',
                     date: participation.date || '',
-                    skills: [],
+                    skills: participationSkills,
                     source: 'participation'
                 };
-                
-                if (!activityQuery.empty) {
-                    const activity = activityQuery.docs[0].data();
-                    activityData.skills = extractSkillsAdmin(activity);
-                }
-                
+
                 activities.push(activityData);
             }
-            
+
             // Load from submissions
             const submissionsQuery = await db.collection('submissions')
                 .where('studentEmail', '==', email)
                 .get();
-            
+
             for (const doc of submissionsQuery.docs) {
                 const submission = doc.data();
-                
-                const exists = activities.find(a => 
+
+                const existingActivity = activities.find(a =>
                     a.name.toLowerCase() === submission.activityName?.toLowerCase()
                 );
-                
-                if (!exists) {
+
+                if (!existingActivity) {
                     activities.push({
                         id: doc.id,
                         name: submission.activityName || 'ไม่ระบุ',
                         status: submission.status || 'Pending',
                         date: submission.activityDate || submission.startDate || '',
-                        skills: submission.skills || [],
+                        skills: submission.approvedSkills || submission.skills || [],
                         source: 'submission'
                     });
+                } else if ((!existingActivity.skills || existingActivity.skills.length === 0) && (submission.approvedSkills?.length > 0 || submission.skills?.length > 0)) {
+                    // Participation has empty skills — merge from submission's approvedSkills
+                    existingActivity.skills = submission.approvedSkills || submission.skills || [];
                 }
             }
             
