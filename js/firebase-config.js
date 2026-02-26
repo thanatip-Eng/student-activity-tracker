@@ -11,8 +11,12 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore
+// Initialize Firestore with long polling to fix WebChannel 404 transport errors
 const db = firebase.firestore();
+db.settings({
+    experimentalForceLongPolling: true,
+    useFetchStreams: false
+});
 
 // Collections reference
 const studentsCollection = db.collection('students');
