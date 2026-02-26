@@ -5377,6 +5377,13 @@
             showLoading(true, '📊 กำลังคำนวณคะแนนนักศึกษาทั้งหมด...');
 
             try {
+                // Invalidate stale cache missing new fields
+                if (skillsSummaryData && skillsSummaryData.length > 0
+                    && skillsSummaryData[0].studentDashboardScore === undefined) {
+                    console.log('[CSV Export] Cache is stale (missing studentDashboardScore), refetching...');
+                    skillsSummaryData = null;
+                }
+
                 // Use cached data if available (avoids Firestore connection issues)
                 let results;
                 if (skillsSummaryData && skillsSummaryData.length > 0) {
