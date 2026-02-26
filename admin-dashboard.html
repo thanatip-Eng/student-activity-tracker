@@ -4863,7 +4863,7 @@
             const csvHeaders = headers.join(',');
             const csvRows = data.map(row => {
                 return headers.map(header => {
-                    let value = row[header] || '';
+                    let value = (row[header] !== undefined && row[header] !== null) ? row[header] : '';
                     // Handle arrays
                     if (Array.isArray(value)) {
                         value = JSON.stringify(value);
@@ -5218,7 +5218,11 @@
             try {
                 const results = await computeAllStudentScores();
 
-                const data = results.map(r => {
+                // Filter to only students with approved activities
+                const activeResults = results.filter(r => r.approvedCount > 0);
+                console.log(`[CSV Export] ${results.length} total students, ${activeResults.length} with activities`);
+
+                const data = activeResults.map(r => {
                     const row = {
                         studentId: r.student.studentId || '',
                         name: r.student.name || '',
