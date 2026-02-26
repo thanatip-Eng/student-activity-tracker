@@ -5275,11 +5275,32 @@
             showLoading(true, '📊 กำลังคำนวณคะแนนนักศึกษาทั้งหมด...');
 
             try {
-                const results = await computeAllStudentScores();
+                // Use cached data if available (avoids Firestore connection issues)
+                let results;
+                if (skillsSummaryData && skillsSummaryData.length > 0) {
+                    results = skillsSummaryData;
+                    console.log('[CSV Export] Using cached skillsSummaryData');
+                } else {
+                    results = await computeAllStudentScores();
+                    console.log('[CSV Export] Fetched fresh data from Firestore');
+                }
+
+                // Guard: no data loaded (Firestore connection issue)
+                if (!results || results.length === 0) {
+                    showLoading(false);
+                    alert('⚠️ ไม่พบข้อมูลนักศึกษา — อาจเป็นปัญหาการเชื่อมต่อ Firestore\n\nลอง:\n1. รีเฟรชหน้า (Ctrl+Shift+R)\n2. เปิดแท็บ สรุปทักษะ ก่อน\n3. กด Export อีกครั้ง');
+                    return;
+                }
 
                 // Filter to only students with approved activities
                 const activeResults = results.filter(r => r.approvedCount > 0);
                 console.log(`[CSV Export] ${results.length} total students, ${activeResults.length} with activities`);
+
+                if (activeResults.length === 0) {
+                    showLoading(false);
+                    alert(`⚠️ พบ ${results.length} นักศึกษา แต่ไม่มีนักศึกษาที่มีกิจกรรมที่อนุมัติแล้ว`);
+                    return;
+                }
 
                 const data = activeResults.map(r => {
                     const row = {
