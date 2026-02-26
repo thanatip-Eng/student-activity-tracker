@@ -1834,19 +1834,7 @@
 
                 // Use skills from participation record first (set during approval)
                 let participationSkills = participation.skills || [];
-
-                // Fallback: query activity doc if participation has no skills
-                if (participationSkills.length === 0) {
-                    const activityQuery = await db.collection('activities')
-                        .where('name', '==', participation.activityName)
-                        .limit(1)
-                        .get();
-
-                    if (!activityQuery.empty) {
-                        const activity = activityQuery.docs[0].data();
-                        participationSkills = extractSkillsAdmin(activity);
-                    }
-                }
+                // Do NOT fallback here — wait until after submission merge
 
                 let activityData = {
                     id: doc.id,
@@ -1886,7 +1874,24 @@
                     existingActivity.skills = submission.approvedSkills || submission.skills || [];
                 }
             }
-            
+
+            // Final fallback: query activity doc for entries STILL without skills (last resort)
+            for (const activity of activities) {
+                if ((!activity.skills || activity.skills.length === 0) && activity.name) {
+                    try {
+                        const activityQuery = await db.collection('activities')
+                            .where('name', '==', activity.name)
+                            .limit(1)
+                            .get();
+                        if (!activityQuery.empty) {
+                            activity.skills = extractSkillsAdmin(activityQuery.docs[0].data());
+                        }
+                    } catch (e) {
+                        console.warn(`[loadStudentActivities] Fallback query failed for "${activity.name}":`, e);
+                    }
+                }
+            }
+
             return activities;
         }
 
@@ -5117,31 +5122,17 @@
             // Build studentId → activities array from participation + submissions
             const studentActivitiesMap = {};
 
-            // 1. Participation records (primary source)
-            let partWithSkills = 0, partWithoutSkills = 0, partFallbackCount = 0;
-            let samplePartSkills = [];
+            // 1. Participation records (primary source — NO fallback here, wait for submission merge)
+            let partWithSkills = 0, partWithoutSkills = 0;
             participationSnap.docs.forEach(doc => {
                 const p = doc.data();
                 const sid = (p.studentId || '').trim();
                 if (!sid) return;
                 if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
 
-                let skills = p.skills || [];
-                const hadOriginalSkills = skills.length > 0;
-                // Fallback: look up skills from activity definition
-                if (skills.length === 0 && p.activityName) {
-                    skills = activitySkillsMap[p.activityName.toLowerCase().trim()] || [];
-                    if (skills.length > 0) partFallbackCount++;
-                }
-
-                if (skills.length > 0) {
-                    partWithSkills++;
-                    if (samplePartSkills.length < 3) {
-                        samplePartSkills.push({ sid, activity: p.activityName, hadOriginal: hadOriginalSkills, skills: skills.map(s => ({ code: s.code, level: s.level, levelType: typeof s.level })) });
-                    }
-                } else {
-                    partWithoutSkills++;
-                }
+                const skills = p.skills || [];
+                if (skills.length > 0) partWithSkills++;
+                else partWithoutSkills++;
 
                 studentActivitiesMap[sid].push({
                     name: p.activityName || '',
@@ -5150,10 +5141,10 @@
                     source: 'participation'
                 });
             });
-            console.log(`[Skills Summary] Participation: ${partWithSkills} with skills, ${partWithoutSkills} without skills, ${partFallbackCount} used activity fallback`);
-            if (samplePartSkills.length > 0) console.log('[Skills Summary] Sample participation skills:', JSON.stringify(samplePartSkills, null, 2));
+            console.log(`[Skills Summary] Participation: ${partWithSkills} with skills, ${partWithoutSkills} without skills`);
 
             // 2. Approved submissions (secondary source — use approvedSkills field)
+            let subMergedCount = 0;
             submissionsSnap.docs.forEach(doc => {
                 const s = doc.data();
                 if (!s.status?.toLowerCase().includes('approved')) return;
@@ -5183,13 +5174,30 @@
                 } else if ((!existingEntry.skills || existingEntry.skills.length === 0) && (s.approvedSkills?.length > 0 || s.skills?.length > 0)) {
                     // Participation record has empty skills — merge from submission's approvedSkills
                     existingEntry.skills = s.approvedSkills || s.skills || [];
+                    subMergedCount++;
                 }
             });
 
             // Diagnostic: submissions stats
             const approvedSubCount = submissionsSnap.docs.filter(d => d.data().status?.toLowerCase().includes('approved')).length;
             const subWithApprovedSkills = submissionsSnap.docs.filter(d => { const s = d.data(); return s.status?.toLowerCase().includes('approved') && s.approvedSkills?.length > 0; }).length;
-            console.log(`[Skills Summary] Submissions: ${approvedSubCount} approved, ${subWithApprovedSkills} with approvedSkills`);
+            console.log(`[Skills Summary] Submissions: ${approvedSubCount} approved, ${subWithApprovedSkills} with approvedSkills, ${subMergedCount} merged into empty participation entries`);
+
+            // 2.5 Final fallback: apply activitySkillsMap ONLY for entries still without skills
+            // (after submissions had a chance to merge their approvedSkills)
+            let fallbackCount = 0;
+            Object.values(studentActivitiesMap).forEach(activities => {
+                activities.forEach(activity => {
+                    if ((!activity.skills || activity.skills.length === 0) && activity.name) {
+                        const fallbackSkills = activitySkillsMap[activity.name.toLowerCase().trim()] || [];
+                        if (fallbackSkills.length > 0) {
+                            activity.skills = fallbackSkills;
+                            fallbackCount++;
+                        }
+                    }
+                });
+            });
+            console.log(`[Skills Summary] Final fallback: ${fallbackCount} entries got skills from activitySkillsMap (after submission merge)`);
 
             // Diagnostic: show first 3 students with activities and their skills detail
             const sampleStudents = Object.entries(studentActivitiesMap).slice(0, 3);
