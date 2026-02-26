@@ -5090,18 +5090,24 @@
             console.log(`[Skills Summary] Loaded: ${studentsSnap.size} students, ${participationSnap.size} participation, ${submissionsSnap.size} submissions, ${activitiesSnap.size} activities`);
 
             // Build activity name → skills map (fallback when participation has no skills)
+            // Limit to top 3 skills — matching extractSkillsAdmin() behavior used in Dashboard
             const activitySkillsMap = {};
             activitiesSnap.docs.forEach(doc => {
                 const data = doc.data();
                 if (!data.name) return;
-                const skills = [];
+                let skills = [];
                 if (data.skills && Array.isArray(data.skills)) {
-                    skills.push(...data.skills);
+                    skills = [...data.skills];
                 } else {
                     CRITERIA_LIST.forEach(c => {
                         const val = data[c.code] || data[c.code.replace('.', '_')];
                         if (val && val > 0) skills.push({ code: c.code, level: parseInt(val) });
                     });
+                }
+                // Top 3 by level (matching extractSkillsAdmin)
+                if (skills.length > 3) {
+                    skills.sort((a, b) => (b.level || 0) - (a.level || 0));
+                    skills = skills.slice(0, 3);
                 }
                 activitySkillsMap[data.name.toLowerCase().trim()] = skills;
             });
@@ -5143,11 +5149,13 @@
             });
             console.log(`[Skills Summary] Participation: ${partWithSkills} with skills, ${partWithoutSkills} without skills`);
 
-            // 2. Approved submissions (secondary source — use approvedSkills field)
-            let subMergedCount = 0;
+            // 2. Submissions (ALL statuses — matching Dashboard behavior)
+            // Dashboard loads all submissions; scoring loop filters approved later
+            let subMergedCount = 0, subMergedNonApproved = 0;
+            const studentNotesMap = {}; // sid → [note strings]
             submissionsSnap.docs.forEach(doc => {
                 const s = doc.data();
-                if (!s.status?.toLowerCase().includes('approved')) return;
+                const isApproved = s.status?.toLowerCase().includes('approved');
 
                 // Try studentId first, then fallback to email→studentId mapping
                 let sid = (s.studentId || '').trim();
@@ -5157,6 +5165,7 @@
                 if (!sid) return;
 
                 if (!studentActivitiesMap[sid]) studentActivitiesMap[sid] = [];
+                if (!studentNotesMap[sid]) studentNotesMap[sid] = [];
 
                 // Dedup: skip if participation already has this activity
                 const nameNorm = (s.activityName || '').toLowerCase().trim();
@@ -5167,35 +5176,45 @@
                 if (!existingEntry) {
                     studentActivitiesMap[sid].push({
                         name: s.activityName || '',
-                        status: s.status || '',
+                        status: s.status || 'Pending',
                         skills: s.approvedSkills || s.skills || [],
                         source: 'submission'
                     });
                 } else if ((!existingEntry.skills || existingEntry.skills.length === 0) && (s.approvedSkills?.length > 0 || s.skills?.length > 0)) {
-                    // Participation record has empty skills — merge from submission's approvedSkills
+                    // Participation record has empty skills — merge from submission
                     existingEntry.skills = s.approvedSkills || s.skills || [];
                     subMergedCount++;
+                    if (!isApproved) {
+                        subMergedNonApproved++;
+                        studentNotesMap[sid].push(`skills merged from non-approved submission: "${s.activityName}" (status: ${s.status})`);
+                    }
                 }
             });
 
             // Diagnostic: submissions stats
             const approvedSubCount = submissionsSnap.docs.filter(d => d.data().status?.toLowerCase().includes('approved')).length;
             const subWithApprovedSkills = submissionsSnap.docs.filter(d => { const s = d.data(); return s.status?.toLowerCase().includes('approved') && s.approvedSkills?.length > 0; }).length;
-            console.log(`[Skills Summary] Submissions: ${approvedSubCount} approved, ${subWithApprovedSkills} with approvedSkills, ${subMergedCount} merged into empty participation entries`);
+            console.log(`[Skills Summary] Submissions: ${approvedSubCount} approved, ${subWithApprovedSkills} with approvedSkills, ${subMergedCount} merged (${subMergedNonApproved} from non-approved)`);
 
             // 2.5 Final fallback: apply activitySkillsMap ONLY for entries still without skills
             // (after submissions had a chance to merge their approvedSkills)
             let fallbackCount = 0;
-            Object.values(studentActivitiesMap).forEach(activities => {
+            Object.entries(studentActivitiesMap).forEach(([sid, activities]) => {
+                let studentFallbackCount = 0;
                 activities.forEach(activity => {
                     if ((!activity.skills || activity.skills.length === 0) && activity.name) {
                         const fallbackSkills = activitySkillsMap[activity.name.toLowerCase().trim()] || [];
                         if (fallbackSkills.length > 0) {
                             activity.skills = fallbackSkills;
                             fallbackCount++;
+                            studentFallbackCount++;
                         }
                     }
                 });
+                if (studentFallbackCount > 0) {
+                    if (!studentNotesMap[sid]) studentNotesMap[sid] = [];
+                    studentNotesMap[sid].push(`skills from activity document fallback (${studentFallbackCount} activities)`);
+                }
             });
             console.log(`[Skills Summary] Final fallback: ${fallbackCount} entries got skills from activitySkillsMap (after submission merge)`);
 
@@ -5233,6 +5252,13 @@
                     a.status?.toLowerCase().includes('approved')
                 );
 
+                // Track approved activities with no skills for notes
+                const approvedNoSkills = approved.filter(a => !a.skills || a.skills.length === 0);
+                if (approvedNoSkills.length > 0) {
+                    if (!studentNotesMap[sid]) studentNotesMap[sid] = [];
+                    studentNotesMap[sid].push(`${approvedNoSkills.length} approved activities have no skills`);
+                }
+
                 approved.forEach(activity => {
                     if (activity.skills && Array.isArray(activity.skills)) {
                         activity.skills.forEach(skill => {
@@ -5249,6 +5275,7 @@
 
                 const domainScores = calculateDomainScoresAdmin(scores);
                 const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+                const notes = (studentNotesMap[sid] || []).join('; ');
 
                 results.push({
                     student,
@@ -5257,7 +5284,8 @@
                     domainScores,
                     totalScore,
                     activityCount: activities.length,
-                    approvedCount: approved.length
+                    approvedCount: approved.length,
+                    notes: notes
                 });
             });
 
@@ -5333,6 +5361,7 @@
                     });
 
                     row.totalScore = r.totalScore;
+                    row.notes = r.notes || '';
                     return row;
                 });
 
@@ -5346,6 +5375,7 @@
                     headers.push(`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`);
                 });
                 headers.push('totalScore');
+                headers.push('notes');
 
                 const csv = convertToCSV(data, headers);
                 downloadCSV(csv, `student_score_summary_${new Date().toISOString().slice(0, 10)}.csv`);
