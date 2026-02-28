@@ -483,6 +483,7 @@
             <button class="tab" data-tab="admin-manage">👤 Admin</button>
             <button class="tab" data-tab="export">📥 Export CSV</button>
             <button class="tab" data-tab="skills-summary">📊 สรุปทักษะ | Skills Summary</button>
+            <button class="tab" data-tab="activity-participants">👥 รายชื่อนศ. | Participants</button>
         </div>
 
         <!-- Tab: Student Search -->
@@ -895,6 +896,54 @@
                 <div id="merge-empty" style="display:none;text-align:center;padding:40px;color:#999;">
                     <span style="font-size:2em;">✅</span>
                     <p style="margin-top:10px;">ไม่พบกิจกรรมที่ชื่อคล้ายกัน</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Activity Participants -->
+        <div id="tab-activity-participants" class="tab-content">
+            <div class="panel">
+                <h2>👥 รายชื่อนักศึกษาในกิจกรรม | Activity Participants</h2>
+                <p style="color: #666; margin-bottom: 20px;">เลือกกิจกรรมเพื่อดูรายชื่อนักศึกษาที่เข้าร่วม และ Export CSV</p>
+
+                <!-- Activity Selector -->
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; color: #333; margin-bottom: 8px; display: block;">📚 เลือกกิจกรรม | Select Activity</label>
+                    <select id="participant-activity-select" onchange="onActivityParticipantSelect()" style="width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; background: white;">
+                        <option value="">-- กรุณาเลือกกิจกรรม --</option>
+                    </select>
+                </div>
+
+                <!-- Search & Export (hidden until activity selected) -->
+                <div class="search-box" id="participant-search-box" style="display: none;">
+                    <input type="text" id="participant-search-input" placeholder="ค้นหารหัส, ชื่อ, email, สาขา..." onkeyup="filterParticipantTable()">
+                    <button class="btn-search" onclick="filterParticipantTable()">🔍 ค้นหา</button>
+                    <button class="btn-search" style="background: #27ae60;" onclick="exportActivityParticipantsCSV()">📥 Export CSV</button>
+                </div>
+
+                <!-- Stats -->
+                <div id="participant-stats" style="display: none; margin: 15px 0; padding: 15px; background: #e3f2fd; border-radius: 10px;">
+                    <span id="participant-count" style="font-weight: 600; color: #1565c0;"></span>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container" id="participant-table-container" style="display: none;">
+                    <table class="activity-table" id="participant-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 4%;">#</th>
+                                <th style="width: 13%;">รหัส | ID</th>
+                                <th style="width: 18%;">ชื่อ | Name</th>
+                                <th style="width: 20%;">Email</th>
+                                <th style="width: 15%;">สาขา | Dept</th>
+                                <th style="width: 5%;">ปี</th>
+                                <th style="width: 12%;">วันที่ | Date</th>
+                                <th style="width: 10%;">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participant-table-body">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1455,6 +1504,12 @@
         let skillsSummaryChart = null;  // Chart.js instance (main radar)
         let modalSkillsChart = null;    // Chart.js instance (modal radar)
 
+        // Activity Participants state
+        let participantStudentMap = {};
+        let participantActivityMap = {};
+        let participantDataLoaded = false;
+        let currentParticipantList = [];
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
@@ -1509,6 +1564,11 @@
                         if (!skillsSummaryLoaded) {
                             loadSkillsSummary();
                         }
+                    }
+
+                    // Lazy load activity participants
+                    if (tab.dataset.tab === 'activity-participants') {
+                        loadActivityParticipants();
                     }
 
                 });
@@ -6905,6 +6965,203 @@
                 const domainScores = calculateDomainScoresAdmin(scores);
                 displayStudentResult(currentSearchedStudent, activities, scores, domainScores);
             }
+        }
+
+        // ============================================
+        // ACTIVITY PARTICIPANTS
+        // ============================================
+
+        async function loadActivityParticipants() {
+            if (participantDataLoaded) return;
+
+            showLoading(true, '📋 กำลังโหลดข้อมูลรายชื่อนักศึกษา...');
+
+            try {
+                // Load all 3 collections in parallel
+                const [studentsSnap, participationSnap, orgSnap] = await Promise.all([
+                    db.collection('students').get(),
+                    db.collection('participation').get(),
+                    db.collection('organizerActivities').get()
+                ]);
+
+                // Build studentId → student map
+                participantStudentMap = {};
+                studentsSnap.docs.forEach(doc => {
+                    const s = doc.data();
+                    if (s.studentId) participantStudentMap[s.studentId] = s;
+                });
+
+                // Build activityName → [participants] from participation
+                participantActivityMap = {};
+                participationSnap.docs.forEach(doc => {
+                    const p = doc.data();
+                    const actName = p.activityName || '';
+                    if (!actName) return;
+                    if (!participantActivityMap[actName]) participantActivityMap[actName] = [];
+                    // Dedup by studentId
+                    if (!participantActivityMap[actName].find(x => x.studentId === p.studentId)) {
+                        participantActivityMap[actName].push({
+                            studentId: p.studentId,
+                            date: p.date || '-',
+                            status: p.status || '-'
+                        });
+                    }
+                });
+
+                // Also check organizerActivities for studentIds not yet in participation
+                orgSnap.docs.forEach(doc => {
+                    const d = doc.data();
+                    const actName = d.activityName || d.activityNameBase || '';
+                    if (!actName) return;
+                    const studentIds = d.studentIds || [];
+                    if (!participantActivityMap[actName]) participantActivityMap[actName] = [];
+                    studentIds.forEach(sid => {
+                        if (!participantActivityMap[actName].find(x => x.studentId === sid)) {
+                            participantActivityMap[actName].push({
+                                studentId: sid,
+                                date: d.startDate || '-',
+                                status: 'Approved'
+                            });
+                        }
+                    });
+                });
+
+                // Populate dropdown
+                const select = document.getElementById('participant-activity-select');
+                const actNames = Object.keys(participantActivityMap).sort((a, b) => a.localeCompare(b, 'th'));
+
+                select.innerHTML = '<option value="">-- เลือกกิจกรรม (' + actNames.length + ' กิจกรรม) --</option>';
+                actNames.forEach(name => {
+                    const count = participantActivityMap[name].length;
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name + ' (' + count + ' คน)';
+                    select.appendChild(opt);
+                });
+
+                participantDataLoaded = true;
+                console.log(`[Participants] Loaded: ${studentsSnap.size} students, ${participationSnap.size} participation, ${actNames.length} activities`);
+
+            } catch (error) {
+                console.error('Load participants error:', error);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+            }
+
+            showLoading(false);
+        }
+
+        function onActivityParticipantSelect() {
+            const actName = document.getElementById('participant-activity-select').value;
+            const searchBox = document.getElementById('participant-search-box');
+            const statsDiv = document.getElementById('participant-stats');
+            const tableContainer = document.getElementById('participant-table-container');
+
+            if (!actName) {
+                searchBox.style.display = 'none';
+                statsDiv.style.display = 'none';
+                tableContainer.style.display = 'none';
+                currentParticipantList = [];
+                return;
+            }
+
+            const participants = participantActivityMap[actName] || [];
+
+            // Resolve student details
+            currentParticipantList = participants.map(p => {
+                const student = participantStudentMap[p.studentId] || {};
+                return {
+                    studentId: p.studentId || '-',
+                    name: student.name || '-',
+                    email: student.email || '-',
+                    department: student.department || '-',
+                    year: student.year || '-',
+                    date: p.date,
+                    status: p.status,
+                    activityName: actName
+                };
+            });
+
+            // Sort by studentId
+            currentParticipantList.sort((a, b) => (a.studentId || '').localeCompare(b.studentId || ''));
+
+            // Show controls
+            searchBox.style.display = 'flex';
+            statsDiv.style.display = 'block';
+            tableContainer.style.display = 'block';
+            document.getElementById('participant-search-input').value = '';
+
+            renderParticipantTable(currentParticipantList);
+        }
+
+        function filterParticipantTable() {
+            const search = document.getElementById('participant-search-input').value.trim().toLowerCase();
+            if (!search) {
+                renderParticipantTable(currentParticipantList);
+                return;
+            }
+            const filtered = currentParticipantList.filter(p =>
+                (p.studentId || '').toLowerCase().includes(search) ||
+                (p.name || '').toLowerCase().includes(search) ||
+                (p.email || '').toLowerCase().includes(search) ||
+                (p.department || '').toLowerCase().includes(search)
+            );
+            renderParticipantTable(filtered);
+        }
+
+        function renderParticipantTable(data) {
+            const tbody = document.getElementById('participant-table-body');
+            const countEl = document.getElementById('participant-count');
+
+            countEl.textContent = '👥 พบ ' + data.length + ' นักศึกษา | Found ' + data.length + ' students';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999;">ไม่พบข้อมูล | No data found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((p, i) => {
+                const statusBadge = p.status === 'Approved'
+                    ? '<span style="background:#e8f5e9;color:#27ae60;padding:3px 10px;border-radius:12px;font-size:0.85em;">✅ Approved</span>'
+                    : '<span style="background:#fff3e0;color:#e65100;padding:3px 10px;border-radius:12px;font-size:0.85em;">' + (p.status || '-') + '</span>';
+
+                return '<tr>' +
+                    '<td class="center">' + (i + 1) + '</td>' +
+                    '<td style="font-family:monospace;">' + (p.studentId || '-') + '</td>' +
+                    '<td>' + (p.name || '-') + '</td>' +
+                    '<td>' + (p.email || '-') + '</td>' +
+                    '<td>' + (p.department || '-') + '</td>' +
+                    '<td class="center">' + (p.year || '-') + '</td>' +
+                    '<td>' + (p.date || '-') + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function exportActivityParticipantsCSV() {
+            const actName = document.getElementById('participant-activity-select').value;
+            if (!actName || currentParticipantList.length === 0) {
+                alert('⚠️ กรุณาเลือกกิจกรรมก่อน | Please select an activity first');
+                return;
+            }
+
+            // Export currently displayed (filtered) data
+            const search = document.getElementById('participant-search-input').value.trim().toLowerCase();
+            let exportData = currentParticipantList;
+            if (search) {
+                exportData = currentParticipantList.filter(p =>
+                    (p.studentId || '').toLowerCase().includes(search) ||
+                    (p.name || '').toLowerCase().includes(search) ||
+                    (p.email || '').toLowerCase().includes(search) ||
+                    (p.department || '').toLowerCase().includes(search)
+                );
+            }
+
+            const headers = ['activityName', 'studentId', 'name', 'email', 'department', 'year', 'date', 'status'];
+            const csv = convertToCSV(exportData, headers);
+            const safeName = actName.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 50);
+            downloadCSV(csv, 'participants_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.csv');
+
+            alert('✅ Export สำเร็จ! ' + exportData.length + ' รายการ');
         }
 
         // Initialize - check session

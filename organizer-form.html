@@ -1262,6 +1262,49 @@
             </div>
         </div>
 
+        <!-- View Participants Modal -->
+        <div id="view-participants-modal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h3>👥 รายชื่อนักศึกษา | Participant List</h3>
+                    <button class="modal-close" onclick="closeViewParticipants()">&#10005;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Activity Info -->
+                    <div id="view-participants-info" style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;"></div>
+
+                    <!-- Search & Export -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="org-participant-search" placeholder="ค้นหารหัส, ชื่อ, email..." style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95em;" onkeyup="filterOrgParticipantTable()">
+                        <button onclick="exportOrgActivityParticipantsCSV()" style="padding: 10px 20px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">📥 Export CSV</button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div id="org-participant-stats" style="margin-bottom: 10px; padding: 10px 15px; background: #e8f5e9; border-radius: 8px;">
+                        <span id="org-participant-count" style="font-weight: 600; color: #2e7d32;"></span>
+                    </div>
+
+                    <!-- Table -->
+                    <div style="overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+                            <thead style="background:linear-gradient(135deg, #27ae60, #2ecc71);color:white;">
+                                <tr>
+                                    <th style="padding:10px 8px;text-align:center;">#</th>
+                                    <th style="padding:10px 8px;text-align:left;">รหัส | ID</th>
+                                    <th style="padding:10px 8px;text-align:left;">ชื่อ | Name</th>
+                                    <th style="padding:10px 8px;text-align:left;">Email</th>
+                                    <th style="padding:10px 8px;text-align:left;">สาขา | Dept</th>
+                                    <th style="padding:10px 8px;text-align:center;">ชั้นปี</th>
+                                </tr>
+                            </thead>
+                            <tbody id="org-participant-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading -->
         <div id="loading-overlay" class="loading-overlay">
             <div class="spinner"></div>
@@ -2646,6 +2689,7 @@ ${roleDesc ? `หน้าที่: ${roleDesc}` : ''}
                                 ` : ''}
                                 ${d.status === 'Approved' ? `
                                     <button class="btn-action btn-manage-students" onclick="openManageStudents('${doc.id}')">👥 จัดการนักศึกษา</button>
+                                    <button class="btn-action" style="background:#e3f2fd;color:#1565c0;" onclick="viewActivityParticipants('${doc.id}')">📋 ดูรายชื่อ</button>
                                 ` : ''}
                             </div>
                         </div>`;
@@ -2947,6 +2991,171 @@ ${roleDesc ? `หน้าที่: ${roleDesc}` : ''}
             }
             
             showLoading(false);
+        }
+
+        // ============================================
+        // VIEW PARTICIPANTS WITH NAME RESOLUTION
+        // ============================================
+        let orgParticipantList = [];
+        let orgParticipantActivityName = '';
+
+        async function viewActivityParticipants(activityId) {
+            showLoading(true, '📋 กำลังโหลดรายชื่อ...');
+
+            try {
+                const actDoc = await db.collection('organizerActivities').doc(activityId).get();
+                if (!actDoc.exists) {
+                    alert('❌ ไม่พบกิจกรรม');
+                    showLoading(false);
+                    return;
+                }
+
+                const actData = actDoc.data();
+                orgParticipantActivityName = actData.activityName || actData.activityNameBase || '';
+                const studentIds = actData.studentIds || [];
+
+                // Show activity info
+                document.getElementById('view-participants-info').innerHTML =
+                    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">' +
+                        '<div>' +
+                            '<strong style="font-size:1.1em;color:#1a472a;">' + orgParticipantActivityName + '</strong>' +
+                            '<p style="margin:5px 0 0;color:#666;font-size:0.9em;">📅 ' + (actData.startDate || '-') + ' | 👥 ' + studentIds.length + ' คน</p>' +
+                        '</div>' +
+                        '<span style="background:#e8f5e9;color:#27ae60;padding:5px 12px;border-radius:15px;font-size:0.85em;">✅ อนุมัติแล้ว</span>' +
+                    '</div>';
+
+                // Resolve student names — batch load (Firestore 'in' query max 10)
+                orgParticipantList = [];
+
+                if (studentIds.length > 0) {
+                    const studentMap = {};
+                    for (let i = 0; i < studentIds.length; i += 10) {
+                        const batch = studentIds.slice(i, i + 10);
+                        const snap = await db.collection('students')
+                            .where('studentId', 'in', batch)
+                            .get();
+                        snap.docs.forEach(doc => {
+                            const s = doc.data();
+                            studentMap[s.studentId] = s;
+                        });
+                    }
+
+                    orgParticipantList = studentIds.map(sid => {
+                        const student = studentMap[sid] || {};
+                        return {
+                            studentId: sid,
+                            name: student.name || '-',
+                            email: student.email || '-',
+                            department: student.department || '-',
+                            year: student.year || '-',
+                            activityName: orgParticipantActivityName
+                        };
+                    });
+
+                    orgParticipantList.sort((a, b) => (a.studentId || '').localeCompare(b.studentId || ''));
+                }
+
+                document.getElementById('org-participant-search').value = '';
+                renderOrgParticipantTable(orgParticipantList);
+                document.getElementById('view-participants-modal').classList.add('show');
+
+            } catch (e) {
+                console.error('View participants error:', e);
+                alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+
+            showLoading(false);
+        }
+
+        function closeViewParticipants() {
+            document.getElementById('view-participants-modal').classList.remove('show');
+            orgParticipantList = [];
+        }
+
+        function filterOrgParticipantTable() {
+            const search = document.getElementById('org-participant-search').value.trim().toLowerCase();
+            if (!search) {
+                renderOrgParticipantTable(orgParticipantList);
+                return;
+            }
+            const filtered = orgParticipantList.filter(p =>
+                (p.studentId || '').toLowerCase().includes(search) ||
+                (p.name || '').toLowerCase().includes(search) ||
+                (p.email || '').toLowerCase().includes(search) ||
+                (p.department || '').toLowerCase().includes(search)
+            );
+            renderOrgParticipantTable(filtered);
+        }
+
+        function renderOrgParticipantTable(data) {
+            const tbody = document.getElementById('org-participant-table-body');
+            const countEl = document.getElementById('org-participant-count');
+
+            countEl.textContent = '👥 พบ ' + data.length + ' นักศึกษา | Found ' + data.length + ' students';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999;">ไม่พบข้อมูล | No data found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(function(p, i) {
+                return '<tr style="border-bottom:1px solid #f0f0f0;">' +
+                    '<td style="padding:8px;text-align:center;color:#999;">' + (i + 1) + '</td>' +
+                    '<td style="padding:8px;font-family:monospace;">' + (p.studentId || '-') + '</td>' +
+                    '<td style="padding:8px;">' + (p.name || '-') + '</td>' +
+                    '<td style="padding:8px;">' + (p.email || '-') + '</td>' +
+                    '<td style="padding:8px;">' + (p.department || '-') + '</td>' +
+                    '<td style="padding:8px;text-align:center;">' + (p.year || '-') + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function exportOrgActivityParticipantsCSV() {
+            if (orgParticipantList.length === 0) {
+                alert('⚠️ ไม่มีข้อมูลให้ Export');
+                return;
+            }
+
+            // Get currently displayed (filtered) data
+            const search = document.getElementById('org-participant-search').value.trim().toLowerCase();
+            let exportData = orgParticipantList;
+            if (search) {
+                exportData = orgParticipantList.filter(function(p) {
+                    return (p.studentId || '').toLowerCase().includes(search) ||
+                           (p.name || '').toLowerCase().includes(search) ||
+                           (p.email || '').toLowerCase().includes(search) ||
+                           (p.department || '').toLowerCase().includes(search);
+                });
+            }
+
+            // Build CSV inline (organizer-form has no convertToCSV utility)
+            var headers = ['activityName', 'studentId', 'name', 'email', 'department', 'year'];
+            var csvRows = [headers.join(',')];
+
+            exportData.forEach(function(row) {
+                var values = headers.map(function(h) {
+                    var val = String(row[h] || '').replace(/"/g, '""');
+                    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+                        val = '"' + val + '"';
+                    }
+                    return val;
+                });
+                csvRows.push(values.join(','));
+            });
+
+            var csvContent = csvRows.join('\n');
+            var BOM = '\uFEFF';
+            var blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            var safeName = orgParticipantActivityName.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 50);
+            link.download = 'participants_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alert('✅ Export สำเร็จ! ' + exportData.length + ' รายการ');
         }
 
         function showLoading(show, text = 'กำลังโหลด...') {
