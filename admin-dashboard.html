@@ -484,6 +484,7 @@
             <button class="tab" data-tab="export">📥 Export CSV</button>
             <button class="tab" data-tab="skills-summary">📊 สรุปทักษะ | Skills Summary</button>
             <button class="tab" data-tab="activity-participants">👥 รายชื่อนศ. | Participants</button>
+            <button class="tab" data-tab="all-students">📋 นศ.ทั้งหมด | All Students</button>
         </div>
 
         <!-- Tab: Student Search -->
@@ -942,6 +943,37 @@
                             </tr>
                         </thead>
                         <tbody id="participant-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Students List Tab -->
+        <div id="tab-all-students" class="tab-content">
+            <div class="panel">
+                <h2>📋 รายชื่อนักศึกษาทั้งหมด | All Students</h2>
+
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="all-students-search-input" placeholder="🔍 ค้นหา รหัส, ชื่อ, email, สาขา..." style="flex: 1; min-width: 250px; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" oninput="filterAllStudentsTable()">
+                    <button onclick="exportAllStudentsCSV()" style="padding: 10px 20px; background: linear-gradient(135deg, #43a047, #66bb6a); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; white-space: nowrap;">📥 Export CSV</button>
+                </div>
+
+                <div id="all-students-stats" style="margin-bottom: 10px; color: #666; font-size: 14px;">กำลังโหลด...</div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="all-students-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 15%;">รหัส | ID</th>
+                                <th style="width: 25%;">ชื่อ | Name</th>
+                                <th style="width: 25%;">Email</th>
+                                <th style="width: 20%;">สาขา | Dept</th>
+                                <th style="width: 10%;">ชั้นปี | Year</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-students-table-body">
                         </tbody>
                     </table>
                 </div>
@@ -1510,6 +1542,9 @@
         let participantDataLoaded = false;
         let currentParticipantList = [];
 
+        let allStudentsListData = [];
+        let allStudentsListLoaded = false;
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
@@ -1569,6 +1604,11 @@
                     // Lazy load activity participants
                     if (tab.dataset.tab === 'activity-participants') {
                         loadActivityParticipants();
+                    }
+
+                    // Lazy load all students list
+                    if (tab.dataset.tab === 'all-students') {
+                        loadAllStudentsList();
                     }
 
                 });
@@ -7160,6 +7200,114 @@
             const csv = convertToCSV(exportData, headers);
             const safeName = actName.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 50);
             downloadCSV(csv, 'participants_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.csv');
+
+            alert('✅ Export สำเร็จ! ' + exportData.length + ' รายการ');
+        }
+
+        // ============ All Students List Functions ============
+
+        async function loadAllStudentsList() {
+            if (allStudentsListLoaded) return;
+
+            const statsEl = document.getElementById('all-students-stats');
+            const tbody = document.getElementById('all-students-table-body');
+            statsEl.textContent = '⏳ กำลังโหลดข้อมูลนักศึกษา...';
+            tbody.innerHTML = '';
+
+            try {
+                const snap = await db.collection('students').get();
+                allStudentsListData = [];
+
+                snap.docs.forEach(doc => {
+                    const d = doc.data();
+                    allStudentsListData.push({
+                        studentId: d.studentId || '',
+                        name: d.name || '',
+                        email: d.email || '',
+                        department: d.department || '',
+                        year: d.year || ''
+                    });
+                });
+
+                // Sort by studentId
+                allStudentsListData.sort((a, b) => a.studentId.localeCompare(b.studentId));
+
+                allStudentsListLoaded = true;
+                renderAllStudentsTable(allStudentsListData);
+                statsEl.textContent = '📊 พบ ' + allStudentsListData.length + ' นักศึกษา';
+            } catch (err) {
+                console.error('Error loading all students:', err);
+                statsEl.textContent = '❌ โหลดข้อมูลไม่สำเร็จ: ' + err.message;
+            }
+        }
+
+        function filterAllStudentsTable() {
+            const search = document.getElementById('all-students-search-input').value.trim().toLowerCase();
+            const statsEl = document.getElementById('all-students-stats');
+
+            if (!search) {
+                renderAllStudentsTable(allStudentsListData);
+                statsEl.textContent = '📊 พบ ' + allStudentsListData.length + ' นักศึกษา';
+                return;
+            }
+
+            const filtered = allStudentsListData.filter(s =>
+                (s.studentId || '').toLowerCase().includes(search) ||
+                (s.name || '').toLowerCase().includes(search) ||
+                (s.email || '').toLowerCase().includes(search) ||
+                (s.department || '').toLowerCase().includes(search) ||
+                String(s.year || '').toLowerCase().includes(search)
+            );
+
+            renderAllStudentsTable(filtered);
+            statsEl.textContent = '📊 พบ ' + filtered.length + ' จาก ' + allStudentsListData.length + ' นักศึกษา';
+        }
+
+        function renderAllStudentsTable(data) {
+            const tbody = document.getElementById('all-students-table-body');
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding:30px;">ไม่พบข้อมูล | No data found</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.forEach((s, i) => {
+                html += '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + (s.studentId || '-') + '</td>' +
+                    '<td>' + (s.name || '-') + '</td>' +
+                    '<td>' + (s.email || '-') + '</td>' +
+                    '<td>' + (s.department || '-') + '</td>' +
+                    '<td>' + (s.year || '-') + '</td>' +
+                    '</tr>';
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function exportAllStudentsCSV() {
+            if (allStudentsListData.length === 0) {
+                alert('⚠️ ไม่มีข้อมูลให้ export | No data to export');
+                return;
+            }
+
+            // Export currently displayed (filtered) data
+            const search = document.getElementById('all-students-search-input').value.trim().toLowerCase();
+            let exportData = allStudentsListData;
+            if (search) {
+                exportData = allStudentsListData.filter(s =>
+                    (s.studentId || '').toLowerCase().includes(search) ||
+                    (s.name || '').toLowerCase().includes(search) ||
+                    (s.email || '').toLowerCase().includes(search) ||
+                    (s.department || '').toLowerCase().includes(search) ||
+                    String(s.year || '').toLowerCase().includes(search)
+                );
+            }
+
+            const headers = ['studentId', 'name', 'email', 'department', 'year'];
+            const csv = convertToCSV(exportData, headers);
+            downloadCSV(csv, 'all_students_' + new Date().toISOString().slice(0, 10) + '.csv');
 
             alert('✅ Export สำเร็จ! ' + exportData.length + ' รายการ');
         }
