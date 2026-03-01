@@ -485,6 +485,7 @@
             <button class="tab" data-tab="skills-summary">📊 สรุปทักษะ | Skills Summary</button>
             <button class="tab" data-tab="activity-participants">👥 รายชื่อนศ. | Participants</button>
             <button class="tab" data-tab="all-students">📋 นศ.ทั้งหมด | All Students</button>
+            <button class="tab" data-tab="leapx-export">📤 Export LEAPX</button>
         </div>
 
         <!-- Tab: Student Search -->
@@ -990,6 +991,40 @@
             </div>
         </div>
 
+        <!-- LEAPX Export Tab -->
+        <div id="tab-leapx-export" class="tab-content">
+            <div class="panel">
+                <h2>📤 Export LEAPX</h2>
+                <p style="color:#666; margin-bottom:15px; font-size:14px;">เลือกกิจกรรมที่อนุมัติแล้ว เพื่อ Export เป็นไฟล์ LEAPX (.xlsx) | Select approved activities to export as LEAPX files</p>
+
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="leapx-search-input" placeholder="🔍 ค้นหากิจกรรม..." style="flex: 1; min-width: 250px; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" oninput="filterLeapxActivities()">
+                    <button onclick="selectAllLeapx()" style="padding: 10px 16px; background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap;">☑️ Select All</button>
+                    <button onclick="deselectAllLeapx()" style="padding: 10px 16px; background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap;">☐ Deselect All</button>
+                    <button onclick="exportLeapx()" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; white-space: nowrap;">📤 Export LEAPX</button>
+                </div>
+
+                <div id="leapx-stats" style="margin-bottom: 10px; color: #666; font-size: 14px;">กำลังโหลด...</div>
+
+                <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                    <table class="data-table" id="leapx-activity-table">
+                        <thead style="position: sticky; top: 0; z-index: 1; background: white;">
+                            <tr>
+                                <th style="width: 5%;">☑️</th>
+                                <th style="width: 40%;">กิจกรรม | Activity</th>
+                                <th style="width: 12%;">ผู้เข้าร่วม</th>
+                                <th style="width: 12%;">ทักษะ</th>
+                                <th style="width: 15%;">วันที่</th>
+                                <th style="width: 16%;">แหล่งที่มา</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leapx-activity-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Merge Confirm Modal -->
         <div id="merge-modal" class="modal-overlay">
             <div class="modal" style="max-width: 650px;">
@@ -1473,6 +1508,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
         // ============================================
@@ -1556,6 +1593,13 @@
         let allStudentsListData = [];
         let allStudentsListLoaded = false;
 
+        // LEAPX Export state
+        let leapxActivitiesData = [];
+        let leapxStudentsMap = {};
+        let leapxOrgActivitiesMap = {};
+        let leapxDataLoaded = false;
+        let leapxSelectedActivities = new Set();
+
         // Bulk selection state
         let selectedStudentItems = new Set();
         let selectedOrganizerItems = new Set();
@@ -1620,6 +1664,11 @@
                     // Lazy load all students list
                     if (tab.dataset.tab === 'all-students') {
                         loadAllStudentsList();
+                    }
+
+                    // Lazy load LEAPX export
+                    if (tab.dataset.tab === 'leapx-export') {
+                        loadLeapxActivities();
                     }
 
                 });
@@ -7354,6 +7403,478 @@
             downloadCSV(csv, 'all_students_' + new Date().toISOString().slice(0, 10) + '.csv');
 
             alert('✅ Export สำเร็จ! ' + exportData.length + ' รายการ');
+        }
+
+        // ============ LEAPX Export Constants & Functions ============
+
+        const LEAPX_SKILL_REF = {
+            1:  'การคิดเชิงวิพากษ์และการแก้ปัญหา > การให้เหตุผลเชิงวิเคราะห์',
+            2:  'การคิดเชิงวิพากษ์และการแก้ปัญหา > การแก้ปัญหาอย่างเป็นระบบ',
+            3:  'การคิดเชิงวิพากษ์และการแก้ปัญหา > การคิดเชิงระบบและบริบททางสังคม',
+            4:  'การสื่อสาร > ทักษะการนำเสนอ',
+            5:  'การสื่อสาร > การฟังและความเข้าใจ',
+            6:  'การสื่อสาร > การสื่อสารภาษาอังกฤษ',
+            7:  'การทำงานเป็นทีมและความร่วมมือ > ความเข้าใจในบทบาทและการปฏิบัติงาน',
+            8:  'การทำงานเป็นทีมและความร่วมมือ > การจัดการงาน',
+            9:  'การทำงานเป็นทีมและความร่วมมือ > การทำงานร่วมกัน',
+            10: 'การเติบโตทางวิชาชีพและการปรับตัว > ความคล่องตัวในการเรียนรู้',
+            11: 'การเติบโตทางวิชาชีพและการปรับตัว > ความรู้ด้านดิจิทัล',
+            12: 'การเติบโตทางวิชาชีพและการปรับตัว > ความเชี่ยวชาญด้านเครื่องมือ',
+            13: 'นวัตกรรมและความเข้าใจทางธุรกิจ > การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง',
+            14: 'นวัตกรรมและความเข้าใจทางธุรกิจ > การบริหารโครงการ',
+            15: 'นวัตกรรมและความเข้าใจทางธุรกิจ > ความตระหนักรู้ทางธุรกิจและการเป็นผู้ประกอบการ',
+            16: 'การพัฒนาตนเองและความยืดหยุ่น > การเติบโตส่วนบุคคลและการตระหนักรู้ในตนเอง',
+            17: 'การพัฒนาตนเองและความยืดหยุ่น > ความยืดหยุ่นและการปรับตัว',
+            18: 'การพัฒนาตนเองและความยืดหยุ่น > ความเข้าอกเข้าใจและความเข้าใจระหว่างบุคคล'
+        };
+
+        function skillCodeToSubSkillId(code) {
+            if (!code || typeof code !== 'string') return null;
+            var parts = code.split('.');
+            if (parts.length !== 2) return null;
+            var x = parseInt(parts[0]);
+            var y = parseInt(parts[1]);
+            if (isNaN(x) || isNaN(y) || x < 1 || x > 6 || y < 1 || y > 3) return null;
+            return (x - 1) * 3 + y;
+        }
+
+        function levelToRoman(level) {
+            var map = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+            return map[parseInt(level)] || 'I';
+        }
+
+        function levelToExp(level) {
+            var map = { 1: 8, 2: 16, 3: 32, 4: 64 };
+            return map[parseInt(level)] || 8;
+        }
+
+        function splitName(fullName) {
+            if (!fullName) return { firstName: '', lastName: '' };
+            var trimmed = fullName.trim();
+            var spaceIdx = trimmed.indexOf(' ');
+            if (spaceIdx === -1) return { firstName: trimmed, lastName: '' };
+            return {
+                firstName: trimmed.substring(0, spaceIdx),
+                lastName: trimmed.substring(spaceIdx + 1).trim()
+            };
+        }
+
+        function sanitizeFilename(name) {
+            return (name || 'activity')
+                .replace(/[\/\\:*?"<>|]/g, '_')
+                .replace(/\s+/g, '_')
+                .substring(0, 100);
+        }
+
+        function downloadBlob(blob, filename) {
+            var link = document.createElement('a');
+            var url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = filename;
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ============ LEAPX Data Loading ============
+
+        async function loadLeapxActivities() {
+            if (leapxDataLoaded) return;
+
+            var statsEl = document.getElementById('leapx-stats');
+            statsEl.textContent = '⏳ กำลังโหลดข้อมูล...';
+
+            try {
+                var [studentsSnap, participationSnap, orgSnap] = await Promise.all([
+                    db.collection('students').get(),
+                    db.collection('participation').get(),
+                    db.collection('organizerActivities').get()
+                ]);
+
+                // Build students map
+                leapxStudentsMap = {};
+                studentsSnap.docs.forEach(function(doc) {
+                    var d = doc.data();
+                    if (d.studentId) {
+                        leapxStudentsMap[d.studentId] = {
+                            email: d.email || '',
+                            name: d.name || '',
+                            department: d.department || '',
+                            year: d.year || ''
+                        };
+                    }
+                });
+
+                // Build org activities map (approved only)
+                leapxOrgActivitiesMap = {};
+                orgSnap.docs.forEach(function(doc) {
+                    var d = doc.data();
+                    if (d.status === 'Approved' && d.activityName) {
+                        var key = d.activityName.toLowerCase().trim();
+                        leapxOrgActivitiesMap[key] = d;
+                    }
+                });
+
+                // Group participation by activityName
+                var activityGroups = {};
+                participationSnap.docs.forEach(function(doc) {
+                    var p = doc.data();
+                    var name = p.activityName || '';
+                    if (!name) return;
+                    if (!activityGroups[name]) activityGroups[name] = [];
+                    activityGroups[name].push({
+                        studentId: p.studentId || '',
+                        skills: p.skills || [],
+                        date: p.date || '',
+                        status: p.status || ''
+                    });
+                });
+
+                // Build leapxActivitiesData
+                leapxActivitiesData = [];
+                Object.keys(activityGroups).forEach(function(actName) {
+                    var participants = activityGroups[actName];
+                    var orgKey = actName.toLowerCase().trim();
+                    var orgAct = leapxOrgActivitiesMap[orgKey] || null;
+
+                    // Determine skills
+                    var skillsSummary = [];
+                    if (orgAct && orgAct.approvedSkills && orgAct.approvedSkills.length > 0) {
+                        skillsSummary = orgAct.approvedSkills.map(function(s) {
+                            return { code: s.code, level: parseInt(s.level) || 1 };
+                        });
+                    } else if (orgAct && orgAct.skills && orgAct.skills.length > 0) {
+                        skillsSummary = orgAct.skills.map(function(s) {
+                            return { code: s.code, level: parseInt(s.level) || 1 };
+                        });
+                    } else {
+                        // Aggregate from participation records (max level per code)
+                        var skillMap = {};
+                        participants.forEach(function(p) {
+                            (p.skills || []).forEach(function(s) {
+                                if (!s.code) return;
+                                var lv = parseInt(s.level) || 1;
+                                if (!skillMap[s.code] || lv > skillMap[s.code]) {
+                                    skillMap[s.code] = lv;
+                                }
+                            });
+                        });
+                        Object.keys(skillMap).forEach(function(code) {
+                            skillsSummary.push({ code: code, level: skillMap[code] });
+                        });
+                    }
+
+                    // Sort skills by SubSkill ID
+                    skillsSummary.sort(function(a, b) {
+                        return (skillCodeToSubSkillId(a.code) || 99) - (skillCodeToSubSkillId(b.code) || 99);
+                    });
+
+                    // Determine date
+                    var actDate = '';
+                    if (orgAct) {
+                        actDate = orgAct.startDate || orgAct.activityDate || '';
+                    }
+                    if (!actDate && participants.length > 0) {
+                        actDate = participants[0].date || '';
+                    }
+
+                    // Determine source
+                    var source = orgAct ? 'organizer' : 'system';
+
+                    leapxActivitiesData.push({
+                        activityName: actName,
+                        participants: participants,
+                        orgActivity: orgAct,
+                        skillsSummary: skillsSummary,
+                        date: actDate,
+                        source: source
+                    });
+                });
+
+                // Sort alphabetically
+                leapxActivitiesData.sort(function(a, b) {
+                    return a.activityName.localeCompare(b.activityName, 'th');
+                });
+
+                leapxDataLoaded = true;
+                renderLeapxActivitiesList(leapxActivitiesData);
+                statsEl.textContent = '📊 พบ ' + leapxActivitiesData.length + ' กิจกรรม | เลือก ' + leapxSelectedActivities.size + ' กิจกรรม';
+
+            } catch (err) {
+                console.error('Error loading LEAPX data:', err);
+                statsEl.textContent = '❌ โหลดข้อมูลไม่สำเร็จ: ' + err.message;
+            }
+        }
+
+        // ============ LEAPX Rendering ============
+
+        function renderLeapxActivitiesList(data) {
+            var tbody = document.getElementById('leapx-activity-list');
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding:30px;">ไม่พบกิจกรรม | No activities found</td></tr>';
+                return;
+            }
+
+            var html = '';
+            data.forEach(function(act) {
+                var checked = leapxSelectedActivities.has(act.activityName) ? 'checked' : '';
+                var escapedName = act.activityName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                var uniqueStudents = new Set();
+                act.participants.forEach(function(p) { if (p.studentId) uniqueStudents.add(p.studentId); });
+                var participantCount = uniqueStudents.size;
+                var skillCount = act.skillsSummary.length;
+                var sourceLabel = act.source === 'organizer'
+                    ? '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;font-size:12px;">ผู้จัด</span>'
+                    : '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:4px;font-size:12px;">ระบบ</span>';
+
+                html += '<tr style="cursor:pointer;" onclick="toggleLeapxActivity(\'' + escapedName + '\')">' +
+                    '<td style="text-align:center;"><input type="checkbox" ' + checked + ' onclick="event.stopPropagation(); toggleLeapxActivity(\'' + escapedName + '\')"></td>' +
+                    '<td>' + act.activityName + '</td>' +
+                    '<td style="text-align:center;">' + participantCount + ' คน</td>' +
+                    '<td style="text-align:center;">' + skillCount + ' ทักษะ</td>' +
+                    '<td>' + (act.date || '-') + '</td>' +
+                    '<td style="text-align:center;">' + sourceLabel + '</td>' +
+                    '</tr>';
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function filterLeapxActivities() {
+            var search = document.getElementById('leapx-search-input').value.trim().toLowerCase();
+            var statsEl = document.getElementById('leapx-stats');
+
+            if (!search) {
+                renderLeapxActivitiesList(leapxActivitiesData);
+                statsEl.textContent = '📊 พบ ' + leapxActivitiesData.length + ' กิจกรรม | เลือก ' + leapxSelectedActivities.size + ' กิจกรรม';
+                return;
+            }
+
+            var filtered = leapxActivitiesData.filter(function(act) {
+                return (act.activityName || '').toLowerCase().includes(search) ||
+                    (act.date || '').toLowerCase().includes(search) ||
+                    (act.orgActivity && (act.orgActivity.organizerName || '').toLowerCase().includes(search)) ||
+                    (act.orgActivity && (act.orgActivity.department || '').toLowerCase().includes(search));
+            });
+
+            renderLeapxActivitiesList(filtered);
+            statsEl.textContent = '📊 พบ ' + filtered.length + ' จาก ' + leapxActivitiesData.length + ' กิจกรรม | เลือก ' + leapxSelectedActivities.size + ' กิจกรรม';
+        }
+
+        // ============ LEAPX Selection ============
+
+        function toggleLeapxActivity(activityName) {
+            if (leapxSelectedActivities.has(activityName)) {
+                leapxSelectedActivities.delete(activityName);
+            } else {
+                leapxSelectedActivities.add(activityName);
+            }
+            updateLeapxUI();
+        }
+
+        function selectAllLeapx() {
+            // Select all currently visible (filtered) activities
+            var search = document.getElementById('leapx-search-input').value.trim().toLowerCase();
+            var data = leapxActivitiesData;
+            if (search) {
+                data = data.filter(function(act) {
+                    return (act.activityName || '').toLowerCase().includes(search) ||
+                        (act.date || '').toLowerCase().includes(search) ||
+                        (act.orgActivity && (act.orgActivity.organizerName || '').toLowerCase().includes(search)) ||
+                        (act.orgActivity && (act.orgActivity.department || '').toLowerCase().includes(search));
+                });
+            }
+            data.forEach(function(act) { leapxSelectedActivities.add(act.activityName); });
+            updateLeapxUI();
+        }
+
+        function deselectAllLeapx() {
+            leapxSelectedActivities.clear();
+            updateLeapxUI();
+        }
+
+        function updateLeapxUI() {
+            // Re-render checkboxes
+            var search = document.getElementById('leapx-search-input').value.trim().toLowerCase();
+            var data = leapxActivitiesData;
+            if (search) {
+                data = data.filter(function(act) {
+                    return (act.activityName || '').toLowerCase().includes(search) ||
+                        (act.date || '').toLowerCase().includes(search) ||
+                        (act.orgActivity && (act.orgActivity.organizerName || '').toLowerCase().includes(search)) ||
+                        (act.orgActivity && (act.orgActivity.department || '').toLowerCase().includes(search));
+                });
+            }
+            renderLeapxActivitiesList(data);
+            var statsEl = document.getElementById('leapx-stats');
+            var countText = search
+                ? '📊 พบ ' + data.length + ' จาก ' + leapxActivitiesData.length + ' กิจกรรม'
+                : '📊 พบ ' + leapxActivitiesData.length + ' กิจกรรม';
+            statsEl.textContent = countText + ' | เลือก ' + leapxSelectedActivities.size + ' กิจกรรม';
+        }
+
+        // ============ LEAPX XLSX Generation ============
+
+        function generateLeapxWorkbook(actData) {
+            var wb = XLSX.utils.book_new();
+
+            // Resolve metadata
+            var org = actData.orgActivity || {};
+            var actName = actData.activityName || '';
+            var description = org.description || '-';
+            var startDate = org.startDate || org.activityDate || actData.date || '';
+            var startTime = org.startTime || '00:00';
+            var endDate = org.endDate || startDate;
+            var endTime = org.endTime || '23:59';
+
+            // Format dates: "YYYY-MM-DD HH:mm"
+            var startDateTime = startDate ? (startDate + ' ' + startTime) : '-';
+            var endDateTime = endDate ? (endDate + ' ' + endTime) : '-';
+
+            // Registration dates: 1 day before activity start
+            var regStartDateTime = '-';
+            var regEndDateTime = '-';
+            if (startDate) {
+                try {
+                    var d = new Date(startDate);
+                    d.setDate(d.getDate() - 1);
+                    var yyyy = d.getFullYear();
+                    var mm = String(d.getMonth() + 1).padStart(2, '0');
+                    var dd = String(d.getDate()).padStart(2, '0');
+                    var regDate = yyyy + '-' + mm + '-' + dd;
+                    regStartDateTime = regDate + ' 00:00';
+                    regEndDateTime = regDate + ' 23:59';
+                } catch (e) {}
+            }
+
+            // Build activity sheet AOA
+            var actAoa = [
+                ['กรอกข้อมูลกิจกรรม — Event Import Template  (อย่าลบหรือเพิ่มแถวในชีตนี้)', '', '', '', ''],
+                ['ชื่อกิจกรรม (TH) *', actName, '', '', ''],
+                ['ชื่อกิจกรรม (EN) *', '-', '', '', ''],
+                ['คำอธิบายกิจกรรม (TH)', description, '', '', ''],
+                ['คำอธิบายกิจกรรม (EN)', '-', '', '', ''],
+                ['สถานที่จัดงาน (TH) *', '-', '', '', ''],
+                ['สถานที่จัดงาน (EN) *', '-', '', '', ''],
+                ['วันที่เริ่มกิจกรรม * (YYYY-MM-DD HH:mm)', startDateTime, '', '', ''],
+                ['วันที่สิ้นสุดกิจกรรม * (YYYY-MM-DD HH:mm)', endDateTime, '', '', ''],
+                ['วันที่เริ่มลงทะเบียน (ถ้าไม่กรอกจะใช้วันเริ่มกิจกรรม)', regStartDateTime, '', '', ''],
+                ['วันที่สิ้นสุดลงทะเบียน (ถ้าไม่กรอกจะใช้วันเริ่มกิจกรรม)', regEndDateTime, '', '', ''],
+                ['', '', '', '', ''],
+                ['ทักษะที่ได้รับจากกิจกรรม  —  ดู SubSkill ID ในชีต "ทักษะอ้างอิง"  |  เพิ่มแถวได้แต่ห้ามเว้นแถวว่างกลาง', '', '', '', ''],
+                ['SubSkill ID *', 'ชื่อทักษะ (อ้างอิง — ห้ามแก้ไข)', 'Level * (I / II / III / IV)', 'EXP พื้นฐาน *', 'EXP โบนัส']
+            ];
+
+            // Add skill rows
+            var skills = actData.skillsSummary || [];
+            skills.forEach(function(skill) {
+                var subId = skillCodeToSubSkillId(skill.code);
+                if (!subId) return;
+                var refName = LEAPX_SKILL_REF[subId] || '';
+                var roman = levelToRoman(skill.level);
+                var exp = levelToExp(skill.level);
+                actAoa.push([subId, refName, roman, exp, 0]);
+            });
+
+            var wsActivity = XLSX.utils.aoa_to_sheet(actAoa);
+            wsActivity['!cols'] = [
+                { wch: 55 },
+                { wch: 60 },
+                { wch: 25 },
+                { wch: 15 },
+                { wch: 12 }
+            ];
+            XLSX.utils.book_append_sheet(wb, wsActivity, 'activity');
+
+            // Build participant sheet AOA
+            var partAoa = [
+                ['* = จำเป็นต้องกรอก  |  รหัสนักศึกษาต้องมีอยู่ในระบบ  |  อีเมลใช้ค้นหาสำรอง  |  ชื่อ-นามสกุลเป็นข้อมูลอ้างอิงเท่านั้น (ไม่บังคับ)', '', '', ''],
+                ['รหัสนักศึกษา *', 'อีเมล *', 'ชื่อ (อ้างอิง)', 'นามสกุล (อ้างอิง)']
+            ];
+
+            // Deduplicate participants by studentId
+            var seenIds = new Set();
+            actData.participants.forEach(function(p) {
+                if (!p.studentId || seenIds.has(p.studentId)) return;
+                seenIds.add(p.studentId);
+
+                var student = leapxStudentsMap[p.studentId] || {};
+                var email = student.email || '';
+                var nameParts = splitName(student.name || '');
+                partAoa.push([p.studentId, email, nameParts.firstName, nameParts.lastName]);
+            });
+
+            var wsParticipant = XLSX.utils.aoa_to_sheet(partAoa);
+            wsParticipant['!cols'] = [
+                { wch: 20 },
+                { wch: 35 },
+                { wch: 20 },
+                { wch: 20 }
+            ];
+            XLSX.utils.book_append_sheet(wb, wsParticipant, 'participant');
+
+            return wb;
+        }
+
+        // ============ LEAPX Export Orchestrator ============
+
+        async function exportLeapx() {
+            if (leapxSelectedActivities.size === 0) {
+                alert('⚠️ กรุณาเลือกกิจกรรมอย่างน้อย 1 กิจกรรม | Please select at least 1 activity');
+                return;
+            }
+
+            if (typeof XLSX === 'undefined') {
+                alert('❌ SheetJS library not loaded. Please refresh the page.');
+                return;
+            }
+
+            showLoading(true, 'กำลังสร้างไฟล์ LEAPX...');
+
+            try {
+                var selectedData = leapxActivitiesData.filter(function(act) {
+                    return leapxSelectedActivities.has(act.activityName);
+                });
+
+                if (selectedData.length === 1) {
+                    // Single file download
+                    var wb = generateLeapxWorkbook(selectedData[0]);
+                    var wbBinary = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    var blob = new Blob([wbBinary], { type: 'application/octet-stream' });
+                    var safeName = sanitizeFilename(selectedData[0].activityName);
+                    downloadBlob(blob, 'LEAPX_' + safeName + '.xlsx');
+                } else {
+                    // Multiple files → ZIP
+                    if (typeof JSZip === 'undefined') {
+                        alert('❌ JSZip library not loaded. Please refresh the page.');
+                        showLoading(false);
+                        return;
+                    }
+
+                    var zip = new JSZip();
+                    selectedData.forEach(function(actData) {
+                        var wb = generateLeapxWorkbook(actData);
+                        var wbBinary = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                        var safeName = sanitizeFilename(actData.activityName);
+                        zip.file('LEAPX_' + safeName + '.xlsx', wbBinary);
+                    });
+
+                    var zipBlob = await zip.generateAsync({ type: 'blob' });
+                    var dateStr = new Date().toISOString().slice(0, 10);
+                    downloadBlob(zipBlob, 'LEAPX_export_' + dateStr + '.zip');
+                }
+
+                showLoading(false);
+                alert('✅ Export สำเร็จ! ' + selectedData.length + ' กิจกรรม');
+
+            } catch (err) {
+                console.error('LEAPX export error:', err);
+                showLoading(false);
+                alert('❌ Export ไม่สำเร็จ: ' + err.message);
+            }
         }
 
         // Initialize - check session
