@@ -653,6 +653,16 @@
                     <span id="student-filter-count" class="filter-result-count"></span>
                 </div>
 
+                <!-- Student Email/ID Search -->
+                <div class="activity-name-filter">
+                    <div class="filter-input-wrap">
+                        <span class="filter-icon">👤</span>
+                        <input type="text" id="student-email-id-search" placeholder="ค้นหาอีเมล / รหัสนักศึกษา..." oninput="onStudentEmailIdSearch()">
+                        <button id="student-email-id-search-clear" class="filter-clear-btn" onclick="clearStudentEmailIdSearch()" style="display:none;">✕</button>
+                    </div>
+                    <span id="student-email-id-count" class="filter-result-count"></span>
+                </div>
+
                 <!-- Reject Reason Search (visible when filtered to rejected) -->
                 <div id="student-reject-reason-filter" class="activity-name-filter" style="display:none;">
                     <div class="filter-input-wrap">
@@ -1525,6 +1535,7 @@
         let studentActivitySearch = '';
         let organizerActivitySearch = '';
         let studentRejectReasonSearch = '';
+        let studentEmailIdSearch = '';
         let organizerRejectReasonSearch = '';
 
         // Participation cross-reference index: studentId → [{activityName (normalized), activityNameOriginal, skills, source}]
@@ -2277,6 +2288,20 @@
             document.getElementById('student-filter-count').textContent = '';
             renderStudentSubmissions();
         }
+        function onStudentEmailIdSearch() {
+            const input = document.getElementById('student-email-id-search');
+            const clearBtn = document.getElementById('student-email-id-search-clear');
+            studentEmailIdSearch = input.value.trim().toLowerCase();
+            clearBtn.style.display = studentEmailIdSearch ? 'flex' : 'none';
+            renderStudentSubmissions();
+        }
+        function clearStudentEmailIdSearch() {
+            document.getElementById('student-email-id-search').value = '';
+            studentEmailIdSearch = '';
+            document.getElementById('student-email-id-search-clear').style.display = 'none';
+            document.getElementById('student-email-id-count').textContent = '';
+            renderStudentSubmissions();
+        }
         function onOrganizerActivitySearch() {
             const input = document.getElementById('organizer-activity-search');
             const clearBtn = document.getElementById('organizer-activity-search-clear');
@@ -2352,6 +2377,12 @@
             let filtered = rejectedItems;
             if (studentActivitySearch) {
                 filtered = filtered.filter(s => (s.activityName || '').toLowerCase().includes(studentActivitySearch));
+            }
+            if (studentEmailIdSearch) {
+                filtered = filtered.filter(s =>
+                    (s.studentEmail || '').toLowerCase().includes(studentEmailIdSearch) ||
+                    (s.studentId || '').toLowerCase().includes(studentEmailIdSearch)
+                );
             }
             if (studentRejectReasonSearch) {
                 filtered = filtered.filter(s => (s.rejectReason || '').toLowerCase().includes(studentRejectReasonSearch));
@@ -2680,6 +2711,13 @@
                     (s.activityName || '').toLowerCase().includes(studentActivitySearch)
                 );
             }
+            // Email/StudentId text filter
+            if (studentEmailIdSearch) {
+                filtered = filtered.filter(s =>
+                    (s.studentEmail || '').toLowerCase().includes(studentEmailIdSearch) ||
+                    (s.studentId || '').toLowerCase().includes(studentEmailIdSearch)
+                );
+            }
             // Reject reason text filter
             if (studentRejectReasonSearch) {
                 filtered = filtered.filter(s =>
@@ -2687,9 +2725,15 @@
                 );
             }
             // Update count label
+            const hasAnySearch = studentActivitySearch || studentRejectReasonSearch || studentEmailIdSearch;
             const countEl = document.getElementById('student-filter-count');
             if (countEl) {
-                countEl.textContent = (studentActivitySearch || studentRejectReasonSearch) ? `${filtered.length} รายการ` : '';
+                countEl.textContent = hasAnySearch ? `${filtered.length} รายการ` : '';
+            }
+            // Update email/id count
+            const emailIdCountEl = document.getElementById('student-email-id-count');
+            if (emailIdCountEl) {
+                emailIdCountEl.textContent = studentEmailIdSearch ? `${filtered.length} รายการ` : '';
             }
             // Update reject reason count
             const rejectCountEl = document.getElementById('student-reject-reason-count');
