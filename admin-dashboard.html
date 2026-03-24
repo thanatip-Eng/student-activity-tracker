@@ -1191,9 +1191,35 @@
                 <!-- Radar Chart -->
                 <div class="skills-chart-section" id="skills-chart-section" style="display:none;">
                     <h3 id="skills-chart-title">ภาพรวมทักษะ | Skills Overview</h3>
+                    <div id="radar-controls" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; align-items:center; font-size:13px;">
+                        <div>
+                            <span style="font-weight:600; margin-right:8px;">สถิติ:</span>
+                            <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" id="radar-show-mean" checked onchange="updateRadarChart()"> Mean</label>
+                            <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" id="radar-show-median" onchange="updateRadarChart()"> Median</label>
+                            <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" id="radar-show-max" onchange="updateRadarChart()"> Max</label>
+                            <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" id="radar-show-min" onchange="updateRadarChart()"> Min</label>
+                        </div>
+                        <div id="radar-year-controls">
+                            <span style="font-weight:600; margin-right:8px;">ชั้นปี:</span>
+                        </div>
+                    </div>
                     <div class="skills-chart-container">
                         <canvas id="skillsSummaryChart"></canvas>
                     </div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div class="skills-chart-section" id="skills-distribution-section" style="display:none;">
+                    <h3>การกระจายระดับทักษะ | Level Distribution</h3>
+                    <div style="height:350px;">
+                        <canvas id="skillsDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Coverage Rate -->
+                <div class="skills-chart-section" id="skills-coverage-section" style="display:none;">
+                    <h3>อัตราครอบคลุมทักษะ | Skill Coverage</h3>
+                    <div id="skills-coverage-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;"></div>
                 </div>
 
                 <!-- Domain Detail Table -->
@@ -1582,6 +1608,7 @@
         let skillsSummaryData = null;   // cached results from computeAllStudentScores()
         let skillsSummaryLoaded = false;
         let skillsSummaryChart = null;  // Chart.js instance (main radar)
+        let skillsDistributionChart = null; // Chart.js instance (distribution bar)
         let modalSkillsChart = null;    // Chart.js instance (modal radar)
 
         // Activity Participants state
@@ -5806,7 +5833,15 @@
             const aggDomainTotals = {};
             const aggCriteriaTotals = {};
             const aggCriteriaMax = {};
-            DOMAINS.forEach(d => aggDomainTotals[d.name] = 0);
+            const domainValuesAll = {};    // { domainName: [max values per student] }
+            const domainMinAll = {};       // { domainName: minNonZero }
+            const domainMaxAll = {};       // { domainName: max }
+            DOMAINS.forEach(d => {
+                aggDomainTotals[d.name] = 0;
+                domainValuesAll[d.name] = [];
+                domainMinAll[d.name] = Infinity;
+                domainMaxAll[d.name] = 0;
+            });
             CRITERIA_LIST.forEach(c => {
                 aggCriteriaTotals[c.code] = 0;
                 aggCriteriaMax[c.code] = 0;
@@ -5826,7 +5861,11 @@
                 });
 
                 DOMAINS.forEach(d => {
-                    aggDomainTotals[d.name] += r.domainScores[d.name]?.max || 0;
+                    const mv = r.domainScores[d.name]?.max || 0;
+                    aggDomainTotals[d.name] += mv;
+                    domainValuesAll[d.name].push(mv);
+                    if (mv > 0) domainMinAll[d.name] = Math.min(domainMinAll[d.name], mv);
+                    domainMaxAll[d.name] = Math.max(domainMaxAll[d.name], mv);
                 });
 
                 // Check if all 6 domains have max level >= 2 (passed criteria)
@@ -5837,6 +5876,7 @@
             // Per-year-level aggregation — only active students
             const yearLevels = new Set();
             const yearAgg = {}; // { yearLevel: { code: { sum, count, min, max } } }
+            const domainValuesPerYear = {}; // { year: { domainName: [max values] } }
 
             activeData.forEach(r => {
                 const yl = r.student.year ? String(r.student.year) : null;
@@ -5848,7 +5888,14 @@
                     CRITERIA_LIST.forEach(c => {
                         yearAgg[yl][c.code] = { sum: 0, count: 0, min: Infinity, max: 0 };
                     });
+                    domainValuesPerYear[yl] = {};
+                    DOMAINS.forEach(d => { domainValuesPerYear[yl][d.name] = []; });
                 }
+
+                // Collect per-year domain values
+                DOMAINS.forEach(d => {
+                    domainValuesPerYear[yl][d.name].push(r.domainScores[d.name]?.max || 0);
+                });
 
                 CRITERIA_LIST.forEach(c => {
                     const val = r.scores[c.code] || 0;
@@ -5898,6 +5945,25 @@
                 console.error('[Skills Summary] Chart render error:', chartErr);
                 document.getElementById('skills-chart-title').textContent = '⚠️ ไม่สามารถแสดงกราฟได้';
             }
+
+            // Store radar state for interactive controls
+            window._radarState = {
+                activeData: activeData,
+                domainValuesAll: domainValuesAll,
+                domainValuesPerYear: domainValuesPerYear,
+                domainMinAll: domainMinAll,
+                domainMaxAll: domainMaxAll,
+                sortedYears: sortedYears
+            };
+            populateRadarYearControls(sortedYears);
+
+            // Distribution chart
+            document.getElementById('skills-distribution-section').style.display = 'block';
+            renderDistributionChart(activeData);
+
+            // Coverage rate
+            document.getElementById('skills-coverage-section').style.display = 'block';
+            renderCoverageRate(activeData, count);
 
             // Skills detail table (year comparison) — uses activeCount
             renderSkillsDetailTable(aggCriteriaTotals, aggCriteriaMax, activeCount, yearAgg, sortedYears);
@@ -5963,6 +6029,265 @@
                     }
                 }
             });
+        }
+
+        // ============ Multi-overlay Radar Chart ============
+
+        function computeMedian(arr) {
+            var sorted = arr.filter(function(v) { return v > 0; }).sort(function(a, b) { return a - b; });
+            if (sorted.length === 0) return 0;
+            var mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function populateRadarYearControls(sortedYears) {
+            var container = document.getElementById('radar-year-controls');
+            var html = '<span style="font-weight:600; margin-right:8px;">ชั้นปี:</span>';
+            sortedYears.forEach(function(y) {
+                html += '<label style="margin-right:10px;cursor:pointer;"><input type="checkbox" class="radar-year-cb" value="' + y + '" onchange="updateRadarChart()"> ปี ' + y + '</label>';
+            });
+            container.innerHTML = html;
+        }
+
+        function computeDomainStats(values) {
+            var nonZero = values.filter(function(v) { return v > 0; });
+            var sum = values.reduce(function(a, b) { return a + b; }, 0);
+            var count = values.length;
+            return {
+                mean: count > 0 ? Math.round((sum / count) * 100) / 100 : 0,
+                median: computeMedian(values),
+                max: nonZero.length > 0 ? Math.max.apply(null, nonZero) : 0,
+                min: nonZero.length > 0 ? Math.min.apply(null, nonZero) : 0
+            };
+        }
+
+        function updateRadarChart() {
+            var state = window._radarState;
+            if (!state) return;
+
+            var showMean = document.getElementById('radar-show-mean').checked;
+            var showMedian = document.getElementById('radar-show-median').checked;
+            var showMax = document.getElementById('radar-show-max').checked;
+            var showMin = document.getElementById('radar-show-min').checked;
+
+            var yearCbs = document.querySelectorAll('.radar-year-cb:checked');
+            var selectedYears = [];
+            yearCbs.forEach(function(cb) { selectedYears.push(cb.value); });
+
+            var labels = DOMAINS.map(function(d) { return d.nameTh; });
+            var datasets = [];
+
+            var statStyles = {
+                mean:   { color: '#667eea', bg: 'rgba(102,126,234,0.15)', dash: [], label: 'Mean' },
+                median: { color: '#e67e22', bg: 'rgba(230,126,34,0.10)', dash: [5,5], label: 'Median' },
+                max:    { color: '#27ae60', bg: 'rgba(39,174,96,0.10)',   dash: [], label: 'Max' },
+                min:    { color: '#e74c3c', bg: 'rgba(231,76,60,0.10)',   dash: [3,3], label: 'Min' }
+            };
+
+            var yearColors = ['#667eea', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c'];
+
+            if (selectedYears.length <= 1) {
+                // Single year or all: show multiple stats
+                var values = selectedYears.length === 1 && state.domainValuesPerYear[selectedYears[0]]
+                    ? state.domainValuesPerYear[selectedYears[0]]
+                    : state.domainValuesAll;
+
+                var yearLabel = selectedYears.length === 1 ? ' (ปี ' + selectedYears[0] + ')' : '';
+
+                var statsMap = {};
+                DOMAINS.forEach(function(d) {
+                    statsMap[d.name] = computeDomainStats(values[d.name] || []);
+                });
+
+                if (showMean) {
+                    datasets.push({
+                        label: 'Mean' + yearLabel,
+                        data: DOMAINS.map(function(d) { return statsMap[d.name].mean; }),
+                        backgroundColor: statStyles.mean.bg,
+                        borderColor: statStyles.mean.color,
+                        borderWidth: 2, borderDash: statStyles.mean.dash,
+                        pointRadius: 5, pointBackgroundColor: statStyles.mean.color,
+                        pointBorderColor: '#fff'
+                    });
+                }
+                if (showMedian) {
+                    datasets.push({
+                        label: 'Median' + yearLabel,
+                        data: DOMAINS.map(function(d) { return statsMap[d.name].median; }),
+                        backgroundColor: statStyles.median.bg,
+                        borderColor: statStyles.median.color,
+                        borderWidth: 2, borderDash: statStyles.median.dash,
+                        pointRadius: 5, pointBackgroundColor: statStyles.median.color,
+                        pointBorderColor: '#fff'
+                    });
+                }
+                if (showMax) {
+                    datasets.push({
+                        label: 'Max' + yearLabel,
+                        data: DOMAINS.map(function(d) { return statsMap[d.name].max; }),
+                        backgroundColor: statStyles.max.bg,
+                        borderColor: statStyles.max.color,
+                        borderWidth: 2, borderDash: statStyles.max.dash,
+                        pointRadius: 5, pointBackgroundColor: statStyles.max.color,
+                        pointBorderColor: '#fff'
+                    });
+                }
+                if (showMin) {
+                    datasets.push({
+                        label: 'Min' + yearLabel,
+                        data: DOMAINS.map(function(d) { return statsMap[d.name].min; }),
+                        backgroundColor: statStyles.min.bg,
+                        borderColor: statStyles.min.color,
+                        borderWidth: 2, borderDash: statStyles.min.dash,
+                        pointRadius: 5, pointBackgroundColor: statStyles.min.color,
+                        pointBorderColor: '#fff'
+                    });
+                }
+            } else {
+                // Multiple years: show one stat per year
+                var stat = showMean ? 'mean' : showMedian ? 'median' : showMax ? 'max' : showMin ? 'min' : 'mean';
+
+                selectedYears.forEach(function(y, idx) {
+                    var values = state.domainValuesPerYear[y];
+                    if (!values) return;
+
+                    var statsMap = {};
+                    DOMAINS.forEach(function(d) {
+                        statsMap[d.name] = computeDomainStats(values[d.name] || []);
+                    });
+
+                    var c = yearColors[idx % yearColors.length];
+                    datasets.push({
+                        label: 'ปี ' + y + ' (' + stat + ')',
+                        data: DOMAINS.map(function(d) { return statsMap[d.name][stat]; }),
+                        backgroundColor: c.replace(')', ',0.1)').replace('rgb', 'rgba').replace('#', ''),
+                        borderColor: c,
+                        borderWidth: 2, borderDash: [],
+                        pointRadius: 5, pointBackgroundColor: c,
+                        pointBorderColor: '#fff',
+                        fill: true
+                    });
+                });
+            }
+
+            // Render
+            if (datasets.length === 0) {
+                datasets.push({
+                    label: 'ไม่มีข้อมูล', data: DOMAINS.map(function() { return 0; }),
+                    backgroundColor: 'rgba(200,200,200,0.1)', borderColor: '#ccc',
+                    borderWidth: 1, pointRadius: 3
+                });
+            }
+
+            var ctx = document.getElementById('skillsSummaryChart').getContext('2d');
+            if (skillsSummaryChart) skillsSummaryChart.destroy();
+
+            skillsSummaryChart = new Chart(ctx, {
+                type: 'radar',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true, max: 4,
+                            ticks: { stepSize: 1, font: { size: 11 }, backdropColor: 'transparent' },
+                            pointLabels: { font: { size: 13, family: 'Sarabun' }, color: '#333' },
+                            grid: { color: 'rgba(0, 0, 0, 0.08)' },
+                            angleLines: { color: 'rgba(0, 0, 0, 0.08)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { font: { size: 12 }, padding: 15 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.r.toFixed(2) + ' / 4';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ Distribution Chart ============
+
+        function renderDistributionChart(activeData) {
+            var dist = {};
+            DOMAINS.forEach(function(d) { dist[d.name] = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 }; });
+
+            activeData.forEach(function(r) {
+                DOMAINS.forEach(function(d) {
+                    var lv = r.domainScores[d.name]?.max || 0;
+                    if (lv > 4) lv = 4;
+                    dist[d.name][lv]++;
+                });
+            });
+
+            var labels = DOMAINS.map(function(d) { return d.nameTh; });
+            var levelColors = ['#bdbdbd', '#ef9a9a', '#fff176', '#a5d6a7', '#90caf9'];
+            var levelLabels = ['ไม่มี (Lv.0)', 'Lv.1', 'Lv.2', 'Lv.3', 'Lv.4'];
+
+            var datasets = levelLabels.map(function(label, lv) {
+                return {
+                    label: label,
+                    data: DOMAINS.map(function(d) { return dist[d.name][lv]; }),
+                    backgroundColor: levelColors[lv]
+                };
+            });
+
+            var ctx = document.getElementById('skillsDistributionChart').getContext('2d');
+            if (skillsDistributionChart) skillsDistributionChart.destroy();
+
+            skillsDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, ticks: { font: { size: 12, family: 'Sarabun' } } },
+                        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'จำนวนนักศึกษา' } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var total = context.chart.data.datasets.reduce(function(sum, ds) {
+                                        return sum + (ds.data[context.dataIndex] || 0);
+                                    }, 0);
+                                    var pct = total > 0 ? Math.round(context.raw / total * 100) : 0;
+                                    return context.dataset.label + ': ' + context.raw + ' คน (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ Coverage Rate ============
+
+        function renderCoverageRate(activeData, totalCount) {
+            var grid = document.getElementById('skills-coverage-grid');
+
+            grid.innerHTML = DOMAINS.map(function(d) {
+                var hasSkill = activeData.filter(function(r) { return (r.domainScores[d.name]?.max || 0) > 0; }).length;
+                var pct = totalCount > 0 ? Math.round(hasSkill / totalCount * 100) : 0;
+                var pctColor = pct >= 60 ? '#27ae60' : pct >= 30 ? '#f39c12' : '#e74c3c';
+
+                return '<div style="padding:14px; background:#f8f9ff; border-radius:10px; border-left:4px solid ' + d.color + ';">' +
+                    '<div style="font-weight:600; color:' + d.color + '; margin-bottom:6px;">' + d.nameTh + '</div>' +
+                    '<div style="font-size:12px; color:#999; margin-bottom:8px;">' + d.name + '</div>' +
+                    '<div style="background:#e0e0e0; border-radius:4px; height:10px; margin-bottom:6px;">' +
+                        '<div style="background:' + d.color + '; width:' + pct + '%; height:100%; border-radius:4px; transition:width 0.5s;"></div>' +
+                    '</div>' +
+                    '<div style="display:flex; justify-content:space-between; font-size:13px;">' +
+                        '<span style="color:#666;">' + hasSkill + ' / ' + totalCount + ' คน</span>' +
+                        '<span style="font-weight:600; color:' + pctColor + ';">' + pct + '%</span>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
         function renderSkillsDetailTable(aggTotals, aggMax, count, yearAgg, sortedYears) {
