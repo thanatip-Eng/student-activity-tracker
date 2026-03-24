@@ -2084,10 +2084,13 @@
                 const domainLevels = domainCriteria.map(c => scores[c.code] || 0);
                 
                 const total = domainLevels.reduce((a, b) => a + b, 0);
-                const avg = domainLevels.length > 0 ? total / domainLevels.length : 0;
-                
+                const maxLevel = Math.max(...domainLevels, 0);
+                const nonZero = domainLevels.filter(l => l > 0);
+                const avg = nonZero.length > 0 ? nonZero.reduce((a, b) => a + b, 0) / nonZero.length : 0;
+
                 domainScores[domain.name] = {
                     total,
+                    max: maxLevel,
                     avg: Math.round(avg * 10) / 10,
                     levels: domainLevels,
                     color: domain.color
@@ -2114,7 +2117,7 @@
             // Update stats
             const approved = activities.filter(a => a.status?.toLowerCase().includes('approved'));
             const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
-            const skillsPassed = DOMAINS.filter(d => domainScores[d.name].avg >= 2).length;
+            const skillsPassed = DOMAINS.filter(d => (domainScores[d.name].max || 0) >= 2).length;
             
             document.getElementById('result-total-activities').textContent = activities.length;
             document.getElementById('result-approved').textContent = approved.length;
@@ -2125,14 +2128,15 @@
             const compContainer = document.getElementById('result-competency');
             compContainer.innerHTML = DOMAINS.map(domain => {
                 const ds = domainScores[domain.name];
-                const statusClass = ds.avg >= 3 ? 'excellent' : ds.avg >= 2 ? 'good' : ds.avg >= 1 ? 'developing' : 'none';
-                const statusText = ds.avg >= 3 ? '⭐ Excellent' : ds.avg >= 2 ? '✅ Passed' : ds.avg >= 1 ? '📈 Developing' : '—';
-                
+                const mv = ds.max || 0;
+                const statusClass = mv >= 3 ? 'excellent' : mv >= 2 ? 'good' : mv >= 1 ? 'developing' : 'none';
+                const statusText = mv >= 3 ? '⭐ Excellent' : mv >= 2 ? '✅ Passed' : mv >= 1 ? '📈 Developing' : '—';
+
                 return `
                     <div class="comp-card" style="border-left: 4px solid ${domain.color}">
                         <div class="comp-header">
                             <span class="comp-name">${domain.name}</span>
-                            <span class="comp-level ${statusClass}">Lv.${ds.avg}</span>
+                            <span class="comp-level ${statusClass}">Lv.${mv}</span>
                         </div>
                         <div class="comp-status ${statusClass}">${statusText}</div>
                     </div>
@@ -5621,8 +5625,9 @@
                         row[`skill_${c.code}_freq`] = r.frequency[c.code] ?? 0;
                     });
 
-                    // 6 domain averages
+                    // 6 domain scores (max + avg)
                     DOMAINS.forEach(d => {
+                        row[`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_max`] = r.domainScores[d.name]?.max ?? 0;
                         row[`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`] = r.domainScores[d.name]?.avg ?? 0;
                     });
 
@@ -5639,6 +5644,7 @@
                     headers.push(`skill_${c.code}_freq`);
                 });
                 DOMAINS.forEach(d => {
+                    headers.push(`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_max`);
                     headers.push(`domain_${d.id}_${d.name.replace(/\s+/g, '_')}_avg`);
                 });
                 headers.push('totalScore');
@@ -5696,7 +5702,8 @@
             let hasEmptyYear = false;
 
             data.forEach(r => {
-                if (r.student.department) depts.add(r.student.department);
+                var dept = (r.student.department || '').trim();
+                if (dept) depts.add(dept);
                 else hasEmptyDept = true;
                 if (r.student.year) years.add(String(r.student.year));
                 else hasEmptyYear = true;
@@ -5757,9 +5764,9 @@
                 filtered = filtered.filter(r => String(r.student.year) === yearFilter);
             }
             if (deptFilter === '_empty_') {
-                filtered = filtered.filter(r => !r.student.department);
+                filtered = filtered.filter(r => !(r.student.department || '').trim());
             } else if (deptFilter !== 'all') {
-                filtered = filtered.filter(r => r.student.department === deptFilter);
+                filtered = filtered.filter(r => (r.student.department || '').trim() === deptFilter);
             }
             if (searchTerm) {
                 filtered = filtered.filter(r =>
@@ -5780,7 +5787,7 @@
 
             const count = filteredData.length;
             // Only include students with approved activities for aggregation
-            const activeData = filteredData.filter(r => r.approvedCount > 0);
+            const activeData = filteredData.filter(r => r.approvedCount > 0 && r.totalScore > 0);
             const activeCount = activeData.length;
 
             if (count === 0) {
@@ -5819,11 +5826,11 @@
                 });
 
                 DOMAINS.forEach(d => {
-                    aggDomainTotals[d.name] += r.domainScores[d.name]?.avg || 0;
+                    aggDomainTotals[d.name] += r.domainScores[d.name]?.max || 0;
                 });
 
-                // Check if all 6 domains >= 2 avg (passed criteria)
-                const allPassed = DOMAINS.every(d => (r.domainScores[d.name]?.avg || 0) >= 2);
+                // Check if all 6 domains have max level >= 2 (passed criteria)
+                const allPassed = DOMAINS.every(d => (r.domainScores[d.name]?.max || 0) >= 2);
                 if (allPassed) passedCount++;
             });
 
@@ -5847,7 +5854,9 @@
                     const val = r.scores[c.code] || 0;
                     yearAgg[yl][c.code].sum += val;
                     yearAgg[yl][c.code].count++;
-                    yearAgg[yl][c.code].min = Math.min(yearAgg[yl][c.code].min, val);
+                    if (val > 0) {
+                        yearAgg[yl][c.code].min = Math.min(yearAgg[yl][c.code].min, val);
+                    }
                     yearAgg[yl][c.code].max = Math.max(yearAgg[yl][c.code].max, val);
                 });
             });
@@ -5863,7 +5872,11 @@
             // Summary stats (averages use activeCount)
             const avgScore = activeCount > 0 ? Math.round((totalScoreSum / activeCount) * 10) / 10 : 0;
             const avgActivities = activeCount > 0 ? Math.round((totalActivitiesSum / activeCount) * 10) / 10 : 0;
-            document.getElementById('skills-total-students').textContent = `${activeCount} / ${count}`;
+            const zeroScoreCount = filteredData.filter(r => r.approvedCount > 0 && r.totalScore === 0).length;
+            const activeLabel = zeroScoreCount > 0
+                ? `${activeCount} / ${count} (${zeroScoreCount} ไม่มีทักษะ)`
+                : `${activeCount} / ${count}`;
+            document.getElementById('skills-total-students').textContent = activeLabel;
             document.getElementById('skills-avg-score').textContent = avgScore;
             document.getElementById('skills-passed-count').textContent = passedCount;
             document.getElementById('skills-avg-activities').textContent = avgActivities;
@@ -6020,7 +6033,7 @@
 
                 // Overall columns
                 const oAvgClass = overallAvg >= 3 ? 'level-high' : overallAvg >= 2 ? 'level-mid' : overallAvg >= 1 ? 'level-low' : 'level-none';
-                html += `<td class="num-cell">${overallMin}</td>`;
+                html += `<td class="num-cell">${overallMin === Infinity ? '-' : overallMin}</td>`;
                 html += `<td class="num-cell ${oAvgClass}"><strong>${overallAvg.toFixed(2)}</strong></td>`;
                 html += `<td class="num-cell">${overallMax}</td>`;
 
@@ -6033,7 +6046,7 @@
                             const yMax = yearAgg[y][c.code].max;
                             const yClass = yAvg >= 3 ? 'level-high' : yAvg >= 2 ? 'level-mid' : yAvg >= 1 ? 'level-low' : 'level-none';
 
-                            html += `<td class="num-cell">${yMin}</td>`;
+                            html += `<td class="num-cell">${yMin === Infinity ? '-' : yMin}</td>`;
                             html += `<td class="num-cell ${yClass}"><strong>${yAvg.toFixed(2)}</strong></td>`;
                             html += `<td class="num-cell">${yMax}</td>`;
                         } else {
@@ -6053,7 +6066,7 @@
             const sorted = [...filteredData].sort((a, b) => b.totalScore - a.totalScore);
 
             tbody.innerHTML = sorted.map((r, idx) => {
-                const passedDomains = DOMAINS.filter(d => (r.domainScores[d.name]?.avg || 0) >= 2).length;
+                const passedDomains = DOMAINS.filter(d => (r.domainScores[d.name]?.max || 0) >= 2).length;
                 const passedClass = passedDomains === 6 ? 'excellent' : passedDomains >= 3 ? 'good' : passedDomains >= 1 ? 'developing' : 'none';
 
                 return `
@@ -6099,7 +6112,7 @@
             if (modalSkillsChart) modalSkillsChart.destroy();
 
             const radarLabels = DOMAINS.map(d => d.nameTh);
-            const radarData = DOMAINS.map(d => r.domainScores[d.name]?.avg || 0);
+            const radarData = DOMAINS.map(d => r.domainScores[d.name]?.max || 0);
 
             modalSkillsChart = new Chart(ctx, {
                 type: 'radar',
