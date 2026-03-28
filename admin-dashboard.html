@@ -1224,9 +1224,13 @@
                                 <option value="all">ทั้งหมด</option>
                             </select>
                         </div>
+                        <label style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:#e8eaf6; border-radius:6px; cursor:pointer;">
+                            <input type="checkbox" id="dist-compare-years" onchange="updateDistAndCoverage()">
+                            <span>📊 เทียบตามชั้นปี</span>
+                        </label>
                         <span id="dist-filter-count" style="color:#666;"></span>
                     </div>
-                    <div style="height:350px;">
+                    <div style="height:400px;">
                         <canvas id="skillsDistributionChart"></canvas>
                     </div>
                 </div>
@@ -6276,11 +6280,180 @@
         }
 
         function updateDistAndCoverage() {
-            var result = getDistFilteredData();
-            var label = result.data.length + ' คน (มีทักษะ)';
-            document.getElementById('dist-filter-count').textContent = label;
-            renderDistributionChart(result.data);
-            renderCoverageRate(result.data, result.total);
+            var compareMode = document.getElementById('dist-compare-years').checked;
+            var yearFilterDiv = document.getElementById('dist-year-filter').parentElement;
+            yearFilterDiv.style.display = compareMode ? 'none' : '';
+
+            if (compareMode) {
+                var deptVal = document.getElementById('dist-dept-filter').value;
+                renderDistributionChartCompare(deptVal);
+                renderCoverageRateCompare(deptVal);
+                document.getElementById('dist-filter-count').textContent = '';
+            } else {
+                var result = getDistFilteredData();
+                var label = result.data.length + ' คน (มีทักษะ)';
+                document.getElementById('dist-filter-count').textContent = label;
+                renderDistributionChart(result.data);
+                renderCoverageRate(result.data, result.total);
+            }
+        }
+
+        function renderDistributionChartCompare(deptFilter) {
+            var state = window._radarState;
+            if (!state) return;
+            var years = state.sortedYears;
+
+            // Group activeData by year (+ apply dept filter)
+            var dataByYear = {};
+            years.forEach(function(y) { dataByYear[y] = []; });
+            state.activeData.forEach(function(r) {
+                if (deptFilter !== 'all' && (r.student.department || '').trim() !== deptFilter) return;
+                var y = String(r.student.year);
+                if (dataByYear[y]) dataByYear[y].push(r);
+            });
+
+            var labels = DOMAINS.map(function(d) { return d.nameTh; });
+            var levelColors = ['#bdbdbd', '#ef9a9a', '#fff176', '#a5d6a7', '#90caf9'];
+            var levelLabels = ['ไม่มี (Lv.0)', 'Lv.1', 'Lv.2', 'Lv.3', 'Lv.4'];
+            // Opacity per year for visual distinction
+            var yearOpacity = [1.0, 0.85, 0.7, 0.55, 0.4];
+
+            var datasets = [];
+            // Create datasets: for each level × year → one dataset with stack = 'yearN'
+            for (var lv = 0; lv <= 4; lv++) {
+                for (var yi = 0; yi < years.length; yi++) {
+                    var y = years[yi];
+                    var total = dataByYear[y].length;
+                    datasets.push({
+                        label: levelLabels[lv] + ' (ปี' + y + ')',
+                        data: DOMAINS.map(function(d) {
+                            if (total === 0) return 0;
+                            var count = dataByYear[y].filter(function(r) {
+                                return (r.domainScores[d.name]?.max || 0) === lv;
+                            }).length;
+                            return Math.round(count / total * 100);
+                        }),
+                        backgroundColor: levelColors[lv],
+                        borderColor: 'rgba(255,255,255,0.6)',
+                        borderWidth: 0.5,
+                        stack: 'year' + y,
+                        // Only show in legend once per level (first year)
+                        hidden: false
+                    });
+                }
+            }
+
+            var ctx = document.getElementById('skillsDistributionChart').getContext('2d');
+            if (skillsDistributionChart) skillsDistributionChart.destroy();
+
+            skillsDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, ticks: { font: { size: 12, family: 'Sarabun' } } },
+                        y: { stacked: true, beginAtZero: true, max: 100, title: { display: true, text: '% ของนศ.ในชั้นปี' } }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 11 }, padding: 10,
+                                filter: function(item) {
+                                    // Show only first year's labels to avoid duplicates
+                                    return item.text.includes('(ปี' + years[0] + ')');
+                                },
+                                generateLabels: function(chart) {
+                                    var defaults = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                    // Rewrite labels to remove year suffix for cleaner legend
+                                    return defaults.filter(function(item) {
+                                        return item.text.includes('(ปี' + years[0] + ')');
+                                    }).map(function(item) {
+                                        item.text = item.text.replace(' (ปี' + years[0] + ')', '');
+                                        return item;
+                                    });
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'เทียบการกระจายทักษะตามชั้นปี (' + years.map(function(y) {
+                                return 'ปี' + y + ': ' + dataByYear[y].length + ' คน';
+                            }).join(', ') + ')',
+                            font: { size: 13, family: 'Sarabun' }, color: '#666'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items.length) return '';
+                                    // Extract year from stack
+                                    var stack = items[0].dataset.stack || '';
+                                    var year = stack.replace('year', '');
+                                    return items[0].label + ' — ปี ' + year;
+                                },
+                                label: function(context) {
+                                    var y = (context.dataset.stack || '').replace('year', '');
+                                    var total = dataByYear[y] ? dataByYear[y].length : 0;
+                                    var count = Math.round(context.raw * total / 100);
+                                    var lvLabel = context.dataset.label.split(' (')[0];
+                                    return lvLabel + ': ' + context.raw + '% (' + count + ' คน)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCoverageRateCompare(deptFilter) {
+            var state = window._radarState;
+            if (!state) return;
+            var years = state.sortedYears;
+            var grid = document.getElementById('skills-coverage-grid');
+
+            // Group data by year
+            var dataByYear = {};
+            var totalByYear = {};
+            years.forEach(function(y) { dataByYear[y] = []; totalByYear[y] = 0; });
+
+            // Count total students per year (including those without skills)
+            state.filteredData.forEach(function(r) {
+                var y = String(r.student.year);
+                if (deptFilter !== 'all' && (r.student.department || '').trim() !== deptFilter) return;
+                if (totalByYear[y] !== undefined) totalByYear[y]++;
+            });
+
+            state.activeData.forEach(function(r) {
+                if (deptFilter !== 'all' && (r.student.department || '').trim() !== deptFilter) return;
+                var y = String(r.student.year);
+                if (dataByYear[y]) dataByYear[y].push(r);
+            });
+
+            var yearColors = ['#667eea', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+
+            grid.innerHTML = DOMAINS.map(function(d) {
+                var barsHtml = years.map(function(y, idx) {
+                    var hasSkill = dataByYear[y].filter(function(r) { return (r.domainScores[d.name]?.max || 0) > 0; }).length;
+                    var total = totalByYear[y] || 0;
+                    var pct = total > 0 ? Math.round(hasSkill / total * 100) : 0;
+                    var c = yearColors[idx % yearColors.length];
+
+                    return '<div style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px;">' +
+                        '<span style="width:32px; color:#666; text-align:right;">ปี ' + y + '</span>' +
+                        '<div style="flex:1; background:#e0e0e0; border-radius:3px; height:8px;">' +
+                            '<div style="background:' + c + '; width:' + pct + '%; height:100%; border-radius:3px; transition:width 0.5s;"></div>' +
+                        '</div>' +
+                        '<span style="width:80px; color:#666; font-size:11px;">' + hasSkill + '/' + total + ' (' + pct + '%)</span>' +
+                    '</div>';
+                }).join('');
+
+                return '<div style="padding:14px; background:#f8f9ff; border-radius:10px; border-left:4px solid ' + d.color + ';">' +
+                    '<div style="font-weight:600; color:' + d.color + '; margin-bottom:8px;">' + d.nameTh + '</div>' +
+                    '<div style="font-size:12px; color:#999; margin-bottom:6px;">' + d.name + '</div>' +
+                    barsHtml +
+                '</div>';
+            }).join('');
         }
 
         function renderDistributionChart(activeData) {
