@@ -40,6 +40,20 @@
             box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
         }
         .login-form input[type="password"] { letter-spacing: 3px; }
+        .login-form .btn-google {
+            background: #fff;
+            color: #444;
+            border: 1px solid #dadce0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-form .btn-google:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         .login-form button {
             padding: 14px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -400,25 +414,48 @@
             </nav>
         </header>
 
+        <!-- Bootstrap Section (first-time setup, hidden by default) -->
+        <section id="bootstrap-section" class="login-section" style="display: none;">
+            <div class="login-card">
+                <h2>🚀 ตั้งค่า Admin คนแรก | First-Time Setup</h2>
+                <p>ยังไม่มี Admin ในระบบ ลงชื่อเข้าใช้ด้วย Google เพื่อสร้าง Admin คนแรก<br>No admin exists. Sign in with Google to become the first admin.</p>
+                <div class="login-form">
+                    <button class="btn-google" onclick="bootstrapFirstAdmin()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;">
+                        ลงชื่อด้วย Google เพื่อสร้าง Admin | Sign in with Google
+                    </button>
+                </div>
+                <p id="bootstrap-error" class="error-message"></p>
+                <div class="first-login-info">
+                    <h4><span class="icon">⚠️</span> หมายเหตุ | Note</h4>
+                    <ul>
+                        <li>ฟอร์มนี้แสดงเฉพาะตอนยังไม่มี Admin ในระบบ</li>
+                        <li>This form only shows when no admin exists yet</li>
+                        <li>Google account แรกที่ login จะกลายเป็น Admin อัตโนมัติ</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
         <!-- Login Section -->
         <section id="login-section" class="login-section">
             <div class="login-card">
                 <h2>🔐 Admin Login</h2>
-                <p>เข้าสู่ระบบเพื่อจัดการข้อมูล | Login to manage data</p>
+                <p>เข้าสู่ระบบด้วย Google เพื่อจัดการข้อมูล | Sign in with Google to manage data</p>
                 <div class="login-form">
-                    <input type="email" id="admin-email" placeholder="Admin Email">
-                    <input type="password" id="admin-password" placeholder="รหัสผ่าน | Password (min 4 chars)" minlength="4">
-                    <button onclick="loginAdmin()">🚀 เข้าสู่ระบบ | Login</button>
+                    <button class="btn-google" onclick="loginAdmin()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;">
+                        ลงชื่อด้วย Google | Sign in with Google
+                    </button>
                 </div>
                 <p id="login-error" class="error-message"></p>
-                
+
                 <div class="first-login-info">
                     <h4><span class="icon">💡</span> วิธีเข้าสู่ระบบ | How to Login</h4>
                     <ul>
-                        <li>Email ของคุณต้องถูกเพิ่มโดย Admin ก่อน</li>
-                        <li>Your email must be added by an Admin first</li>
-                        <li>เข้าครั้งแรก: ใส่ Email + <strong>สร้างรหัสผ่านใหม่</strong></li>
-                        <li>ครั้งถัดไป: ใช้รหัสผ่านที่สร้างไว้</li>
+                        <li>Email ของคุณต้องถูกเพิ่มเข้า Admin list ก่อน</li>
+                        <li>Your email must be added to the Admin list first</li>
+                        <li>ลงชื่อด้วย Google account ที่ตรงกับ email นั้น</li>
                     </ul>
                 </div>
             </div>
@@ -869,7 +906,7 @@
                         </button>
                     </div>
                     <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
-                        💡 Admin ใหม่จะตั้งรหัสผ่านเองเมื่อเข้าสู่ระบบครั้งแรก | New admin will set password on first login
+                        💡 Admin ใหม่จะ login ด้วย Google account ที่ตรงกับ email นี้ | New admin signs in with Google account matching this email
                     </p>
                 </div>
                 
@@ -1551,6 +1588,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -1657,16 +1695,60 @@
         // ============================================
         // INITIALIZATION
         // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAdminSession();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkBootstrapNeeded();
+            setupAuthListener();
             setupTabs();
             setupFilters();
-            
-            // Enter key for login
-            document.getElementById('admin-password')?.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') loginAdmin();
-            });
         });
+
+        async function checkBootstrapNeeded() {
+            try {
+                const snap = await db.collection('admins').limit(1).get();
+                if (snap.empty) {
+                    document.getElementById('bootstrap-section').style.display = 'flex';
+                    document.getElementById('login-section').style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Bootstrap check failed:', e);
+            }
+        }
+
+        async function bootstrapFirstAdmin() {
+            const errorEl = document.getElementById('bootstrap-error');
+            errorEl.textContent = '';
+            showLoading(true, 'กำลังเข้าสู่ระบบ Google... | Signing in with Google...');
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                if (!user || !user.email) {
+                    errorEl.textContent = '❌ ไม่พบ Email จาก Google account';
+                    showLoading(false);
+                    return;
+                }
+                // Race guard
+                const snap = await db.collection('admins').limit(1).get();
+                if (!snap.empty) {
+                    errorEl.textContent = '⚠️ มี Admin ในระบบแล้ว กรุณา refresh แล้ว login';
+                    showLoading(false);
+                    return;
+                }
+                await db.collection('admins').add({
+                    email: user.email.toLowerCase(),
+                    name: user.displayName || user.email.split('@')[0],
+                    uid: user.uid,
+                    photoURL: user.photoURL || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    firstLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    addedBy: 'bootstrap'
+                });
+                // onAuthStateChanged will pick this up and load dashboard
+            } catch (e) {
+                errorEl.textContent = '❌ Error: ' + (e.message || e.code);
+                showLoading(false);
+            }
+        }
 
         function setupTabs() {
             document.querySelectorAll('.tab').forEach(tab => {
@@ -7265,99 +7347,89 @@
         }
 
         // ============================================
-        // ADMIN LOGIN / LOGOUT
+        // ADMIN LOGIN / LOGOUT (Google Auth)
         // ============================================
         let currentAdmin = null;
+        let authListenerRegistered = false;
 
         async function loginAdmin() {
-            const email = document.getElementById('admin-email').value.trim().toLowerCase();
-            const password = document.getElementById('admin-password').value.trim();
             const errorEl = document.getElementById('login-error');
             errorEl.textContent = '';
-            
-            if (!email || !email.includes('@')) { 
-                errorEl.textContent = '⚠️ กรุณากรอก Email ที่ถูกต้อง | Please enter valid Email'; 
-                return; 
-            }
-            if (!password || password.length < 4) { 
-                errorEl.textContent = '⚠️ กรุณากรอกรหัสผ่าน (อย่างน้อย 4 ตัวอักษร)'; 
-                return; 
-            }
-            
-            showLoading(true, 'กำลังเข้าสู่ระบบ... | Logging in...');
-            
+            showLoading(true, 'กำลังเข้าสู่ระบบ Google... | Signing in with Google...');
             try {
-                const q = await db.collection('admins').where('email', '==', email).limit(1).get();
-                
-                if (q.empty) {
-                    // Email not found - not allowed to self-register
-                    errorEl.textContent = '❌ ไม่พบ Email ในระบบ | Email not found. กรุณาติดต่อ Admin เพื่อเพิ่มสิทธิ์';
-                    showLoading(false);
-                    return;
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await firebase.auth().signInWithPopup(provider);
+                // onAuthStateChanged handles allowlist check + dashboard load
+            } catch (e) {
+                if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+                    errorEl.textContent = '⚠️ ยกเลิกการเข้าสู่ระบบ';
+                } else {
+                    errorEl.textContent = '❌ Error: ' + (e.message || e.code);
                 }
-                
-                const doc = q.docs[0];
-                const data = doc.data();
-                
-                if (!data.password) {
-                    // First time login - set password
-                    await db.collection('admins').doc(doc.id).update({ 
-                        password,
-                        firstLoginAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    data.password = password;
-                } else if (password !== data.password) {
-                    errorEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง | Incorrect password';
-                    showLoading(false);
-                    return;
-                }
-                
-                currentAdmin = { id: doc.id, email, name: data.name || email.split('@')[0], ...data };
-                
-                // Store session
-                sessionStorage.setItem('adminSession', JSON.stringify(currentAdmin));
-                
-                // Update UI
-                document.getElementById('admin-avatar').textContent = currentAdmin.name.charAt(0).toUpperCase();
-                document.getElementById('admin-display-name').textContent = currentAdmin.name;
-                document.getElementById('admin-display-email').textContent = email;
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('main-section').style.display = 'block';
-                
-                // Load data
-                await loadAllData();
-                
-            } catch (e) { 
-                errorEl.textContent = '❌ เกิดข้อผิดพลาด | Error: ' + e.message; 
+                showLoading(false);
             }
-            showLoading(false);
         }
 
-        function logoutAdmin() {
+        async function logoutAdmin() {
+            try { await firebase.auth().signOut(); } catch (e) { console.error(e); }
             currentAdmin = null;
-            sessionStorage.removeItem('adminSession');
             document.getElementById('login-section').style.display = 'flex';
             document.getElementById('main-section').style.display = 'none';
-            document.getElementById('admin-email').value = '';
-            document.getElementById('admin-password').value = '';
         }
 
-        // Check session on load
-        async function checkAdminSession() {
-            const session = sessionStorage.getItem('adminSession');
-            if (session) {
+        function setupAuthListener() {
+            if (authListenerRegistered) return;
+            authListenerRegistered = true;
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (!user) {
+                    // Signed out
+                    currentAdmin = null;
+                    document.getElementById('main-section').style.display = 'none';
+                    // Show login (bootstrap may override later)
+                    if (document.getElementById('bootstrap-section').style.display !== 'flex') {
+                        document.getElementById('login-section').style.display = 'flex';
+                    }
+                    showLoading(false);
+                    return;
+                }
+                // Signed in - verify allowlist
+                const errorEl = document.getElementById('login-error');
                 try {
-                    currentAdmin = JSON.parse(session);
-                    document.getElementById('admin-avatar').textContent = currentAdmin.name?.charAt(0).toUpperCase() || 'A';
-                    document.getElementById('admin-display-name').textContent = currentAdmin.name || 'Admin';
-                    document.getElementById('admin-display-email').textContent = currentAdmin.email;
+                    const email = (user.email || '').toLowerCase();
+                    const q = await db.collection('admins').where('email', '==', email).limit(1).get();
+                    if (q.empty) {
+                        errorEl.textContent = `❌ ${email} ไม่อยู่ใน Admin list | Not authorized`;
+                        await firebase.auth().signOut();
+                        showLoading(false);
+                        return;
+                    }
+                    const doc = q.docs[0];
+                    const data = doc.data();
+                    currentAdmin = { id: doc.id, email, name: data.name || user.displayName || email.split('@')[0], ...data };
+
+                    // Update UI
+                    document.getElementById('admin-avatar').textContent = currentAdmin.name.charAt(0).toUpperCase();
+                    document.getElementById('admin-display-name').textContent = currentAdmin.name;
+                    document.getElementById('admin-display-email').textContent = email;
+                    document.getElementById('bootstrap-section').style.display = 'none';
                     document.getElementById('login-section').style.display = 'none';
                     document.getElementById('main-section').style.display = 'block';
+
+                    // Backfill uid/photoURL on first Google login
+                    if (!data.uid || data.uid !== user.uid) {
+                        await db.collection('admins').doc(doc.id).update({
+                            uid: user.uid,
+                            photoURL: user.photoURL || null,
+                            lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).catch(() => {});
+                    }
                     await loadAllData();
                 } catch (e) {
-                    sessionStorage.removeItem('adminSession');
+                    errorEl.textContent = '❌ Error: ' + e.message;
+                } finally {
+                    showLoading(false);
                 }
-            }
+            });
         }
 
         // ============================================
