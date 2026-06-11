@@ -1695,60 +1695,15 @@
         // ============================================
         // INITIALIZATION
         // ============================================
-        document.addEventListener('DOMContentLoaded', async () => {
-            await checkBootstrapNeeded();
+        document.addEventListener('DOMContentLoaded', () => {
             setupAuthListener();
             setupTabs();
             setupFilters();
         });
 
-        async function checkBootstrapNeeded() {
-            try {
-                const snap = await db.collection('admins').limit(1).get();
-                if (snap.empty) {
-                    document.getElementById('bootstrap-section').style.display = 'flex';
-                    document.getElementById('login-section').style.display = 'none';
-                }
-            } catch (e) {
-                console.error('Bootstrap check failed:', e);
-            }
-        }
-
-        async function bootstrapFirstAdmin() {
-            const errorEl = document.getElementById('bootstrap-error');
-            errorEl.textContent = '';
-            showLoading(true, 'กำลังเข้าสู่ระบบ Google... | Signing in with Google...');
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                const result = await firebase.auth().signInWithPopup(provider);
-                const user = result.user;
-                if (!user || !user.email) {
-                    errorEl.textContent = '❌ ไม่พบ Email จาก Google account';
-                    showLoading(false);
-                    return;
-                }
-                // Race guard
-                const snap = await db.collection('admins').limit(1).get();
-                if (!snap.empty) {
-                    errorEl.textContent = '⚠️ มี Admin ในระบบแล้ว กรุณา refresh แล้ว login';
-                    showLoading(false);
-                    return;
-                }
-                await db.collection('admins').add({
-                    email: user.email.toLowerCase(),
-                    name: user.displayName || user.email.split('@')[0],
-                    uid: user.uid,
-                    photoURL: user.photoURL || null,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    firstLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    addedBy: 'bootstrap'
-                });
-                // onAuthStateChanged will pick this up and load dashboard
-            } catch (e) {
-                errorEl.textContent = '❌ Error: ' + (e.message || e.code);
-                showLoading(false);
-            }
-        }
+        // Bootstrap-on-first-login: after Google sign-in, if admins collection empty,
+        // auto-create admin doc for this user. Avoids unauthenticated reads.
+        async function bootstrapFirstAdmin() { return loginAdmin(); }
 
         function setupTabs() {
             document.querySelectorAll('.tab').forEach(tab => {
@@ -7382,32 +7337,45 @@
             authListenerRegistered = true;
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (!user) {
-                    // Signed out
                     currentAdmin = null;
                     document.getElementById('main-section').style.display = 'none';
-                    // Show login (bootstrap may override later)
-                    if (document.getElementById('bootstrap-section').style.display !== 'flex') {
-                        document.getElementById('login-section').style.display = 'flex';
-                    }
+                    document.getElementById('bootstrap-section').style.display = 'none';
+                    document.getElementById('login-section').style.display = 'flex';
                     showLoading(false);
                     return;
                 }
-                // Signed in - verify allowlist
                 const errorEl = document.getElementById('login-error');
                 try {
                     const email = (user.email || '').toLowerCase();
                     const q = await db.collection('admins').where('email', '==', email).limit(1).get();
+                    let doc, data;
                     if (q.empty) {
-                        errorEl.textContent = `❌ ${email} ไม่อยู่ใน Admin list | Not authorized`;
-                        await firebase.auth().signOut();
-                        showLoading(false);
-                        return;
+                        // No admin record for this email. Try bootstrap: only allowed if collection is empty.
+                        const anyAdmin = await db.collection('admins').limit(1).get();
+                        if (!anyAdmin.empty) {
+                            errorEl.textContent = `❌ ${email} ไม่อยู่ใน Admin list | Not authorized`;
+                            await firebase.auth().signOut();
+                            showLoading(false);
+                            return;
+                        }
+                        // Bootstrap first admin
+                        const newRef = await db.collection('admins').add({
+                            email,
+                            name: user.displayName || email.split('@')[0],
+                            uid: user.uid,
+                            photoURL: user.photoURL || null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            firstLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            addedBy: 'bootstrap'
+                        });
+                        doc = await newRef.get();
+                        data = doc.data();
+                    } else {
+                        doc = q.docs[0];
+                        data = doc.data();
                     }
-                    const doc = q.docs[0];
-                    const data = doc.data();
                     currentAdmin = { id: doc.id, email, name: data.name || user.displayName || email.split('@')[0], ...data };
 
-                    // Update UI
                     document.getElementById('admin-avatar').textContent = currentAdmin.name.charAt(0).toUpperCase();
                     document.getElementById('admin-display-name').textContent = currentAdmin.name;
                     document.getElementById('admin-display-email').textContent = email;
@@ -7415,7 +7383,6 @@
                     document.getElementById('login-section').style.display = 'none';
                     document.getElementById('main-section').style.display = 'block';
 
-                    // Backfill uid/photoURL on first Google login
                     if (!data.uid || data.uid !== user.uid) {
                         await db.collection('admins').doc(doc.id).update({
                             uid: user.uid,
@@ -7426,6 +7393,7 @@
                     await loadAllData();
                 } catch (e) {
                     errorEl.textContent = '❌ Error: ' + e.message;
+                    console.error('Auth flow error:', e);
                 } finally {
                     showLoading(false);
                 }
