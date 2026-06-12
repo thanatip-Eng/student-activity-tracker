@@ -1,0 +1,10 @@
+serviceAccount.json
+*.serviceAccount.json
+raw/
+data/
+out/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.venv/
+venv/
