@@ -117,12 +117,13 @@ def per_role_student_matrix(activities: pd.DataFrame, participation: pd.DataFram
     resolved = p["activityId_resolved"].notna().sum()
     print(f"  participation resolved (id or name): {resolved} / {len(p)}")
 
-    # Attach role from activity table to each participation row
+    # Attach role from activity table to each participation row.
+    # Activities without a role marker are treated as participant by default.
     id_to_role = dict(zip(activities["_id"].astype(str), activities["role"]))
-    p["role"] = p["activityId_resolved"].astype(str).map(id_to_role).fillna("unknown")
+    p["role"] = p["activityId_resolved"].astype(str).map(id_to_role).fillna("participant")
 
     out: dict[str, pd.DataFrame] = {}
-    for r in ROLES + ["unknown"]:
+    for r in ROLES:
         sub = p[p["role"].eq(r)]
         if sub.empty or "sid_hash" not in sub.columns:
             continue
@@ -165,7 +166,7 @@ def f_role_radar(role_means: pd.DataFrame):
     angles += angles[:1]
 
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw=dict(polar=True))
-    palette = {"participant": "#667eea", "staff": "#27ae60", "organizer": "#e67e22", "unknown": "#888"}
+    palette = {"participant": "#667eea", "staff": "#27ae60", "organizer": "#e67e22"}
     for role in domain_means.index:
         vals = domain_means.loc[role, domains].tolist() + [domain_means.loc[role, domains[0]]]
         color = palette.get(role, "#888")

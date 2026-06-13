@@ -32,13 +32,14 @@ _PAREN_TAIL = re.compile(r"\s*[\(\[]([^\(\)\[\]]+)[\)\]]\s*$")
 def parse_role(name: str | None) -> tuple[str, str]:
     """Return (base_name_stripped, role) for an activity title.
 
-    role is one of {participant, staff, organizer} or 'unknown' if no marker
-    found. The base name strips a trailing parenthesised role tag when present.
+    role is one of {participant, staff, organizer}; defaults to participant
+    when no marker found. The base name strips a trailing parenthesised role
+    tag when present.
     """
     if not isinstance(name, str):
-        return "", "unknown"
+        return "", ROLE_PARTICIPANT
     n = name.strip()
-    role = "unknown"
+    role: str | None = None
 
     m = _PAREN_TAIL.search(n)
     if m:
@@ -49,13 +50,13 @@ def parse_role(name: str | None) -> tuple[str, str]:
                 n = n[: m.start()].strip()
                 break
 
-    if role == "unknown":
+    if role is None:
         for pat, label in _ROLE_PATTERNS:
             if pat.search(n):
                 role = label
                 break
 
-    return n, role
+    return n, role or ROLE_PARTICIPANT
 
 # 6 domains x 3 sub-criteria = 18 skills
 DOMAINS: dict[str, list[str]] = {
