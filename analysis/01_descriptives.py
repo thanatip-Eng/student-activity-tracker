@@ -151,9 +151,11 @@ def f6_participation_timeseries(participation: pd.DataFrame):
     if p.empty:
         return
     monthly = p.set_index(date_col).resample("MS").size()
+    labels = [d.strftime("%b %y") for d in monthly.index]
     fig, ax = plt.subplots(figsize=(8, 3.5))
-    monthly.plot(kind="bar", color="#667eea", ax=ax)
-    ax.set_xticklabels([d.strftime("%b %y") for d in monthly.index], rotation=45, ha="right")
+    ax.bar(range(len(monthly)), monthly.values, color="#667eea")
+    ax.set_xticks(range(len(monthly)))
+    ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.set_ylabel("Participation records")
     ax.set_title("Monthly participation volume (period: Jun 2025 – Apr 2026)")
     fig.tight_layout()
