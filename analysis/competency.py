@@ -79,33 +79,34 @@ def activity_skill_matrix(activities: pd.DataFrame) -> pd.DataFrame:
 def student_competency(
     participation: pd.DataFrame,
     activity_matrix: pd.DataFrame,
+    activities: pd.DataFrame | None = None,
     approved_only: bool = True,
 ) -> pd.DataFrame:
     """Return (sid_hash x 18 skill) MAX-level matrix from approved participation.
 
-    Joins participation with activity skill matrix via activityId / activityName.
+    Joins participation with activity skill matrix preferring activityId, falling
+    back to a name -> id lookup built from activities when activityId is missing.
     """
     p = participation.copy()
     if approved_only and "status" in p.columns:
         p = p[p["status"].str.lower().eq("approved")]
 
-    if "activityId" in p.columns and p["activityId"].notna().any():
-        join_key = "activityId"
-        skill_lookup = activity_matrix
-    elif "activityName" in p.columns:
-        # fallback: map name -> matrix row
-        name_to_id = {}
-        # caller must provide activities df separately to map name; here best-effort skip
-        join_key = "activityName"
-        skill_lookup = activity_matrix
-    else:
+    use_id = "activityId" in p.columns and p["activityId"].notna().any()
+
+    if not use_id and "activityName" in p.columns and activities is not None and not activities.empty:
+        name_col = next((c for c in ("name", "activityName", "title") if c in activities.columns), None)
+        if name_col:
+            name_to_id = dict(zip(activities[name_col].astype(str), activities["_id"].astype(str)))
+            p = p.copy()
+            p["activityId"] = p["activityName"].astype(str).map(name_to_id)
+            use_id = p["activityId"].notna().any()
+
+    if not use_id:
         return pd.DataFrame(columns=SKILL_CODES)
 
-    merged = p.merge(
-        skill_lookup.reset_index().rename(columns={"_id": join_key}),
-        on=join_key,
-        how="inner",
-    )
+    skill_lookup = activity_matrix.reset_index().rename(columns={"_id": "activityId"})
+    merged = p.merge(skill_lookup, on="activityId", how="inner")
+
     if merged.empty or "sid_hash" not in merged.columns:
         return pd.DataFrame(columns=SKILL_CODES)
 

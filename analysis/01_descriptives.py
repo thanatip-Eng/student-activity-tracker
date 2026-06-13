@@ -66,15 +66,32 @@ def t2_activity_skill_heatmap(activities: pd.DataFrame) -> pd.DataFrame:
     if activities.empty:
         return pd.DataFrame()
     M = activity_skill_matrix(activities)
-    M.to_csv(OUT / "T2_activity_skill_matrix.csv")
+
+    # Build id -> name lookup, fall back to id prefix
+    name_col = next((c for c in ("name", "activityName", "title") if c in activities.columns), None)
+    if name_col:
+        id_to_name = dict(zip(activities["_id"], activities[name_col].fillna("(no name)").astype(str)))
+    else:
+        id_to_name = {i: str(i)[:8] for i in activities["_id"]}
+
+    # Save T2 CSV with both id and name columns for readability
+    M_out = M.copy()
+    M_out.insert(0, "name", [id_to_name.get(i, str(i)[:8]) for i in M_out.index])
+    M_out.to_csv(OUT / "T2_activity_skill_matrix.csv")
 
     # top-15 activities by total skill coverage
     top = M.assign(_total=M.sum(axis=1)).nlargest(15, "_total").drop(columns="_total")
-    top.index = top.index.astype(str).str[:8]
-    fig, ax = plt.subplots(figsize=(10, 6))
+
+    def label(i: str) -> str:
+        n = id_to_name.get(i, str(i)[:8])
+        return (n[:40] + "…") if len(n) > 40 else n
+
+    top.index = [label(i) for i in top.index]
+
+    fig, ax = plt.subplots(figsize=(11, 6))
     sns.heatmap(top, annot=True, fmt="d", cmap="YlGnBu", cbar_kws={"label": "Declared level"}, ax=ax)
     ax.set_xlabel("Skill code")
-    ax.set_ylabel("Activity (id prefix)")
+    ax.set_ylabel("Activity")
     ax.set_title("Top-15 activities x 18-skill coverage")
     fig.tight_layout()
     fig.savefig(OUT / "F3_activity_skill_heatmap.png", dpi=200)
@@ -84,7 +101,12 @@ def t2_activity_skill_heatmap(activities: pd.DataFrame) -> pd.DataFrame:
 
 
 def student_vectors(data: dict[str, pd.DataFrame], activity_matrix: pd.DataFrame) -> pd.DataFrame:
-    S = student_competency(data["participation"], activity_matrix, approved_only=True)
+    S = student_competency(
+        data["participation"],
+        activity_matrix,
+        activities=data["activities"],
+        approved_only=True,
+    )
     if S.empty:
         print("  (no student vectors - check participation date range / activityId join)")
         return S
