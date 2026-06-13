@@ -10,6 +10,53 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
+# Role normalisation. Activities are stored as separate docs per role with the
+# role appended in parentheses, e.g. "X (ผู้เข้าร่วม)", "X (Staff)", "X (ผู้จัดงาน)".
+ROLE_PARTICIPANT = "participant"
+ROLE_STAFF = "staff"
+ROLE_ORGANIZER = "organizer"
+ROLES = [ROLE_PARTICIPANT, ROLE_STAFF, ROLE_ORGANIZER]
+
+_ROLE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"ผู้\s*เข้\s*า\s*ร่\s*วม"), ROLE_PARTICIPANT),
+    (re.compile(r"\bparticipant\b", re.I), ROLE_PARTICIPANT),
+    (re.compile(r"ผู้\s*จัด\s*งาน|ผู้\s*จัด\s*กิจกรรม"), ROLE_ORGANIZER),
+    (re.compile(r"\borganiz(?:er|ers)\b", re.I), ROLE_ORGANIZER),
+    (re.compile(r"\bstaff\b", re.I), ROLE_STAFF),
+    (re.compile(r"\bกรรมการ\b"), ROLE_STAFF),
+]
+
+_PAREN_TAIL = re.compile(r"\s*[\(\[]([^\(\)\[\]]+)[\)\]]\s*$")
+
+
+def parse_role(name: str | None) -> tuple[str, str]:
+    """Return (base_name_stripped, role) for an activity title.
+
+    role is one of {participant, staff, organizer} or 'unknown' if no marker
+    found. The base name strips a trailing parenthesised role tag when present.
+    """
+    if not isinstance(name, str):
+        return "", "unknown"
+    n = name.strip()
+    role = "unknown"
+
+    m = _PAREN_TAIL.search(n)
+    if m:
+        tail = m.group(1)
+        for pat, label in _ROLE_PATTERNS:
+            if pat.search(tail):
+                role = label
+                n = n[: m.start()].strip()
+                break
+
+    if role == "unknown":
+        for pat, label in _ROLE_PATTERNS:
+            if pat.search(n):
+                role = label
+                break
+
+    return n, role
+
 # 6 domains x 3 sub-criteria = 18 skills
 DOMAINS: dict[str, list[str]] = {
     "D1_Knowledge": ["1.1", "1.2", "1.3"],
