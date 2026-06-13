@@ -18,10 +18,10 @@ ROLE_ORGANIZER = "organizer"
 ROLES = [ROLE_PARTICIPANT, ROLE_STAFF, ROLE_ORGANIZER]
 
 _ROLE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"ทีม\s*ผู้\s*จัด|ผู้\s*จัด\s*งาน|ผู้\s*จัด\s*กิจกรรม|ผู้\s*จัด"), ROLE_ORGANIZER),
+    (re.compile(r"\borganiz(?:er|ers)\b", re.I), ROLE_ORGANIZER),
     (re.compile(r"ผู้\s*เข้\s*า\s*ร่\s*วม"), ROLE_PARTICIPANT),
     (re.compile(r"\bparticipant\b", re.I), ROLE_PARTICIPANT),
-    (re.compile(r"ผู้\s*จัด\s*งาน|ผู้\s*จัด\s*กิจกรรม"), ROLE_ORGANIZER),
-    (re.compile(r"\borganiz(?:er|ers)\b", re.I), ROLE_ORGANIZER),
     (re.compile(r"\bstaff\b", re.I), ROLE_STAFF),
     (re.compile(r"\bกรรมการ\b"), ROLE_STAFF),
 ]

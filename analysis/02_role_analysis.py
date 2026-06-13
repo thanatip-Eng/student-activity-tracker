@@ -19,6 +19,7 @@ Outputs to analysis/out/role/:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -97,28 +98,65 @@ def multirole_table(activities: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _norm(s: str) -> str:
+    """Collapse whitespace, unify quotes/dashes for fuzzy name match."""
+    if not isinstance(s, str):
+        return ""
+    s = s.strip()
+    s = re.sub(r"\s+", " ", s)
+    s = s.translate(str.maketrans({
+        "“": '"', "”": '"', "‘": "'", "’": "'",
+        "–": "-", "—": "-",
+    }))
+    return s
+
+
 def per_role_student_matrix(activities: pd.DataFrame, participation: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """For each role, compute student x 18-skill MAX matrix from participation."""
-    name_to_id = dict(zip(activities["name"].astype(str).str.strip(), activities["_id"].astype(str)))
     activity_matrix = activity_skill_matrix(activities)
+
+    # Lookup tables
+    a = activities.copy()
+    a["base_norm"] = a["base_name"].map(_norm)
+    by_base_role = a.groupby(["base_norm", "role"])["_id"].first().to_dict()      # (base, role) -> _id
+    by_base_any = a.groupby("base_norm")["_id"].first().to_dict()                  # base -> first _id
+    by_full = dict(zip(a["name"].map(_norm), a["_id"].astype(str)))                # full -> _id
 
     p = participation.copy()
     if "status" in p.columns:
         p = p[p["status"].astype(str).str.lower().eq("approved")]
-    p["activityId_resolved"] = p["activityId"].astype(str)
-    direct_hit = p["activityId_resolved"].isin(set(activity_matrix.index.astype(str)))
-    print(f"  participation rows: {len(p)}  | direct id hits: {direct_hit.sum()}")
 
-    # Fall back to name-based mapping for the rest
-    if "activityName" in p.columns:
-        mapped = p["activityName"].astype(str).str.strip().map(name_to_id)
-        p["activityId_resolved"] = p["activityId_resolved"].where(direct_hit, mapped)
+    # Resolve activityId per row by trying: direct id, full name, base+role, base
+    activity_ids = set(activity_matrix.index.astype(str))
 
-    resolved = p["activityId_resolved"].notna().sum()
-    print(f"  participation resolved (id or name): {resolved} / {len(p)}")
+    def resolve_row(row) -> tuple[str | None, str]:
+        # Returns (resolved_id, role)
+        raw_id = str(row.get("activityId") or "").strip()
+        if raw_id and raw_id in activity_ids:
+            return raw_id, "from_id"
+        name_raw = row.get("activityName", "")
+        if not isinstance(name_raw, str) or not name_raw.strip():
+            return None, "no_name"
+        full_n = _norm(name_raw)
+        if full_n in by_full:
+            return by_full[full_n], "full_name"
+        base, role = parse_role(name_raw)
+        base_n = _norm(base)
+        if (base_n, role) in by_base_role:
+            return by_base_role[(base_n, role)], "base_role"
+        if base_n in by_base_any:
+            return by_base_any[base_n], "base_only"
+        return None, "unmatched"
+
+    resolved_pairs = p.apply(resolve_row, axis=1)
+    p["activityId_resolved"] = resolved_pairs.map(lambda x: x[0])
+    p["resolution"] = resolved_pairs.map(lambda x: x[1])
+    print("  resolution breakdown:")
+    print(p["resolution"].value_counts().to_string())
+    resolved_count = p["activityId_resolved"].notna().sum()
+    print(f"  total resolved: {resolved_count} / {len(p)} ({resolved_count/len(p)*100:.1f}%)")
 
     # Attach role from activity table to each participation row.
-    # Activities without a role marker are treated as participant by default.
     id_to_role = dict(zip(activities["_id"].astype(str), activities["role"]))
     p["role"] = p["activityId_resolved"].astype(str).map(id_to_role).fillna("participant")
 
