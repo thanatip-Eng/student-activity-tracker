@@ -88,26 +88,42 @@ def student_competency(
     back to a name -> id lookup built from activities when activityId is missing.
     """
     p = participation.copy()
+    print(f"  [debug] participation cols: {sorted(p.columns.tolist())[:25]}")
+    print(f"  [debug] participation rows: {len(p)}")
+
     if approved_only and "status" in p.columns:
-        p = p[p["status"].str.lower().eq("approved")]
+        status_counts = p["status"].astype(str).str.lower().value_counts().head()
+        print(f"  [debug] status counts: {dict(status_counts)}")
+        p = p[p["status"].astype(str).str.lower().eq("approved")]
+        print(f"  [debug] after approved filter: {len(p)}")
 
     use_id = "activityId" in p.columns and p["activityId"].notna().any()
+    print(f"  [debug] use_id (has activityId): {use_id}")
 
     if not use_id and "activityName" in p.columns and activities is not None and not activities.empty:
         name_col = next((c for c in ("name", "activityName", "title") if c in activities.columns), None)
+        print(f"  [debug] name_col on activities: {name_col}")
         if name_col:
             name_to_id = dict(zip(activities[name_col].astype(str), activities["_id"].astype(str)))
             p = p.copy()
             p["activityId"] = p["activityName"].astype(str).map(name_to_id)
-            use_id = p["activityId"].notna().any()
+            matched = p["activityId"].notna().sum()
+            print(f"  [debug] name->id mapped: {matched} / {len(p)}")
+            use_id = matched > 0
 
     if not use_id:
+        print("  [debug] no activityId resolvable -> returning empty")
+        return pd.DataFrame(columns=SKILL_CODES)
+
+    if "sid_hash" not in p.columns:
+        print(f"  [debug] sid_hash MISSING in participation -> cannot group by student")
         return pd.DataFrame(columns=SKILL_CODES)
 
     skill_lookup = activity_matrix.reset_index().rename(columns={"_id": "activityId"})
     merged = p.merge(skill_lookup, on="activityId", how="inner")
+    print(f"  [debug] merged rows: {len(merged)}")
 
-    if merged.empty or "sid_hash" not in merged.columns:
+    if merged.empty:
         return pd.DataFrame(columns=SKILL_CODES)
 
     student_matrix = merged.groupby("sid_hash")[SKILL_CODES].max().fillna(0).astype(int)

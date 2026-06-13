@@ -11,6 +11,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib import font_manager
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -28,7 +30,25 @@ DATA = HERE / "data"
 OUT = HERE / "out"
 OUT.mkdir(exist_ok=True)
 
-sns.set_theme(style="whitegrid", context="paper", font_scale=1.0)
+
+def _pick_thai_font() -> str:
+    candidates = [
+        "Sarabun", "TH Sarabun New", "Noto Sans Thai", "Noto Sans Thai Looped",
+        "Thonburi", "Ayuthaya", "Sathu", "Silom", "Krungthep",
+        "Tahoma", "Lucida Grande",
+    ]
+    installed = {f.name for f in font_manager.fontManager.ttflist}
+    for name in candidates:
+        if name in installed:
+            return name
+    return "DejaVu Sans"
+
+
+THAI_FONT = _pick_thai_font()
+mpl.rcParams["font.family"] = [THAI_FONT, "DejaVu Sans"]
+mpl.rcParams["axes.unicode_minus"] = False
+sns.set_theme(style="whitegrid", context="paper", font_scale=1.0, font=THAI_FONT)
+print(f"  [font] using '{THAI_FONT}' for Thai glyphs")
 
 
 def load():
