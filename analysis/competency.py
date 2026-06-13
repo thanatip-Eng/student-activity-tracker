@@ -97,33 +97,51 @@ def student_competency(
         p = p[p["status"].astype(str).str.lower().eq("approved")]
         print(f"  [debug] after approved filter: {len(p)}")
 
-    use_id = "activityId" in p.columns and p["activityId"].notna().any()
-    print(f"  [debug] use_id (has activityId): {use_id}")
+    if "sid_hash" not in p.columns:
+        print("  [debug] sid_hash MISSING in participation -> cannot group by student")
+        return pd.DataFrame(columns=SKILL_CODES)
 
-    if not use_id and "activityName" in p.columns and activities is not None and not activities.empty:
+    activity_ids = set(activity_matrix.index.astype(str))
+    skill_lookup = activity_matrix.reset_index().rename(columns={"_id": "activityId"})
+    skill_lookup["activityId"] = skill_lookup["activityId"].astype(str)
+
+    # Try 1: direct activityId join
+    p1 = p.copy()
+    p1["activityId"] = p1.get("activityId", pd.Series(dtype=str)).astype(str)
+    id_hits = p1["activityId"].isin(activity_ids).sum() if "activityId" in p1.columns else 0
+    print(f"  [debug] direct activityId hits: {id_hits} / {len(p1)}")
+
+    merged = p1.merge(skill_lookup, on="activityId", how="inner") if id_hits > 0 else pd.DataFrame()
+
+    # Try 2: activityName -> _id fallback
+    if merged.empty and "activityName" in p.columns and activities is not None and not activities.empty:
         name_col = next((c for c in ("name", "activityName", "title") if c in activities.columns), None)
         print(f"  [debug] name_col on activities: {name_col}")
         if name_col:
-            name_to_id = dict(zip(activities[name_col].astype(str), activities["_id"].astype(str)))
-            p = p.copy()
-            p["activityId"] = p["activityName"].astype(str).map(name_to_id)
-            matched = p["activityId"].notna().sum()
-            print(f"  [debug] name->id mapped: {matched} / {len(p)}")
-            use_id = matched > 0
+            name_to_id = dict(
+                zip(activities[name_col].astype(str).str.strip(),
+                    activities["_id"].astype(str))
+            )
+            p2 = p.copy()
+            p2["activityId"] = p2["activityName"].astype(str).str.strip().map(name_to_id)
+            matched = p2["activityId"].notna().sum()
+            print(f"  [debug] name->id mapped: {matched} / {len(p2)}")
+            sample_unmatched = p2.loc[p2["activityId"].isna(), "activityName"].dropna().head(3).tolist()
+            if sample_unmatched:
+                print(f"  [debug] sample unmatched names: {sample_unmatched}")
+            sample_activity_names = activities[name_col].dropna().astype(str).head(3).tolist()
+            print(f"  [debug] sample activity names: {sample_activity_names}")
+            merged = p2.dropna(subset=["activityId"]).merge(skill_lookup, on="activityId", how="inner")
 
-    if not use_id:
-        print("  [debug] no activityId resolvable -> returning empty")
-        return pd.DataFrame(columns=SKILL_CODES)
-
-    if "sid_hash" not in p.columns:
-        print(f"  [debug] sid_hash MISSING in participation -> cannot group by student")
-        return pd.DataFrame(columns=SKILL_CODES)
-
-    skill_lookup = activity_matrix.reset_index().rename(columns={"_id": "activityId"})
-    merged = p.merge(skill_lookup, on="activityId", how="inner")
     print(f"  [debug] merged rows: {len(merged)}")
 
     if merged.empty:
+        # diagnostics: peek at what participation.activityId looks like vs activity._id
+        if "activityId" in p.columns:
+            p_ids = p["activityId"].dropna().astype(str).head(3).tolist()
+            print(f"  [debug] sample participation.activityId: {p_ids}")
+        a_ids = list(activity_matrix.index.astype(str)[:3])
+        print(f"  [debug] sample activity._id: {a_ids}")
         return pd.DataFrame(columns=SKILL_CODES)
 
     student_matrix = merged.groupby("sid_hash")[SKILL_CODES].max().fillna(0).astype(int)
