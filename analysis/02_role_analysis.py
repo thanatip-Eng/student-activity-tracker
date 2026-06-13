@@ -199,7 +199,7 @@ def f_role_radar(role_means: pd.DataFrame):
         domain_means[domain] = role_means[cols].mean(axis=1) if cols else 0
 
     domains = list(DOMAINS.keys())
-    labels = [d.split("_", 1)[1] for d in domains]
+    labels = domains
     angles = np.linspace(0, 2 * np.pi, len(domains), endpoint=False).tolist()
     angles += angles[:1]
 

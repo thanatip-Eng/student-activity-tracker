@@ -58,14 +58,42 @@ def parse_role(name: str | None) -> tuple[str, str]:
 
     return n, role or ROLE_PARTICIPANT
 
-# 6 domains x 3 sub-criteria = 18 skills
+# 6 domains x 3 sub-criteria = 18 skills (mirrors js/app.js:DOMAINS + CRITERIA_LIST)
 DOMAINS: dict[str, list[str]] = {
-    "D1_Knowledge": ["1.1", "1.2", "1.3"],
-    "D2_Skill": ["2.1", "2.2", "2.3"],
-    "D3_Attitude": ["3.1", "3.2", "3.3"],
-    "D4_Ethics": ["4.1", "4.2", "4.3"],
-    "D5_Leadership": ["5.1", "5.2", "5.3"],
-    "D6_Innovation": ["6.1", "6.2", "6.3"],
+    "Critical Thinking": ["1.1", "1.2", "1.3"],
+    "Communication": ["2.1", "2.2", "2.3"],
+    "Teamwork": ["3.1", "3.2", "3.3"],
+    "Digital & Learning": ["4.1", "4.2", "4.3"],
+    "Innovation": ["5.1", "5.2", "5.3"],
+    "Self Development": ["6.1", "6.2", "6.3"],
+}
+DOMAINS_TH: dict[str, str] = {
+    "Critical Thinking": "การคิดวิเคราะห์",
+    "Communication": "การสื่อสาร",
+    "Teamwork": "การทำงานเป็นทีม",
+    "Digital & Learning": "ดิจิทัลและการเรียนรู้",
+    "Innovation": "นวัตกรรม",
+    "Self Development": "พัฒนาตนเอง",
+}
+SKILL_NAMES: dict[str, tuple[str, str]] = {
+    "1.1": ("Analytical Reasoning", "การใช้เหตุผลเชิงวิเคราะห์"),
+    "1.2": ("Systematic Problem Solving", "การแก้ปัญหาอย่างเป็นระบบ"),
+    "1.3": ("Systems Thinking", "การคิดเชิงระบบและบริบททางสังคม"),
+    "2.1": ("Presentation Skills", "ทักษะการนำเสนอ"),
+    "2.2": ("Listening & Comprehension", "การฟังและความเข้าใจ"),
+    "2.3": ("English Communication", "การสื่อสารภาษาอังกฤษ"),
+    "3.1": ("Role Understanding", "ความเข้าใจในบทบาท"),
+    "3.2": ("Task Management", "การจัดการงาน"),
+    "3.3": ("Collaborative Work", "การทำงานร่วมกัน"),
+    "4.1": ("Learning Agility", "ความคล่องตัวในการเรียนรู้"),
+    "4.2": ("Digital Literacy", "ความรู้ด้านดิจิทัล"),
+    "4.3": ("Tool Proficiency", "ความเชี่ยวชาญเครื่องมือ"),
+    "5.1": ("Human-Centered Design", "การออกแบบที่ยึดมนุษย์เป็นศูนย์กลาง"),
+    "5.2": ("Project Management", "การบริหารโครงการ"),
+    "5.3": ("Business Awareness", "ความตระหนักทางธุรกิจ"),
+    "6.1": ("Personal Growth", "การเติบโตส่วนบุคคล"),
+    "6.2": ("Resilience", "ความยืดหยุ่นและการปรับตัว"),
+    "6.3": ("Empathy", "ความเห็นอกเห็นใจ"),
 }
 SKILL_CODES: list[str] = [code for codes in DOMAINS.values() for code in codes]
 

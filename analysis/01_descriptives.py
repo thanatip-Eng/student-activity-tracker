@@ -176,7 +176,7 @@ def f5_domain_radar(student_matrix: pd.DataFrame):
     ax.plot(angles, values, color="#667eea", linewidth=2, label="Mean")
     ax.fill_between(angles, lower, upper, color="#667eea", alpha=0.15, label="±1 SD")
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels([d.split("_", 1)[1] for d in domains], fontsize=9)
+    ax.set_xticklabels(domains, fontsize=9)
     ax.set_yticks([1, 2, 3, 4])
     ax.set_ylim(0, 4)
     ax.set_title("Mean domain competency (radar)")

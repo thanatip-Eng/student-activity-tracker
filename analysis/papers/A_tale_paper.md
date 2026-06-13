@@ -22,10 +22,12 @@ Cloud Firestore back-end, and Google-based authentication gated by an admin
 allow-list. Per-student competency is computed as the maximum demonstrated
 level across approved activities and visualised as a radar chart. A pilot
 deployment at Chiang Mai University's Faculty of Engineering during
-academic year 2025-2026 captured {{N_students}} students and {{N_activities}}
-activities, yielding {{N_participation}} participation records. Initial
-analysis identifies skill coverage gaps that inform future curriculum
-planning. We discuss design lessons and outline a roadmap toward formal
+academic year 2025-2026 captured 5,203 students and 205 activities,
+yielding 7,545 approved participation records. A role-aware analysis
+shows that students participating as activity organisers reach the
+faculty competency threshold (level 3 in at least three skills) at
+49.4%, more than nineteen times the rate of plain participants (2.6%).
+We discuss design lessons and outline a roadmap toward formal
 course-outcome integration and longitudinal tracking.
 
 **Keywords:** competency-based education; co-curricular activities;
@@ -99,14 +101,14 @@ sub-criteria each (Table I).
 
 **Table I. Six domains and eighteen sub-criteria of the competency framework.**
 
-| Code | Domain | Sub-criteria |
-|------|--------|--------------|
-| D1 | {{Domain 1 name}} | 1.1, 1.2, 1.3 |
-| D2 | {{Domain 2 name}} | 2.1, 2.2, 2.3 |
-| D3 | {{Domain 3 name}} | 3.1, 3.2, 3.3 |
-| D4 | {{Domain 4 name}} | 4.1, 4.2, 4.3 |
-| D5 | {{Domain 5 name}} | 5.1, 5.2, 5.3 |
-| D6 | {{Domain 6 name}} | 6.1, 6.2, 6.3 |
+| Code | Domain (Eng / Thai) | Sub-criteria |
+|------|---------------------|--------------|
+| D1 | Critical Thinking / การคิดวิเคราะห์ | 1.1 Analytical Reasoning, 1.2 Systematic Problem Solving, 1.3 Systems Thinking |
+| D2 | Communication / การสื่อสาร | 2.1 Presentation Skills, 2.2 Listening & Comprehension, 2.3 English Communication |
+| D3 | Teamwork / การทำงานเป็นทีม | 3.1 Role Understanding, 3.2 Task Management, 3.3 Collaborative Work |
+| D4 | Digital & Learning / ดิจิทัลและการเรียนรู้ | 4.1 Learning Agility, 4.2 Digital Literacy, 4.3 Tool Proficiency |
+| D5 | Innovation / นวัตกรรม | 5.1 Human-Centered Design, 5.2 Project Management, 5.3 Business Awareness |
+| D6 | Self Development / พัฒนาตนเอง | 6.1 Personal Growth, 6.2 Resilience, 6.3 Empathy |
 
 Each sub-criterion has a four-level rubric (1: aware, 2: practised,
 3: proficient, 4: led / innovated). Activities declare the level at which
@@ -171,23 +173,48 @@ sub-criteria. Students self-report participation or organisers bulk
 upload attendance. Faculty admins audit and approve. The student portal
 shows the radar score for completed activities.
 
-**Data summary (Table II).** From `T1_dataset_summary.csv`:
+**Data summary (Table II).**
 
 | Metric | Value |
 |--------|-------|
-| Students | {{N_students}} |
-| Activities | {{N_activities}} |
-| Participation records | {{N_participation}} |
-| Approved participation | {{N_approved}} |
-| Submissions | {{N_submissions}} |
+| Students registered | 5,203 |
+| Activities | 205 |
+| Approved participation records | 7,545 |
+| Submissions (self-report) | 247 |
+| Participation records matched to 18-skill framework | 3,254 (43.1%) |
+| Distinct students with at least one matched record | 1,752 |
+
+**Role distribution of activities.** Of the 205 activities, 182 were
+offered as a participant variant, 14 as an organiser variant
+("ทีมผู้จัด"), and 9 as a staff variant. Eight base activities exist in
+two or more role variants — a small but informative subset for
+within-activity role comparison.
 
 **Activity skill coverage (Fig. 3).** A heatmap of the top-15 activities
-by total declared coverage shows {{description: which skills appear most;
-which skills appear least}}. Notable under-covered sub-criteria include
-{{list}}, suggesting curriculum gaps.
+by total declared coverage shows concentration on Communication 2.3
+(English Communication) and Teamwork 3.2 (Task Management). Six of the
+eighteen sub-criteria — 1.3 Systems Thinking, 2.2 Listening &
+Comprehension, 4.3 Tool Proficiency, 5.1 Human-Centered Design, 5.3
+Business Awareness, and 6.2 Resilience — never appear at level 3 or
+above in any student record, evidencing concrete coverage gaps in the
+current activity portfolio.
 
-**Monthly participation (Fig. 6).** Volume peaks in {{month}} and dips in
-{{month}}, reflecting examination and break periods.
+**Role-aware competency gains.** Per-role mean levels reveal that
+activity organisers gain markedly higher Teamwork (3.2 mean = 3.20,
+3.3 mean = 2.38) and Project Management (5.2 mean = 2.16) than
+participants (3.2 mean = 0.00, 5.2 mean = 0.01), demonstrating that
+*role*, not just *attendance*, drives competency development.
+
+**Compliance with the faculty rule** ("each student must reach level
+3 in at least three skills"): only 86 of 1,752 students (4.91%) meet
+the rule overall. Stratified by the role that contributes most of the
+student's coverage: organisers 49.4% (85/172), staff 4.2% (3/72),
+participants 2.6% (41/1,595). The 19× gap between organisers and
+participants is the most striking pilot finding.
+
+**Monthly participation (Fig. 6).** Volume peaks in the early-semester
+months and dips during examination periods, consistent with academic
+calendar effects.
 
 ## VI. Discussion
 
@@ -211,6 +238,12 @@ which skills appear least}}. Notable under-covered sub-criteria include
   report high levels without external rubric calibration.
 - Self-reported participation introduces selection bias toward
   high-engagement students.
+- 4,291 participation records (56.9% of approved entries) reference
+  external LinkedIn Learning courses tagged against a separate
+  Entaneer-track framework and could not be mapped to the 18-skill
+  rubric. These records were excluded from competency aggregation but
+  are retained in the participation count. A unified mapping is
+  required before cross-track conclusions can be drawn.
 
 **Future work.**
 
@@ -226,11 +259,15 @@ which skills appear least}}. Notable under-covered sub-criteria include
 We demonstrated that a lightweight, serverless web system can produce
 structured competency evidence from co-curricular engineering activities
 without procurement overhead. The pilot at Chiang Mai University in
-academic year 2025-2026 yielded {{N_participation}} approved records
-across {{N_skills_touched}} of the eighteen sub-criteria, surfacing
-coverage gaps that inform future activity portfolio decisions. The
-framework, scoring rule, and architecture are replicable; the main
-remaining work is rubric calibration and longitudinal validation.
+academic year 2025-2026 yielded 7,545 approved records and revealed
+that activity *role* — participant, staff, or organiser — explains the
+largest share of variance in competency attainment: organisers meet
+the three-skills-at-level-3 rule at 49.4% versus 2.6% for plain
+participants. Six of the eighteen sub-criteria are not reached by any
+student at level 3, evidencing concrete coverage gaps. The framework,
+scoring rule, and architecture are replicable; the main remaining work
+is rubric calibration, cross-track mapping, and longitudinal
+validation.
 
 ## Acknowledgement
 
