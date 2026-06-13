@@ -94,9 +94,16 @@ def t2_activity_skill_heatmap(activities: pd.DataFrame) -> pd.DataFrame:
     else:
         id_to_name = {i: str(i)[:8] for i in activities["_id"]}
 
-    # Save T2 CSV with both id and name columns for readability
+    # Save T2 CSV indexed by activity name; keep _id as a trailing column for traceability
     M_out = M.copy()
-    M_out.insert(0, "name", [id_to_name.get(i, str(i)[:8]) for i in M_out.index])
+    names = pd.Series([id_to_name.get(i, str(i)[:8]) for i in M_out.index], index=M_out.index)
+    # Disambiguate duplicate names by suffixing short id
+    dupes = names.duplicated(keep=False)
+    if dupes.any():
+        names = names.where(~dupes, names + " [" + names.index.astype(str).str[:6] + "]")
+    M_out["_id"] = M_out.index
+    M_out.index = names
+    M_out.index.name = "activity_name"
     M_out.to_csv(OUT / "T2_activity_skill_matrix.csv")
 
     # top-15 activities by total skill coverage
