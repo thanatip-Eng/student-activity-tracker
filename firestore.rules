@@ -1,0 +1,104 @@
+rules_version = '2';
+
+// ============================================================
+// Firestore Security Rules — role-based, LTI-backed identity
+// ============================================================
+// Identity comes from a Firebase Custom Token minted by the
+// ltiLaunch Cloud Function AFTER it verifies the signed Canvas
+// LTI launch and checks the email against the allowlist.
+// The token carries a custom claim `role` ('admin' | 'student')
+// and the verified `email`. Nobody can obtain such a token by
+// opening the site URL directly, so direct access reads/writes
+// nothing.
+// ------------------------------------------------------------
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function role() {
+      return signedIn() ? request.auth.token.role : '';
+    }
+    function isAdmin() {
+      return role() == 'admin';
+    }
+    function isStudent() {
+      return role() == 'student';
+    }
+    // Email verified by Canvas and stamped into the token by the
+    // Cloud Function (Firebase Auth user record `email`).
+    function myEmail() {
+      return signedIn() ? request.auth.token.email : '';
+    }
+
+    // ----- admins: managed only by existing admins -----
+    // NOTE: the old "self-create your own admin doc" rule is gone.
+    // Bootstrapping the first admin is done from the Firebase
+    // console / Admin SDK, not from the client.
+    match /admins/{id} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ----- student roster: admins manage; a student sees only self -----
+    match /students/{id} {
+      allow read:  if isAdmin() || (isStudent() && resource.data.email == myEmail());
+      allow write: if isAdmin();
+    }
+
+    // ----- participation (approved records): admin-managed -----
+    // Reads limited to admins for now (participation is keyed by
+    // studentId, not email; per-student read can be added once an
+    // email/uid field is present on these docs).
+    match /participation/{id} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ----- submissions: a student may file their own; admin decides -----
+    match /submissions/{id} {
+      allow read: if isAdmin()
+                  || (isStudent() && resource.data.studentEmail == myEmail());
+      // Student can only create a submission for THEIR OWN email and
+      // only in the pending state — they can't self-approve.
+      allow create: if isStudent()
+                    && request.resource.data.studentEmail == myEmail()
+                    && request.resource.data.status == 'Pending Review';
+      allow update, delete: if isAdmin();
+    }
+
+    // ----- surveys: student writes, admin reads -----
+    match /surveys/{id} {
+      allow create: if isStudent();
+      allow read:   if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ----- activity catalogs: everyone signed-in reads, admin writes -----
+    match /activities/{id} {
+      allow read:  if signedIn();
+      allow write: if isAdmin();
+    }
+    match /organizerActivities/{id} {
+      allow read:  if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ----- organizers: admin-only. No more client-side plaintext login. -----
+    match /organizers/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // ----- LTI replay-protection nonces: server-only (Admin SDK bypasses rules) -----
+    match /lti_nonces/{id} {
+      allow read, write: if false;
+    }
+
+    // ----- default deny everything else -----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

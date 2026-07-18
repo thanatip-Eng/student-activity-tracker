@@ -1,0 +1,19 @@
+{
+  "name": "student-activity-tracker-functions",
+  "description": "LTI 1.1 launch endpoint that verifies a signed Canvas launch and mints a Firebase custom token",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,hosting",
+    "deploy": "firebase deploy --only functions,firestore:rules,hosting",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^4.9.0",
+    "ims-lti": "^3.0.2"
+  }
+}
